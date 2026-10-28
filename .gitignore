@@ -1,0 +1,11 @@
+# Godot 4+ Git Ignore
+.godot/
+*.translation
+*.tmp
+temp_git_assets/
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
