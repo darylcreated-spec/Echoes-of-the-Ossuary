@@ -31,10 +31,10 @@ func _ready() -> void:
 		_setup_chamber_encounter()
 
 func _setup_hub_interactables() -> void:
-	# Hub has hero class pedestals, Upgrade Altar, and Descent Sigil
-	_spawn_descent_sigil(Vector3(0, 0, 7.0))
-	_spawn_upgrade_altar(Vector3(-5.0, 0, 0))
-	_spawn_class_pedestals(Vector3(0, 0, -4.0))
+	# Overworld Hub has hero class pedestals in plaza, Upgrade Altar at blacksmith, and Descent Sigil at Crypt
+	_spawn_descent_sigil(Vector3(0, 0, -6.5))
+	_spawn_upgrade_altar(Vector3(-5.8, 0, 0))
+	_spawn_class_pedestals(Vector3(0, 0, 1.8))
 
 func _setup_chamber_encounter() -> void:
 	# Define spawn points inside room

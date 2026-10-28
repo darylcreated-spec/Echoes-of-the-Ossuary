@@ -226,11 +226,11 @@ func _update_floor_display() -> void:
 	if not floor_label:
 		return
 	if GameManager.current_floor == 0:
-		floor_label.text = "Sanctuary Hub (Floor 0)"
+		floor_label.text = "Surface Sanctuary (Overworld)"
 	elif GameManager.current_floor >= 5:
 		floor_label.text = "Floor 5: The Ossuary Throne"
 	else:
-		floor_label.text = "Floor " + str(GameManager.current_floor) + " • Chamber " + str(GameManager.current_chamber_index) + "/" + str(GameManager.max_chambers_per_floor)
+		floor_label.text = "Ossuary Delve • Floor " + str(GameManager.current_floor) + " • Chamber " + str(GameManager.current_chamber_index) + "/" + str(GameManager.max_chambers_per_floor)
 
 func _on_boon_acquired(boon: Dictionary) -> void:
 	var badge = PanelContainer.new()
