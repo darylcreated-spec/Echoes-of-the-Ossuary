@@ -5,8 +5,8 @@ extends Node3D
 @onready var player: Node3D = $Player
 @onready var hud: CanvasLayer = $UI_HUD
 
-# Isometric camera offset
-var camera_offset: Vector3 = Vector3(10.0, 14.0, 10.0)
+# Isometric camera offset (Balanced for 1.85m player stature)
+var camera_offset: Vector3 = Vector3(8.5, 11.5, 8.5)
 var camera_follow_speed: float = 6.5
 var current_room: Node3D = null
 

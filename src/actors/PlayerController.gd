@@ -105,6 +105,8 @@ func _setup_model_and_weapon() -> void:
 	var asset_path = "res://assets/characters/adventurers/" + class_name_str + ".glb"
 	visual_model_root = AssetLoader.load_or_generate_model(asset_path, "character", class_name_str)
 	visual_model_root.name = "Model"
+	# Proportionate scale: 3.44m base height scaled by 0.55 = 1.89m height (matches 1.8m capsule)
+	visual_model_root.scale = Vector3(0.55, 0.55, 0.55)
 	add_child(visual_model_root)
 	invalidate_model_cache()
 	_cache_model_nodes()

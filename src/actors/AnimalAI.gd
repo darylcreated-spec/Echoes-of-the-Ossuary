@@ -33,11 +33,46 @@ func _ready() -> void:
 	super._ready()
 	spawn_origin = global_position
 	_configure_type_stats()
+	_setup_collision_and_hurtbox()
 	_setup_visuals()
 	
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		target_player = players[0]
+
+func _setup_collision_and_hurtbox() -> void:
+	collision_layer = 4 # Enemy/Creature physics
+	collision_mask = 1 | 2 # Environment and Player
+	
+	var col = find_child("CollisionShape3D", true, false)
+	if not col:
+		col = CollisionShape3D.new()
+		col.name = "CollisionShape3D"
+		var shape = CapsuleShape3D.new()
+		shape.radius = 0.55
+		shape.height = 1.3
+		col.shape = shape
+		col.position.y = 0.65
+		add_child(col)
+		
+	if not hurtbox:
+		var hb = Area3D.new()
+		hb.name = "Hurtbox3D"
+		hb.collision_layer = 4 # Layer 3: Enemy Hurtbox
+		hb.collision_mask = 8 # Layer 4: Player Hitbox
+		var HurtboxScript = load("res://src/combat/Hurtbox3D.gd")
+		if HurtboxScript:
+			hb.set_script(HurtboxScript)
+			hb.set("owner_character", self)
+		var hb_col = CollisionShape3D.new()
+		var hb_shape = CapsuleShape3D.new()
+		hb_shape.radius = 0.65
+		hb_shape.height = 1.4
+		hb_col.shape = hb_shape
+		hb_col.position.y = 0.7
+		hb.add_child(hb_col)
+		add_child(hb)
+		hurtbox = hb
 
 func _configure_type_stats() -> void:
 	match animal_type:
@@ -78,25 +113,25 @@ func _setup_visuals() -> void:
 	match animal_type:
 		AnimalType.STAG:
 			file_name = "Stag"
-			model_scale = Vector3(1.1, 1.1, 1.1)
+			model_scale = Vector3(32.0, 32.0, 32.0)
 		AnimalType.DEER:
 			file_name = "Deer"
-			model_scale = Vector3(1.0, 1.0, 1.0)
+			model_scale = Vector3(28.0, 28.0, 28.0)
 		AnimalType.WOLF:
 			file_name = "Wolf"
-			model_scale = Vector3(1.15, 1.15, 1.15)
+			model_scale = Vector3(17.0, 17.0, 17.0)
 		AnimalType.FOX:
 			file_name = "Fox"
-			model_scale = Vector3(0.9, 0.9, 0.9)
+			model_scale = Vector3(9.0, 9.0, 9.0)
 		AnimalType.HORSE:
 			file_name = "Horse"
-			model_scale = Vector3(1.2, 1.2, 1.2)
+			model_scale = Vector3(30.0, 30.0, 30.0)
 		AnimalType.COW:
 			file_name = "Cow"
-			model_scale = Vector3(1.15, 1.15, 1.15)
+			model_scale = Vector3(20.0, 20.0, 20.0)
 		AnimalType.BULL:
 			file_name = "Bull"
-			model_scale = Vector3(1.25, 1.25, 1.25)
+			model_scale = Vector3(22.0, 22.0, 22.0)
 
 	var model_path = "res://assets/characters/animals/" + file_name + ".glb"
 	visual_model_root = AssetLoader.load_or_generate_model(model_path, "character", file_name)

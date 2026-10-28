@@ -7,7 +7,7 @@ class_name TownNPC
 @export var icon: String = "⚒️"
 @export_multiline var dialogue_text: String = "Hail, warrior! The forge fires burn night and day. Bring me Soul Echoes from the Ossuary depths and I shall re-temper your blade, fortify your armor, and sharpen your dash reflexes!"
 @export var model_path: String = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-@export var model_scale: Vector3 = Vector3(1.3, 1.3, 1.3)
+@export var model_scale: Vector3 = Vector3(0.55, 0.55, 0.55)
 @export var model_rotation_y: float = 0.0
 
 var _model: Node3D = null
@@ -45,7 +45,7 @@ func _build_visuals() -> void:
 	_label = Label3D.new()
 	_label.text = icon + " " + npc_name + "\n[E] Speak"
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 2.4
+	_label.position.y = 2.0
 	_label.font_size = 28
 	_label.outline_size = 8
 	_label.outline_modulate = Color(0.02, 0.03, 0.05)
