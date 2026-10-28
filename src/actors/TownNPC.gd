@@ -14,12 +14,56 @@ var _model: Node3D = null
 var _label: Label3D = null
 var _interact_area: Area3D = null
 var _anim_player: AnimationPlayer = null
+var _idle_time: float = 0.0
+var _spark_timer: float = 0.0
+var _target_player: Node3D = null
 
 func _ready() -> void:
 	name = "NPC_" + npc_id
 	add_to_group("interactable")
 	_build_visuals()
 	_build_interaction()
+	_build_role_effects()
+	
+	var players = get_tree().get_nodes_in_group("player")
+	if players.size() > 0:
+		_target_player = players[0]
+
+func _process(delta: float) -> void:
+	_idle_time += delta
+	
+	# Procedural idle breathing & weight shift
+	if _model and is_instance_valid(_model):
+		var breath = sin(_idle_time * 2.4) * 0.015
+		_model.position.y = breath
+		
+		# Smooth player tracking when close
+		if not _target_player:
+			var players = get_tree().get_nodes_in_group("player")
+			if players.size() > 0:
+				_target_player = players[0]
+				
+		var target_rot = model_rotation_y
+		if _target_player and is_instance_valid(_target_player):
+			var dist = global_position.distance_to(_target_player.global_position)
+			if dist < 5.0 and dist > 0.4:
+				var look_vec = _target_player.global_position - global_position
+				target_rot = rad_to_deg(atan2(look_vec.x, look_vec.z))
+				
+		_model.rotation_degrees.y = lerp_angle(deg_to_rad(_model.rotation_degrees.y), deg_to_rad(target_rot), delta * 4.5)
+		_model.rotation_degrees.y = rad_to_deg(_model.rotation_degrees.y)
+		
+	# Role-specific timed animations
+	if npc_id == "blacksmith":
+		_spark_timer += delta
+		if _spark_timer >= 2.6:
+			_spark_timer = 0.0
+			AmbientFX.create_forge_sparks(self, Vector3(0.6, 0.9, 0.4))
+			AudioManager.play_sfx("sword_swing", 0.05, 0.4)
+
+func _build_role_effects() -> void:
+	if npc_id == "priestess":
+		AmbientFX.create_sacred_aura(self, Vector3(0, 0.2, 0))
 
 func _build_visuals() -> void:
 	_model = AssetLoader.load_or_generate_model(model_path, "character", npc_name)

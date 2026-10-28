@@ -359,6 +359,14 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	smith.rotation_degrees.y = 90.0
 	parent.add_child(smith)
 	_add_static_box(parent, Vector3(-15.0, 3.5, 0.0), Vector3(9.2, 7.0, 9.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-15.0, 7.2, -1.2))
+
+	# Circling Crows Flock above North Crypt
+	var flock_crypt = CirclingFlock.new()
+	flock_crypt.position = Vector3(0.0, 16.0, -14.0)
+	flock_crypt.bird_count = 6
+	flock_crypt.circle_radius = 9.0
+	parent.add_child(flock_crypt)
 
 	# Master Torval - Town Blacksmith NPC (Stout Dwarf proportions ~1.44m tall)
 	var torval = TownNPCScript.new()
@@ -514,17 +522,14 @@ func _build_road_network(parent: Node3D) -> void:
 		parent.add_child(tile)
 
 func _build_river_and_bridges(parent: Node3D) -> void:
-	# Continuous River Water Plane: 8m wide channel cutting across the world (Z=20..28)
+	# Continuous River Water Plane with dynamic flowing shader
 	var river_mesh_inst = MeshInstance3D.new()
 	river_mesh_inst.name = "RiverWaterSurface"
 	var r_mesh = PlaneMesh.new()
 	r_mesh.size = Vector2(110.0, 8.0)
 	river_mesh_inst.mesh = r_mesh
-	var w_mat = StandardMaterial3D.new()
-	w_mat.albedo_color = Color(0.18, 0.48, 0.72, 0.92) # Radiant blue river
-	w_mat.roughness = 0.12
-	w_mat.metallic = 0.25
-	w_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var w_mat = ShaderMaterial.new()
+	w_mat.shader = load("res://shaders/river_flow.gdshader")
 	river_mesh_inst.material_override = w_mat
 	river_mesh_inst.position = Vector3(0.0, 0.04, 24.0)
 	parent.add_child(river_mesh_inst)
@@ -558,21 +563,33 @@ func _build_river_and_bridges(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(-20.2, 1.0, 24.0), Vector3(0.4, 1.4, 8.0))
 	_add_static_box(parent, Vector3(-15.8, 1.0, 24.0), Vector3(0.4, 1.4, 8.0))
 
-	# Riverside Watermill (10.4m tall with turning wheel on river edge)
-	_place_prop(parent, "res://assets/overworld/building_watermill_blue.gltf", Vector3(12.0, 0.0, 19.0), Vector3.ONE * 6.0, -90.0)
+	# Riverside Watermill (10.4m tall with rotating water wheel)
+	var watermill = _place_prop(parent, "res://assets/overworld/building_watermill_blue.gltf", Vector3(12.0, 0.0, 19.0), Vector3.ONE * 6.0, -90.0)
 	_add_static_box(parent, Vector3(12.0, 3.5, 19.0), Vector3(6.5, 7.0, 7.0))
+	var wm_rot = RotatingProp.new()
+	wm_rot.target_node_name = "building_watermill_wheel_blue"
+	wm_rot.rotation_axis = Vector3(0, 0, 1)
+	wm_rot.rpm = 12.0
+	watermill.add_child(wm_rot)
 
 func _build_farmlands_hamlet(parent: Node3D) -> void:
-	# Grand Windmill (Towering 14.3m high landmark)
-	_place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(34.0, 0.0, 36.0), Vector3.ONE * 12.0)
+	# Grand Windmill (Towering 14.3m high landmark with rotating blades)
+	var windmill = _place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(34.0, 0.0, 36.0), Vector3.ONE * 12.0)
 	_add_static_cyl(parent, Vector3(34.0, 0.0, 36.0), 4.0, 13.0)
+	var fan_rot = RotatingProp.new()
+	fan_rot.target_node_name = "building_windmill_top_fan_blue"
+	fan_rot.rotation_axis = Vector3(0, 0, 1)
+	fan_rot.rpm = 7.5
+	windmill.add_child(fan_rot)
 	
-	# Thatched Cottages (Realistic 7m - 9m tall village houses)
+	# Thatched Cottages (Realistic 7m - 9m tall village houses with chimney smoke)
 	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(22.0, 0.0, 14.0), Vector3.ONE * 7.5, 45.0)
 	_add_static_box(parent, Vector3(22.0, 3.5, 14.0), Vector3(6.2, 6.5, 6.5))
+	AmbientFX.create_chimney_smoke(parent, Vector3(22.0, 7.2, 14.0))
 	
 	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(38.0, 0.0, 16.0), Vector3.ONE * 7.0, -30.0)
 	_add_static_box(parent, Vector3(38.0, 4.0, 16.0), Vector3(6.5, 7.5, 7.8))
+	AmbientFX.create_chimney_smoke(parent, Vector3(38.0, 8.8, 16.0))
 	
 	# Village Stone Well (3.5m tall well)
 	_place_prop(parent, "res://assets/overworld/building_well_blue.gltf", Vector3(26.0, 0.0, 18.0), Vector3.ONE * 2.8)
@@ -670,11 +687,23 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-12.0, 15.0, 38.0), Vector3.ONE * 3.0)
 	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(12.0, 15.0, 38.0), Vector3.ONE * 3.0)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(3.0, 0.0, 36.0), Vector3.ONE * 1.5)
+	AmbientFX.create_chimney_smoke(parent, Vector3(18.0, 8.8, 34.0))
+
+	# Circling Hawks Flock above Castle Keep
+	var flock_castle = CirclingFlock.new()
+	flock_castle.position = Vector3(0.0, 28.0, 42.0)
+	flock_castle.bird_count = 5
+	flock_castle.circle_radius = 14.0
+	parent.add_child(flock_castle)
 
 func _build_blackwood_forest(parent: Node3D) -> void:
 	# Lumbermill (9.5m tall building)
 	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-24.0, 0.0, 32.0), Vector3.ONE * 6.0, 90.0)
 	_add_static_box(parent, Vector3(-24.0, 4.5, 32.0), Vector3(8.0, 7.0, 8.0))
+
+	# Glowing Forest Fireflies
+	AmbientFX.create_forest_fireflies(parent, Vector3(-28.0, 1.8, 22.0), 9.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-34.0, 1.8, 32.0), 9.0)
 
 	# Dense Forest Trees (Scaled 3.0x - 3.6x -> 10m to 14m tall realistic pines and birches)
 	var forest_locs = [
@@ -800,7 +829,21 @@ func _place_prop(parent: Node3D, path: String, pos: Vector3, sc: Vector3 = Vecto
 	if rot_y_deg != 0.0:
 		prop.rotation_degrees.y = rot_y_deg
 	parent.add_child(prop)
+	
+	if "flag" in path:
+		_apply_flag_shader(prop)
+		
 	return prop
+
+func _apply_flag_shader(node: Node3D) -> void:
+	var flag_shader = load("res://shaders/waving_flag.gdshader")
+	if flag_shader:
+		var flag_mat = ShaderMaterial.new()
+		flag_mat.shader = flag_shader
+		for child in node.find_children("*", "MeshInstance3D", true, false):
+			var mi = child as MeshInstance3D
+			if mi:
+				mi.material_override = flag_mat
 
 func _add_static_box(parent: Node3D, pos: Vector3, sz: Vector3) -> StaticBody3D:
 	var body = StaticBody3D.new()
