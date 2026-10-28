@@ -23,6 +23,7 @@ func _ready() -> void:
 	load_current_floor_room()
 	
 	if camera and player:
+		camera.make_current()
 		camera.global_position = player.global_position + camera_offset
 		camera.look_at(player.global_position + Vector3(0, 0.8, 0), Vector3.UP)
 
@@ -66,6 +67,12 @@ func _update_environment_lighting(floor_num: int) -> void:
 		if world_env and world_env.environment:
 			world_env.environment.ambient_light_energy = 1.15
 			world_env.environment.ambient_light_color = Color(0.52, 0.62, 0.76)
+			if world_env.environment.sky and world_env.environment.sky.sky_material is ProceduralSkyMaterial:
+				var sky_mat: ProceduralSkyMaterial = world_env.environment.sky.sky_material
+				sky_mat.sky_top_color = Color(0.28, 0.52, 0.88)
+				sky_mat.sky_horizon_color = Color(0.68, 0.82, 0.94)
+				sky_mat.ground_bottom_color = Color(0.2, 0.28, 0.2)
+				sky_mat.ground_horizon_color = Color(0.48, 0.62, 0.48)
 	else:
 		# Subterranean Ossuary Delve: Dark moody dungeon
 		if dir_light:
@@ -74,3 +81,9 @@ func _update_environment_lighting(floor_num: int) -> void:
 		if world_env and world_env.environment:
 			world_env.environment.ambient_light_energy = 0.65
 			world_env.environment.ambient_light_color = Color(0.16, 0.2, 0.28)
+			if world_env.environment.sky and world_env.environment.sky.sky_material is ProceduralSkyMaterial:
+				var sky_mat: ProceduralSkyMaterial = world_env.environment.sky.sky_material
+				sky_mat.sky_top_color = Color(0.06, 0.08, 0.14)
+				sky_mat.sky_horizon_color = Color(0.12, 0.14, 0.2)
+				sky_mat.ground_bottom_color = Color(0.03, 0.04, 0.06)
+				sky_mat.ground_horizon_color = Color(0.08, 0.1, 0.14)
