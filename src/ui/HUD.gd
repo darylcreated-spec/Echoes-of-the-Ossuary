@@ -4,6 +4,7 @@ class_name HUD
 const BoonSelectionModalScript = preload("res://src/ui/BoonSelectionModal.gd")
 const BoonSystemScript = preload("res://src/combat/BoonSystem.gd")
 const MissionMenuScript = preload("res://src/ui/MissionMenu.gd")
+const DialogueModalScript = preload("res://src/ui/DialogueModal.gd")
 
 # Health Bar references
 var hp_bar: ProgressBar = null
@@ -31,6 +32,7 @@ var boon_modal: Control = null
 var altar_modal: Control = null
 var death_modal: Control = null
 var mission_menu: Control = null
+var dialogue_modal: DialogueModal = null
 
 # Mission Notification Toast
 var mission_toast: PanelContainer = null
@@ -195,6 +197,10 @@ func _build_ui_tree() -> void:
 	add_child(mission_menu)
 	_create_mission_toast(root_control)
 
+	dialogue_modal = DialogueModalScript.new()
+	dialogue_modal.action_triggered.connect(_on_dialogue_action)
+	add_child(dialogue_modal)
+
 func update_player_health(curr: float, max_v: float) -> void:
 	if hp_bar:
 		hp_bar.max_value = max_v
@@ -330,6 +336,34 @@ func _add_upgrade_row(parent: VBoxContainer, label_text: String, upgrade_id: Str
 	)
 	row.add_child(btn)
 	parent.add_child(row)
+
+func open_dialogue(title_text: String, icon_str: String, body_text: String, actions: Array[Dictionary]) -> void:
+	if dialogue_modal:
+		dialogue_modal.show_dialogue(title_text, icon_str, body_text, actions)
+
+func _on_dialogue_action(action_id: String) -> void:
+	match action_id:
+		"open_upgrades":
+			show_altar_modal()
+		"open_missions":
+			if mission_menu:
+				mission_menu.open_menu()
+		"gate_info":
+			if dialogue_modal:
+				var follow_up_actions: Array[Dictionary] = [
+					{
+						"id": "open_missions",
+						"label": "📜 Check Bounties",
+						"color": Color(0.18, 0.42, 0.65),
+						"closes": true
+					}
+				]
+				dialogue_modal.show_dialogue(
+					"Captain Vane (Gate Sentinel)",
+					"🛡️",
+					"Beyond this archway lies the Descent Sigil into the Ossuary. The crypt grows more perilous with every floor. Steel your courage, claim bounties, and re-temper your soul at the forge!",
+					follow_up_actions
+				)
 
 func show_altar_modal() -> void:
 	altar_modal.visible = true

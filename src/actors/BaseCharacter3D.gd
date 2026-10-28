@@ -60,9 +60,20 @@ func _cache_model_nodes() -> void:
 		_nodes_cached = true
 
 func play_anim(anim_name: String, blend_time: float = 0.12, speed: float = 1.0) -> bool:
-	if anim_player and anim_player.has_animation(anim_name):
+	if not anim_player:
+		return false
+	if anim_player.has_animation(anim_name):
 		anim_player.play(anim_name, blend_time, speed)
 		return true
+	
+	# Fuzzy match fallback (e.g. "attack" -> "Punch" or "Weapon" or "Bite_Action")
+	var anim_list = anim_player.get_animation_list()
+	var lower_target = anim_name.to_lower()
+	for a in anim_list:
+		var la = a.to_lower()
+		if lower_target in la or la in lower_target:
+			anim_player.play(a, blend_time, speed)
+			return true
 	return false
 
 func update_movement_animation(delta: float) -> void:
@@ -84,18 +95,25 @@ func update_movement_animation(delta: float) -> void:
 			
 		if speed > 0.35:
 			var run_speed = clamp(speed / max(move_speed, 1.0) * 1.3, 0.7, 1.8)
-			if anim_player.has_animation("Running_A"):
-				if anim_player.current_animation != "Running_A":
-					anim_player.play("Running_A", 0.15, run_speed)
+			var move_anim = ""
+			for candidate in ["Running_A", "Run", "run", "Walking_A", "Walk", "walk", "Walk1_Action"]:
+				if anim_player.has_animation(candidate):
+					move_anim = candidate
+					break
+			if move_anim != "":
+				if anim_player.current_animation != move_anim:
+					anim_player.play(move_anim, 0.15, run_speed)
 				else:
 					anim_player.speed_scale = run_speed
-			elif anim_player.has_animation("Walking_A"):
-				if anim_player.current_animation != "Walking_A":
-					anim_player.play("Walking_A", 0.15, run_speed)
 		else:
-			if anim_player.has_animation("Idle"):
-				if anim_player.current_animation != "Idle":
-					anim_player.play("Idle", 0.2, 1.0)
+			var idle_anim = ""
+			for candidate in ["Idle", "idle", "Idle_A", "Idle1_Action"]:
+				if anim_player.has_animation(candidate):
+					idle_anim = candidate
+					break
+			if idle_anim != "":
+				if anim_player.current_animation != idle_anim:
+					anim_player.play(idle_anim, 0.2, 1.0)
 		return
 
 	# --- PROCEDURAL FALLBACK (FOR NON-RIGGED CSG MODELS) ---

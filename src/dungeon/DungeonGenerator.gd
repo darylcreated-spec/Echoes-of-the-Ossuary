@@ -3,6 +3,7 @@ class_name DungeonGenerator
 
 const RoomControllerScript = preload("res://src/dungeon/RoomController.gd")
 const SpikeTrapScript = preload("res://src/dungeon/SpikeTrap.gd")
+const TownNPCScript = preload("res://src/actors/TownNPC.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -342,6 +343,24 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	parent.add_child(smith)
 	_add_static_box(parent, Vector3(-9.8, 2.0, 0.0), Vector3(4.5, 4.0, 4.5))
 
+	# Master Torval - Town Blacksmith NPC
+	var torval = TownNPCScript.new()
+	torval.npc_id = "blacksmith"
+	torval.npc_name = "Master Torval"
+	torval.npc_title = "Forge Master"
+	torval.icon = "⚒️"
+	torval.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	torval.model_scale = Vector3(1.3, 1.3, 1.3)
+	torval.model_rotation_y = 90.0
+	torval.dialogue_text = "Hail, warrior! The forge fires blaze with eternal embers. Deliver unto me the Soul Echoes reaped from the Ossuary depths, and I shall temper your weapons, bolster your armor, and sharpen your dash reflexes!"
+	torval.position = Vector3(-7.5, 0, 0.0)
+	parent.add_child(torval)
+
+	# Blacksmith forge props
+	_place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(-9.2, 0, -2.4), Vector3.ONE * 1.3, 90.0)
+	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-7.5, 0, -2.2), Vector3.ONE * 1.2, 0.0)
+	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-6.8, 0, -2.2), Vector3.ONE * 1.2)
+
 	# 6. East: The Ruined Cathedral
 	var church = AssetLoader.load_or_generate_model("res://assets/overworld/building_church_blue.gltf", "dungeon", "church")
 	church.scale = Vector3(3.0, 3.0, 3.0)
@@ -351,12 +370,42 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(9.8, 2.5, 0.0), Vector3(4.5, 5.0, 5.0))
 	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(6.5, 0, 2.2), Vector3.ONE * 1.5, -45.0)
 
+	# Eldress Alyssa - High Priestess & Bounty Questgiver NPC
+	var alyssa = TownNPCScript.new()
+	alyssa.npc_id = "priestess"
+	alyssa.npc_name = "Eldress Alyssa"
+	alyssa.npc_title = "Sanctuary Priestess"
+	alyssa.icon = "✨"
+	alyssa.model_path = "res://assets/characters/adventurers/Mage.glb"
+	alyssa.model_scale = Vector3(1.15, 1.15, 1.15)
+	alyssa.model_rotation_y = -90.0
+	alyssa.dialogue_text = "May the Sacred Light guide your steps, champion. The dead stir restlessly in the Catacombs below. Inquire upon our Sanctuary Bounties—purge the wicked hordes to claim divine favour and rich reward!"
+	alyssa.position = Vector3(7.5, 0, 0.0)
+	parent.add_child(alyssa)
+
+	# Cathedral props
+	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(6.5, 0, -2.2), Vector3.ONE * 1.5, -45.0)
+	_place_prop(parent, "res://assets/furniture/cabinet_small_decorated.gltf", Vector3(9.2, 0, -2.5), Vector3.ONE * 1.2, -90.0)
+
 	# 7. South: Castle Arch Gateway
 	var gate = AssetLoader.load_or_generate_model("res://assets/overworld/arch_gate.gltf", "dungeon", "arch_gate")
 	gate.position = Vector3(0, 0, 11.5)
 	parent.add_child(gate)
 	_add_static_box(parent, Vector3(-2.8, 2.0, 11.5), Vector3(1.5, 4.0, 1.5))
 	_add_static_box(parent, Vector3(2.8, 2.0, 11.5), Vector3(1.5, 4.0, 1.5))
+
+	# Captain Vane - Gate Sentinel NPC
+	var vane = TownNPCScript.new()
+	vane.npc_id = "guard"
+	vane.npc_name = "Captain Vane"
+	vane.npc_title = "Gate Sentinel"
+	vane.icon = "🛡️"
+	vane.model_path = "res://assets/characters/adventurers/Knight.glb"
+	vane.model_scale = Vector3(1.2, 1.2, 1.2)
+	vane.model_rotation_y = 180.0
+	vane.dialogue_text = "Halt, warrior! You stand before the threshold of the Ossuary Catacombs. Beneath the north crypt lies the descent sigil. Step upon the glowing seal to plunge into the underworld. Beware the Bone Titan's wrath on the final floor!"
+	vane.position = Vector3(0, 0, 9.5)
+	parent.add_child(vane)
 
 	# 8. Courtyard Perimeter Trees & Nature Rocks
 	var border_trees = [

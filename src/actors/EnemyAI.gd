@@ -7,7 +7,10 @@ enum EnemyType {
 	MINION,
 	WARRIOR,
 	ROGUE,
-	MAGE
+	MAGE,
+	ORC,
+	DEMON,
+	CREEP
 }
 
 enum AIState {
@@ -78,6 +81,30 @@ func _configure_type_stats() -> void:
 			attack_range_threshold = 8.0 # Ranged caster
 			telegraph_duration = 0.8
 			attack_cooldown = 2.2
+		EnemyType.ORC:
+			max_health = 130.0
+			move_speed = 4.0
+			attack_damage = 32.0
+			attack_range_threshold = 2.4
+			telegraph_duration = 0.6
+			attack_cooldown = 1.6
+			defense = 4.0
+		EnemyType.DEMON:
+			max_health = 165.0
+			move_speed = 4.4
+			attack_damage = 36.0
+			attack_range_threshold = 2.5
+			telegraph_duration = 0.5
+			attack_cooldown = 1.4
+			defense = 5.0
+		EnemyType.CREEP:
+			max_health = 85.0
+			move_speed = 6.0
+			attack_damage = 24.0
+			attack_range_threshold = 2.0
+			telegraph_duration = 0.35
+			attack_cooldown = 1.1
+			defense = 2.0
 
 	current_health = max_health
 
@@ -87,38 +114,60 @@ func _setup_visuals() -> void:
 
 	var type_name = "Skeleton_Minion"
 	var weapon_name = "Skeleton_Blade"
+	var model_path = ""
+	var model_scale = Vector3.ONE
 	
 	match enemy_type:
 		EnemyType.MINION:
 			type_name = "Skeleton_Minion"
 			weapon_name = "Skeleton_Blade"
+			model_path = "res://assets/characters/skeletons/" + type_name + ".glb"
 		EnemyType.WARRIOR:
 			type_name = "Skeleton_Warrior"
 			weapon_name = "Skeleton_Axe"
+			model_path = "res://assets/characters/skeletons/" + type_name + ".glb"
 		EnemyType.ROGUE:
 			type_name = "Skeleton_Rogue"
 			weapon_name = "dagger"
+			model_path = "res://assets/characters/skeletons/" + type_name + ".glb"
 		EnemyType.MAGE:
 			type_name = "Skeleton_Mage"
 			weapon_name = "Skeleton_Staff"
+			model_path = "res://assets/characters/skeletons/" + type_name + ".glb"
+		EnemyType.ORC:
+			type_name = "Orc"
+			weapon_name = ""
+			model_path = "res://assets/characters/monsters/Orc.gltf"
+			model_scale = Vector3(1.15, 1.15, 1.15)
+		EnemyType.DEMON:
+			type_name = "Demon"
+			weapon_name = ""
+			model_path = "res://assets/characters/monsters/Demon.gltf"
+			model_scale = Vector3(1.25, 1.25, 1.25)
+		EnemyType.CREEP:
+			type_name = "CreepCreature"
+			weapon_name = ""
+			model_path = "res://assets/characters/monsters/CreepCreature.glb"
+			model_scale = Vector3(1.0, 1.0, 1.0)
 
-	var model_path = "res://assets/characters/skeletons/" + type_name + ".glb"
 	visual_model_root = AssetLoader.load_or_generate_model(model_path, "character", type_name)
 	visual_model_root.name = "Model"
+	visual_model_root.scale = model_scale
 	add_child(visual_model_root)
 	invalidate_model_cache()
 	_cache_model_nodes()
 
-	var weapon_path = "res://assets/weapons/" + weapon_name + ".gltf"
-	var weapon = AssetLoader.load_or_generate_model(weapon_path, "weapon", weapon_name)
-	weapon.name = "Weapon"
-	AssetLoader.attach_weapon_socket(visual_model_root, weapon, "handslot.r")
+	if weapon_name != "":
+		var weapon_path = "res://assets/weapons/" + weapon_name + ".gltf"
+		var weapon = AssetLoader.load_or_generate_model(weapon_path, "weapon", weapon_name)
+		weapon.name = "Weapon"
+		AssetLoader.attach_weapon_socket(visual_model_root, weapon, "handslot.r")
 		
-	# Warrior Shield
-	if enemy_type == EnemyType.WARRIOR:
-		var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square.glb", "weapon", "shield_square")
-		shield.name = "Shield"
-		AssetLoader.attach_weapon_socket(visual_model_root, shield, "handslot.l")
+		# Warrior Shield
+		if enemy_type == EnemyType.WARRIOR:
+			var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square.glb", "weapon", "shield_square")
+			shield.name = "Shield"
+			AssetLoader.attach_weapon_socket(visual_model_root, shield, "handslot.l")
 
 func _create_telegraph_indicator() -> void:
 	telegraph_indicator = MeshInstance3D.new()
@@ -253,6 +302,10 @@ func _execute_attack() -> void:
 			anim_name = "Spellcast_Shoot"
 		elif enemy_type == EnemyType.ROGUE:
 			anim_name = "1H_Melee_Attack_Stab"
+		elif enemy_type in [EnemyType.ORC, EnemyType.DEMON]:
+			anim_name = "Punch" if randf() < 0.5 else "Weapon"
+		elif enemy_type == EnemyType.CREEP:
+			anim_name = "Bite_Action"
 		play_anim(anim_name, 0.05, 1.8)
 		get_tree().create_timer(0.35).timeout.connect(func(): is_attacking = false)
 	
@@ -336,6 +389,10 @@ func die() -> void:
 	GameManager.add_gold(gold_drop)
 	GameManager.add_echoes(echo_drop)
 	
-	CombatJuice.spawn_bone_burst(global_position)
-	AudioManager.play_sfx("skeleton_bones", 0.1, 2.0)
+	if enemy_type in [EnemyType.ORC, EnemyType.DEMON, EnemyType.CREEP]:
+		CombatJuice.spawn_hit_spark(global_position + Vector3(0, 1.0, 0), Color(0.9, 0.2, 0.1))
+		AudioManager.play_sfx("boss_roar", 0.08, 0.5)
+	else:
+		CombatJuice.spawn_bone_burst(global_position)
+		AudioManager.play_sfx("skeleton_bones", 0.1, 2.0)
 	queue_free()

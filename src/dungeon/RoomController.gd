@@ -97,12 +97,33 @@ func _start_wave() -> void:
 			enemy = EnemyAIScript.new()
 			
 		# Determine enemy type distribution based on floor
-		if i == 0 and floor_num >= 2:
-			enemy.enemy_type = EnemyAIScript.EnemyType.WARRIOR
-		elif i == 1 and floor_num >= 3:
-			enemy.enemy_type = EnemyAIScript.EnemyType.ROGUE
-		elif i == 2 and floor_num >= 4:
-			enemy.enemy_type = EnemyAIScript.EnemyType.MAGE
+		if floor_num >= 4:
+			if i == 0:
+				enemy.enemy_type = EnemyAIScript.EnemyType.DEMON
+			elif i == 1:
+				enemy.enemy_type = EnemyAIScript.EnemyType.ORC
+			elif i == 2:
+				enemy.enemy_type = EnemyAIScript.EnemyType.MAGE
+			elif i % 2 == 0:
+				enemy.enemy_type = EnemyAIScript.EnemyType.CREEP
+			else:
+				enemy.enemy_type = EnemyAIScript.EnemyType.WARRIOR
+		elif floor_num >= 3:
+			if i == 0:
+				enemy.enemy_type = EnemyAIScript.EnemyType.ORC
+			elif i == 1:
+				enemy.enemy_type = EnemyAIScript.EnemyType.ROGUE
+			elif i == 2:
+				enemy.enemy_type = EnemyAIScript.EnemyType.MAGE
+			else:
+				enemy.enemy_type = EnemyAIScript.EnemyType.WARRIOR
+		elif floor_num >= 2:
+			if i == 0:
+				enemy.enemy_type = EnemyAIScript.EnemyType.WARRIOR
+			elif i == 1:
+				enemy.enemy_type = EnemyAIScript.EnemyType.ROGUE
+			else:
+				enemy.enemy_type = EnemyAIScript.EnemyType.MINION
 		else:
 			enemy.enemy_type = EnemyAIScript.EnemyType.MINION
 			
