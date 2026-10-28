@@ -28,6 +28,7 @@ var _combo_reset_timer: float = 0.0
 
 # Interaction
 var current_interactable: Node = null
+var is_input_locked: bool = false
 
 # Nodes
 @onready var hitbox = $Hitbox3D if has_node("Hitbox3D") else null
@@ -174,6 +175,13 @@ func _physics_process(delta: float) -> void:
 	
 	if is_dead:
 		move_and_slide()
+		return
+
+	if is_input_locked:
+		velocity.x = move_toward(velocity.x, 0.0, move_speed)
+		velocity.z = move_toward(velocity.z, 0.0, move_speed)
+		move_and_slide()
+		update_movement_animation(delta)
 		return
 		
 	_handle_movement(delta)
