@@ -130,8 +130,46 @@ var missions: Array[Dictionary] = [
 		"completed": false,
 		"claimed": false,
 		"icon": "👑"
+	},
+	{
+		"id": "wild_hunt",
+		"title": "Wildland Hunter",
+		"description": "Hunt 2 wild beasts (Wolves, Stags, or Foxes) in the open world.",
+		"current": 0,
+		"target": 2,
+		"reward_gold": 60,
+		"reward_echoes": 45,
+		"completed": false,
+		"claimed": false,
+		"icon": "🐺"
+	},
+	{
+		"id": "mineral_seeker",
+		"title": "Mountain Prospector",
+		"description": "Gather 2 Arcane Crystals or Gold Veins across the open world.",
+		"current": 0,
+		"target": 2,
+		"reward_gold": 80,
+		"reward_echoes": 60,
+		"completed": false,
+		"claimed": false,
+		"icon": "💎"
+	},
+	{
+		"id": "relic_recovery",
+		"title": "Relic of the Ancients",
+		"description": "Recover the Sacred Chalice or Forgotten Scroll from the ruins.",
+		"current": 0,
+		"target": 1,
+		"reward_gold": 120,
+		"reward_echoes": 100,
+		"completed": false,
+		"claimed": false,
+		"icon": "🏆"
 	}
 ]
+
+var materials: Dictionary = {}
 
 const SAVE_PATH: String = "user://echoes_save.json"
 
@@ -395,6 +433,20 @@ func record_enemy_kill() -> void:
 
 func record_boss_slain() -> void:
 	progress_mission("architect_downfall", 1)
+
+func add_material(mat_id: String, count: int = 1) -> void:
+	if not materials.has(mat_id):
+		materials[mat_id] = 0
+	materials[mat_id] += count
+
+func record_animal_hunted(_animal_type_val: int) -> void:
+	progress_mission("wild_hunt", 1)
+
+func record_material_gathered(mat_id: String) -> void:
+	if "crystal" in mat_id or "gold" in mat_id or "stone" in mat_id:
+		progress_mission("mineral_seeker", 1)
+	if "chalice" in mat_id or "scroll" in mat_id or "key" in mat_id:
+		progress_mission("relic_recovery", 1)
 
 # --- SAVE / LOAD SYSTEM ---
 func save_game() -> void:

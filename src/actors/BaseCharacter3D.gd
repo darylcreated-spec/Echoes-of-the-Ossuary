@@ -96,9 +96,13 @@ func update_movement_animation(delta: float) -> void:
 		if speed > 0.35:
 			var run_speed = clamp(speed / max(move_speed, 1.0) * 1.3, 0.7, 1.8)
 			var move_anim = ""
-			for candidate in ["Running_A", "Run", "run", "Walking_A", "Walk", "walk", "Walk1_Action"]:
-				if anim_player.has_animation(candidate):
-					move_anim = candidate
+			var anim_list = anim_player.get_animation_list()
+			for candidate in ["running_a", "gallop", "run", "walking_a", "walk", "walk1_action"]:
+				for a in anim_list:
+					if candidate in a.to_lower():
+						move_anim = a
+						break
+				if move_anim != "":
 					break
 			if move_anim != "":
 				if anim_player.current_animation != move_anim:
@@ -107,9 +111,13 @@ func update_movement_animation(delta: float) -> void:
 					anim_player.speed_scale = run_speed
 		else:
 			var idle_anim = ""
-			for candidate in ["Idle", "idle", "Idle_A", "Idle1_Action"]:
-				if anim_player.has_animation(candidate):
-					idle_anim = candidate
+			var anim_list = anim_player.get_animation_list()
+			for candidate in ["idle", "eating"]:
+				for a in anim_list:
+					if candidate in a.to_lower():
+						idle_anim = a
+						break
+				if idle_anim != "":
 					break
 			if idle_anim != "":
 				if anim_player.current_animation != idle_anim:

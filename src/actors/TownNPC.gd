@@ -102,6 +102,27 @@ func interact(player: Node3D) -> void:
 				"color": Color(0.24, 0.32, 0.48),
 				"closes": false
 			})
+		"farmer":
+			actions.append({
+				"id": "open_missions",
+				"label": "📜 Hamlet Requests",
+				"color": Color(0.25, 0.52, 0.22),
+				"closes": true
+			})
+		"commander":
+			actions.append({
+				"id": "open_missions",
+				"label": "🛡️ Royal Decrees",
+				"color": Color(0.55, 0.22, 0.22),
+				"closes": true
+			})
+		"hermit":
+			actions.append({
+				"id": "open_upgrades",
+				"label": "✨ Channel Soul Echoes",
+				"color": Color(0.35, 0.20, 0.58),
+				"closes": true
+			})
 			
 	if hud.has_method("open_dialogue"):
 		hud.open_dialogue(npc_name + " (" + npc_title + ")", icon, dialogue_text, actions)
