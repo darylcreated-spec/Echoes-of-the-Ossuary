@@ -64,6 +64,34 @@ const BOONS: Array[Dictionary] = [
 		"rarity": "Legendary",
 		"description": "The Crown's blessing grants +15% damage reduction and +30 Max HP.",
 		"color": Color(0.95, 0.82, 0.25)
+	},
+	{
+		"id": "tidecaller_compass",
+		"name": "Tidecaller's Compass",
+		"rarity": "Legendary",
+		"description": "Corsair relic of Port Blackwater: +15% Movement Speed and +15% Critical Strike Chance.",
+		"color": Color(0.18, 0.75, 0.95)
+	},
+	{
+		"id": "living_heartwood",
+		"name": "Living Heartwood",
+		"rarity": "Legendary",
+		"description": "Ancient Druidic seed of Whisperwood: +40 Max HP and passively regenerates 2 HP every second.",
+		"color": Color(0.25, 0.88, 0.35)
+	},
+	{
+		"id": "runebound_core",
+		"name": "Runebound Mountain Core",
+		"rarity": "Legendary",
+		"description": "Ancestral Dwarven relic of Khar-Drakken: +25% Attack Damage and +6 Defense.",
+		"color": Color(1.0, 0.55, 0.15)
+	},
+	{
+		"id": "tri_seal_mastery",
+		"name": "Tri-Seal of the Realm",
+		"rarity": "Mythic",
+		"description": "Unites Sea, Forest, and Mountain: +30% to all attributes and unseals the Abyssal Crypts!",
+		"color": Color(0.85, 0.35, 1.0)
 	}
 ]
 

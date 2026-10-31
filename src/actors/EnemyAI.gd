@@ -10,7 +10,9 @@ enum EnemyType {
 	MAGE,
 	ORC,
 	DEMON,
-	CREEP
+	CREEP,
+	PIRATE,
+	BANDIT
 }
 
 enum AIState {
@@ -105,6 +107,22 @@ func _configure_type_stats() -> void:
 			telegraph_duration = 0.35
 			attack_cooldown = 1.1
 			defense = 2.0
+		EnemyType.PIRATE:
+			max_health = 80.0
+			move_speed = 6.2
+			attack_damage = 22.0
+			attack_range_threshold = 2.2
+			telegraph_duration = 0.38
+			attack_cooldown = 1.2
+			defense = 2.0
+		EnemyType.BANDIT:
+			max_health = 75.0
+			move_speed = 6.0
+			attack_damage = 20.0
+			attack_range_threshold = 2.0
+			telegraph_duration = 0.4
+			attack_cooldown = 1.3
+			defense = 2.0
 
 	current_health = max_health
 
@@ -149,6 +167,16 @@ func _setup_visuals() -> void:
 			weapon_name = ""
 			model_path = "res://assets/characters/monsters/CreepCreature.glb"
 			model_scale = Vector3(1.0, 1.0, 1.0)
+		EnemyType.PIRATE:
+			type_name = "Rogue_Hooded"
+			weapon_name = "sword_1handed"
+			model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+			model_scale = Vector3(0.55, 0.55, 0.55)
+		EnemyType.BANDIT:
+			type_name = "Rogue_Hooded"
+			weapon_name = "dagger"
+			model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+			model_scale = Vector3(0.55, 0.55, 0.55)
 
 	visual_model_root = AssetLoader.load_or_generate_model(model_path, "character", type_name)
 	visual_model_root.name = "Model"
@@ -398,9 +426,9 @@ func die() -> void:
 	GameManager.add_gold(gold_drop)
 	GameManager.add_echoes(echo_drop)
 	
-	if enemy_type in [EnemyType.ORC, EnemyType.DEMON, EnemyType.CREEP]:
+	if enemy_type in [EnemyType.ORC, EnemyType.DEMON, EnemyType.CREEP, EnemyType.PIRATE, EnemyType.BANDIT]:
 		CombatJuice.spawn_hit_spark(global_position + Vector3(0, 1.0, 0), Color(0.9, 0.2, 0.1))
-		AudioManager.play_sfx("boss_roar", 0.08, 0.5)
+		AudioManager.play_sfx("boss_roar" if enemy_type in [EnemyType.ORC, EnemyType.DEMON] else "hit_flesh", 0.08, 0.5)
 	else:
 		CombatJuice.spawn_bone_burst(global_position)
 		AudioManager.play_sfx("skeleton_bones", 0.1, 2.0)

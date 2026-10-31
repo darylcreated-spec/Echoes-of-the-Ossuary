@@ -483,6 +483,73 @@ func _on_dialogue_action(action_id: String) -> void:
 					"Bard Finn strums a haunting lute ballad: 'The stones beneath whisper of an ancient king... He who braves the five tiers shall wear the crown of dawn!' You feel a serene focus settle in your veins.",
 					[]
 				)
+		"turn_in_compass":
+			if GameManager.materials.get("tidecaller_compass", 0) > 0:
+				GameManager.materials["tidecaller_compass"] = 0
+				GameManager.quest_port_compass_completed = true
+				GameManager.add_gold(180)
+				GameManager.add_echoes(60)
+				GameManager.acquire_boon_by_id("tidecaller_compass")
+				AudioManager.play_sfx("level_up", 0.08, 1.2)
+				_check_tri_seal_completion()
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Captain Marlo (Corsair Captain)",
+						"⚓",
+						"By Blackbeard's ghost! You returned the Tidecaller's Compass! Marlo bestows the Corsair's Blessing (+15% Move Speed & +15% Crit Chance) and 180 Gold!",
+						[]
+					)
+		"turn_in_heartwood":
+			if GameManager.materials.get("living_heartwood", 0) > 0:
+				GameManager.materials["living_heartwood"] = 0
+				GameManager.quest_forest_heartwood_completed = true
+				GameManager.add_gold(180)
+				GameManager.add_echoes(60)
+				GameManager.acquire_boon_by_id("living_heartwood")
+				AudioManager.play_sfx("level_up", 0.08, 1.2)
+				_check_tri_seal_completion()
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Elder Thorne (Circle Druid)",
+						"🌿",
+						"The ancient grove blazes with emerald radiance! The Living Heartwood grants you +40 Max HP and eternal regeneration (+2 HP per second)!",
+						[]
+					)
+		"turn_in_runecore":
+			if GameManager.materials.get("runebound_core", 0) > 0:
+				GameManager.materials["runebound_core"] = 0
+				GameManager.quest_crags_runecore_completed = true
+				GameManager.add_gold(200)
+				GameManager.add_echoes(80)
+				GameManager.acquire_boon_by_id("runebound_core")
+				AudioManager.play_sfx("anvil_strike", 0.08, 1.0)
+				_check_tri_seal_completion()
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Torvald Ironbreaker (Runesmith)",
+						"⛏️",
+						"The Mountain Core is restored to the ancestral anvil! Torvald forges Runic Power into your soul (+25% Attack Damage & +6 Defense)!",
+						[]
+					)
+		"druid_blessing":
+			if player and player.has_method("heal"):
+				player.heal(player.max_health)
+				AudioManager.play_sfx("soul_pickup", 0.08, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Elder Thorne",
+						"🌿",
+						"A soothing emerald mist washes over your wounds. Your vitality is restored to the peak of health!",
+						[]
+					)
+		"travel_oakhaven":
+			_fast_travel_to(Vector3(0.0, 0.0, 10.0), "Oakhaven Town Hub")
+		"travel_port":
+			_fast_travel_to(Vector3(-85.0, 0.0, 65.0), "Port Blackwater Docks")
+		"travel_forest":
+			_fast_travel_to(Vector3(-80.0, 0.0, -65.0), "Whisperwood Forest (Sylva's Rest)")
+		"travel_crags":
+			_fast_travel_to(Vector3(80.0, 0.0, -65.0), "Khar-Drakken Crags (Stonegate)")
 
 func show_altar_modal() -> void:
 	altar_modal.visible = true
@@ -608,4 +675,40 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mission_menu and mission_menu.visible:
 			mission_menu.close_menu()
 			get_viewport().set_input_as_handled()
+
+func _check_tri_seal_completion() -> void:
+	if GameManager.quest_port_compass_completed and GameManager.quest_forest_heartwood_completed and GameManager.quest_crags_runecore_completed:
+		if not GameManager.tri_seal_unlocked:
+			GameManager.tri_seal_unlocked = true
+			GameManager.acquire_boon_by_id("tri_seal_mastery")
+			GameManager.progress_mission("tri_seal_quest", 3)
+			AudioManager.play_sfx("sfx_victory_fanfare", 0.05, 2.0)
+			if mission_toast and mission_toast_lbl:
+				mission_toast_lbl.text = "👑 THE TRI-SEAL OF AETHELGARD IS AWAKENED!\nThe Abyssal Gates are unsealed!"
+				mission_toast.visible = true
+				mission_toast.modulate.a = 1.0
+
+func _fast_travel_to(target_pos: Vector3, location_name: String) -> void:
+	var player = get_tree().get_first_node_in_group("player")
+	if not player:
+		return
+	if fade_curtain:
+		fade_curtain.visible = true
+		fade_curtain.modulate.a = 0.0
+		var tw = fade_curtain.create_tween()
+		tw.tween_property(fade_curtain, "modulate:a", 1.0, 0.22)
+		tw.tween_callback(func():
+			player.global_position = target_pos
+			AudioManager.play_sfx("footstep", 0.1, 1.0)
+		)
+		tw.tween_interval(0.1)
+		tw.tween_property(fade_curtain, "modulate:a", 0.0, 0.25)
+		tw.tween_callback(func(): fade_curtain.visible = false)
+	else:
+		player.global_position = target_pos
+	if mission_toast and mission_toast_lbl:
+		mission_toast_lbl.text = "Arrived at " + location_name
+		mission_toast.visible = true
+		mission_toast.modulate.a = 1.0
+		get_tree().create_timer(2.2).timeout.connect(func(): if mission_toast: mission_toast.visible = false)
 

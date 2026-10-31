@@ -213,5 +213,53 @@ func interact(player: Node3D) -> void:
 		"hermit":
 			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
 
+		"captain_marlo":
+			if GameManager.quest_port_compass_completed:
+				active_dialogue = "The seas smile upon us, matey! The Tidecaller's Compass guides our ships through every storm. You're a true brother of the coast!"
+				actions.append({"id": "open_missions", "label": "📜 Port Bounties", "color": Color(0.18, 0.55, 0.75), "closes": true})
+			elif GameManager.materials.get("tidecaller_compass", 0) > 0:
+				active_dialogue = "By the roaring kraken! That's the legendary Tidecaller's Compass recovered from the sunken smuggler's cove! Hand it over and claim the Corsair's Blessing and sea bounty!"
+				actions.append({"id": "turn_in_compass", "label": "🧭 Turn in Tidecaller's Compass", "color": Color(0.18, 0.75, 0.95), "closes": false})
+			else:
+				active_dialogue = "Ahoy, landlubber! Welcome to Port Blackwater. Deep Sea Creeps crawl along our reefs, and corsairs brawl on the piers. At the sunken cove lies the lost Tidecaller's Compass. Retrieve it to master the ocean tides!"
+				actions.append({"id": "open_missions", "label": "📜 Port Bounties", "color": Color(0.18, 0.55, 0.75), "closes": true})
+
+		"harbormaster":
+			active_dialogue = "Welcome to the Port Blackwater Docks. Keep your weapons drawn—smugglers lurk behind the boathouses, and monstrosities emerge from the salt water. Check the harbor bounty board to assist the port guard!"
+			actions.append({"id": "open_missions", "label": "📜 Harbor Bounties", "color": Color(0.2, 0.45, 0.65), "closes": true})
+
+		"druid_thorne":
+			if GameManager.quest_forest_heartwood_completed:
+				active_dialogue = "The great canopy breathes once more. The Living Heartwood pulse revitalizes every root and leaf. Nature's blessing flows in your veins, guardian!"
+				actions.append({"id": "druid_blessing", "label": "🌿 Receive Forest Blessing (+Full Heal)", "color": Color(0.25, 0.75, 0.35), "closes": false})
+			elif GameManager.materials.get("living_heartwood", 0) > 0:
+				active_dialogue = "The sacred seed! You have reclaimed the Living Heartwood from the bandit hollow! Place it upon the shrine to restore the balance and gain permanent health regeneration!"
+				actions.append({"id": "turn_in_heartwood", "label": "🌱 Plant Living Heartwood", "color": Color(0.25, 0.88, 0.35), "closes": false})
+			else:
+				active_dialogue = "Hail, child of the realm. Whisperwood Forest suffers under bandit outlaws who desecrated the sacred grove. Find the Living Heartwood deep in the woodland glade to heal the corrupted forest!"
+				actions.append({"id": "open_missions", "label": "📜 Grove Bounties", "color": Color(0.25, 0.65, 0.30), "closes": true})
+
+		"ranger_elora":
+			active_dialogue = "Quiet your tread. Highwaymen and timber wolves stalk the shadows of the pines. Keep to the dirt trail unless you're ready for an ambush. What news from the outer world?"
+			actions.append({"id": "open_missions", "label": "📜 Ranger Bounties", "color": Color(0.22, 0.52, 0.28), "closes": true})
+
+		"runesmith_torvald":
+			if GameManager.quest_crags_runecore_completed:
+				active_dialogue = "The ancestral furnace burns red-hot! With the Runebound Core restored, our mountain fortress stands impenetrable! May your hammer strike true, kin!"
+				actions.append({"id": "open_upgrades", "label": "⚒️ Masterwork Upgrades", "color": Color(0.75, 0.45, 0.15), "closes": true})
+			elif GameManager.materials.get("runebound_core", 0) > 0:
+				active_dialogue = "By the fiery blood of the mountain! You shattered the Orc warlords and claimed the Runebound Mountain Core! Give it here, and I shall temper your weapons with ancient dwarven runes!"
+				actions.append({"id": "turn_in_runecore", "label": "⛰️ Turn in Runebound Core", "color": Color(0.95, 0.55, 0.15), "closes": false})
+			else:
+				active_dialogue = "Greetings, warrior! You stand before the Stonegate Mining Outpost. Orc Berserkers and cliff demons have seized the upper crags and stole our Runebound Core! Cleave them in twain and reclaim our heritage!"
+				actions.append({"id": "open_upgrades", "label": "⚒️ Mountain Forge", "color": Color(0.75, 0.45, 0.15), "closes": true})
+
+		"signpost_crossroads", "signpost_port", "signpost_forest", "signpost_crags":
+			active_dialogue = "Kingdom Crossroad Waystone:\n• South-West: Port Blackwater (Harbor, Ships, and Ocean Coast)\n• North-West: Whisperwood Forest (Sylva's Rest & Ancient Pines)\n• North-East: Khar-Drakken Crags (Dwarven Mines & Orc Stronghold)\n• Central: Oakhaven Sanctuary (Castle Citadel & Catacombs)"
+			actions.append({"id": "travel_oakhaven", "label": "🏰 Fast Travel: Oakhaven Town", "color": Color(0.35, 0.45, 0.65), "closes": true})
+			actions.append({"id": "travel_port", "label": "⚓ Fast Travel: Port Blackwater", "color": Color(0.18, 0.55, 0.75), "closes": true})
+			actions.append({"id": "travel_forest", "label": "🌲 Fast Travel: Whisperwood", "color": Color(0.22, 0.55, 0.28), "closes": true})
+			actions.append({"id": "travel_crags", "label": "⛰️ Fast Travel: Khar-Drakken", "color": Color(0.75, 0.45, 0.18), "closes": true})
+
 	if hud.has_method("open_dialogue"):
 		hud.open_dialogue(npc_name + " (" + npc_title + ")", icon, active_dialogue, actions)

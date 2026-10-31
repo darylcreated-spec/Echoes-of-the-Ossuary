@@ -25,6 +25,7 @@ var _dash_direction: Vector3 = Vector3.FORWARD
 var combo_step: int = 0
 var combo_reset_time: float = 0.85
 var _combo_reset_timer: float = 0.0
+var _regen_timer: float = 0.0
 
 # Interaction
 var current_interactable: Node = null
@@ -200,6 +201,14 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < 0.0:
 		global_position.y = 0.0
 		velocity.y = 0.0
+
+	# Living Heartwood / Tri-Seal Passive Regeneration
+	if GameManager.has_boon("living_heartwood") or GameManager.has_boon("tri_seal_mastery"):
+		_regen_timer += delta
+		if _regen_timer >= 1.0:
+			_regen_timer = 0.0
+			if current_health < max_health:
+				heal(2.0 if not GameManager.has_boon("tri_seal_mastery") else 4.0)
 
 func _handle_movement(_delta: float) -> void:
 	if _is_dashing:
@@ -512,8 +521,11 @@ func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3
 			var reflect_amount = amount * 0.5
 			source.take_damage(reflect_amount, -knockback * 0.5, false, self)
 
-func on_enemy_slain(_enemy: Node3D) -> void:
-	GameManager.record_enemy_kill()
+func on_enemy_slain(enemy: Node3D = null) -> void:
+	var enemy_t = -1
+	if enemy and "enemy_type" in enemy:
+		enemy_t = int(enemy.enemy_type)
+	GameManager.record_enemy_kill(enemy_t)
 	# Vampiric Edge Boon: heal on kill
 	if GameManager.has_boon("vampiric_edge"):
 		heal(max_health * 0.08)

@@ -52,6 +52,10 @@ var quest_chalice_completed: bool = false
 var quest_vintage_completed: bool = false
 var quest_steel_completed: bool = false
 var quest_wolves_completed: bool = false
+var quest_port_compass_completed: bool = false
+var quest_forest_heartwood_completed: bool = false
+var quest_crags_runecore_completed: bool = false
+var tri_seal_unlocked: bool = false
 
 # Active Boons in the current descent
 var relic_boons: Array[Dictionary] = []
@@ -172,6 +176,66 @@ var missions: Array[Dictionary] = [
 		"completed": false,
 		"claimed": false,
 		"icon": "🏆"
+	},
+	{
+		"id": "port_corsairs",
+		"title": "Corsair Scourge",
+		"description": "Defeat 3 Smugglers or Corsairs roaming the Port Blackwater docks.",
+		"current": 0,
+		"target": 3,
+		"reward_gold": 100,
+		"reward_echoes": 80,
+		"completed": false,
+		"claimed": false,
+		"icon": "⚓"
+	},
+	{
+		"id": "sea_creeps",
+		"title": "Abyssal Shore Lurkers",
+		"description": "Slay 2 Deep Sea Creeps crawling along the Blackwater coastline.",
+		"current": 0,
+		"target": 2,
+		"reward_gold": 120,
+		"reward_echoes": 90,
+		"completed": false,
+		"claimed": false,
+		"icon": "🦑"
+	},
+	{
+		"id": "forest_bandits",
+		"title": "Whisperwood Outlaws",
+		"description": "Eliminate 3 Forest Bandits ambushing travelers in Whisperwood.",
+		"current": 0,
+		"target": 3,
+		"reward_gold": 100,
+		"reward_echoes": 80,
+		"completed": false,
+		"claimed": false,
+		"icon": "🌲"
+	},
+	{
+		"id": "orc_bastion",
+		"title": "Orc Warlords of the Crags",
+		"description": "Defeat 2 Orc Berserkers in the Khar-Drakken mountain stronghold.",
+		"current": 0,
+		"target": 2,
+		"reward_gold": 150,
+		"reward_echoes": 110,
+		"completed": false,
+		"claimed": false,
+		"icon": "⛰️"
+	},
+	{
+		"id": "tri_seal_quest",
+		"title": "The Tri-Seal of Aethelgard",
+		"description": "Recover the 3 Relics: Tidecaller's Compass, Living Heartwood, and Runebound Core.",
+		"current": 0,
+		"target": 3,
+		"reward_gold": 350,
+		"reward_echoes": 300,
+		"completed": false,
+		"claimed": false,
+		"icon": "✨"
 	}
 ]
 
@@ -267,6 +331,22 @@ func get_base_hero_stats(h_class: HeroClass = selected_class) -> Dictionary:
 				stats["attack_damage"] *= 1.20
 			"assassin_eye":
 				stats["crit_chance"] += 0.20
+			"knight_crest":
+				stats["max_hp"] += 30.0
+				stats["defense"] += 4.0
+			"tidecaller_compass":
+				stats["move_speed"] *= 1.15
+				stats["crit_chance"] += 0.15
+			"living_heartwood":
+				stats["max_hp"] += 40.0
+			"runebound_core":
+				stats["attack_damage"] *= 1.25
+				stats["defense"] += 6.0
+			"tri_seal_mastery":
+				stats["max_hp"] *= 1.30
+				stats["attack_damage"] *= 1.30
+				stats["move_speed"] *= 1.20
+				stats["defense"] += 8.0
 				
 	return stats
 
@@ -441,9 +521,21 @@ func claim_mission_reward(mission_id: String) -> bool:
 				return true
 	return false
 
-func record_enemy_kill() -> void:
+func record_enemy_kill(enemy_type_id: int = -1) -> void:
 	enemies_defeated += 1
 	progress_mission("bone_cleaver", 1)
+	match enemy_type_id:
+		2: # ROGUE
+			progress_mission("port_corsairs", 1)
+			progress_mission("forest_bandits", 1)
+		4: # ORC
+			progress_mission("orc_bastion", 1)
+		6: # CREEP
+			progress_mission("sea_creeps", 1)
+		7: # PIRATE
+			progress_mission("port_corsairs", 1)
+		8: # BANDIT
+			progress_mission("forest_bandits", 1)
 
 func record_boss_slain() -> void:
 	progress_mission("architect_downfall", 1)
@@ -461,6 +553,8 @@ func record_material_gathered(mat_id: String) -> void:
 		progress_mission("mineral_seeker", 1)
 	if "chalice" in mat_id or "scroll" in mat_id or "key" in mat_id:
 		progress_mission("relic_recovery", 1)
+	if "compass" in mat_id or "heartwood" in mat_id or "runecore" in mat_id or "rune_core" in mat_id:
+		progress_mission("tri_seal_quest", 1)
 
 # --- SAVE / LOAD SYSTEM ---
 func save_game() -> void:
