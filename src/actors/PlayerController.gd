@@ -511,6 +511,10 @@ func _trigger_lightning_discharge() -> void:
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
 	if GameManager.has_boon("knight_crest"):
 		amount *= 0.85
+	if GameManager.has_boon("paladins_ward"):
+		amount *= 0.80 # Paladin absorbs 20% incoming damage
+	if GameManager.has_boon("unstoppable_juggernaut"):
+		knockback = Vector3.ZERO # Juggernaut cannot be knocked back
 	super.take_damage(amount, knockback, is_crit, source)
 	if not is_dead and not is_attacking and anim_player:
 		var hit_anim = "Hit_A" if randf() > 0.5 else "Hit_B"

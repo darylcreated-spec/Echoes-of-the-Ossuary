@@ -107,6 +107,7 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 		candidates.append(asset_path.replace(".glb", ".gltf.glb"))
 		candidates.append(asset_path.replace(".glb", ".gltf"))
 	elif asset_path.ends_with(".gltf"):
+		candidates.append(asset_path + ".glb")
 		candidates.append(asset_path.replace(".gltf", ".gltf.glb"))
 		candidates.append(asset_path.replace(".gltf", ".glb"))
 	
@@ -116,6 +117,12 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 			if res is PackedScene:
 				var instance = res.instantiate()
 				if instance is Node3D:
+					if "fence_wood" in candidate:
+						for c in instance.find_children("*", "MeshInstance3D"):
+							if c is MeshInstance3D and c.mesh:
+								var aabb = c.mesh.get_aabb()
+								if aabb.position.x < -0.5:
+									c.position.x += 1.0
 					return instance
 
 	# Procedural Fallback Generator
@@ -126,11 +133,10 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 			return _create_procedural_weapon(fallback_subtype)
 		"dungeon":
 			return _create_procedural_dungeon_tile(fallback_subtype)
+		"prop":
+			return _create_procedural_prop(fallback_subtype, asset_path)
 		_:
-			var default_node = Node3D.new()
-			var mesh_inst = _make_box(Vector3(1, 1, 1), _material_cache["stone"])
-			default_node.add_child(mesh_inst)
-			return default_node
+			return _create_procedural_prop(fallback_subtype, asset_path)
 
 # --- SKELETAL WEAPON SOCKET ATTACHMENT ---
 func attach_weapon_socket(character_root: Node3D, weapon_node: Node3D, bone_name: String = "handslot.r") -> void:
@@ -576,3 +582,86 @@ func _make_cone(bottom_radius: float, height: float, mat: Material) -> MeshInsta
 	mi.mesh = cyl
 	mi.material_override = mat
 	return mi
+
+func _create_procedural_prop(subtype: String, path: String) -> Node3D:
+	var root = Node3D.new()
+	var lower_p = (subtype + " " + path).to_lower()
+	
+	if "fireplace" in lower_p or "hearth" in lower_p:
+		# Stone Fireplace with mantle and glowing hearth
+		var base = _make_box(Vector3(1.6, 0.25, 0.9), _material_cache["stone_dark"])
+		base.position.y = 0.125
+		root.add_child(base)
+		
+		var left_col = _make_box(Vector3(0.3, 1.4, 0.8), _material_cache["stone"])
+		left_col.position = Vector3(-0.65, 0.85, 0)
+		root.add_child(left_col)
+		
+		var right_col = _make_box(Vector3(0.3, 1.4, 0.8), _material_cache["stone"])
+		right_col.position = Vector3(0.65, 0.85, 0)
+		root.add_child(right_col)
+		
+		var mantle = _make_box(Vector3(1.8, 0.3, 1.0), _material_cache["wood"])
+		mantle.position = Vector3(0, 1.65, 0)
+		root.add_child(mantle)
+		
+		var back_wall = _make_box(Vector3(1.2, 1.4, 0.2), _material_cache["dark_iron"])
+		back_wall.position = Vector3(0, 0.85, -0.3)
+		root.add_child(back_wall)
+		
+		# Glowing Fire Coals
+		var fire_mat = StandardMaterial3D.new()
+		fire_mat.albedo_color = Color(1.0, 0.35, 0.1)
+		fire_mat.emission_enabled = true
+		fire_mat.emission = Color(1.0, 0.45, 0.1)
+		fire_mat.emission_energy_multiplier = 3.0
+		var coals = _make_box(Vector3(0.7, 0.2, 0.4), fire_mat)
+		coals.position = Vector3(0, 0.3, -0.05)
+		root.add_child(coals)
+		
+		var light = OmniLight3D.new()
+		light.light_color = Color(1.0, 0.55, 0.2)
+		light.light_energy = 1.8
+		light.omni_range = 6.0
+		light.position = Vector3(0, 0.6, 0.2)
+		root.add_child(light)
+		return root
+
+	elif "anvil" in lower_p:
+		# Wooden stump base
+		var stump = _make_cylinder(0.42, 0.65, _material_cache["wood"])
+		stump.position.y = 0.325
+		root.add_child(stump)
+		
+		# Dark Iron Anvil (waist and face)
+		var anvil_waist = _make_cylinder(0.18, 0.25, _material_cache["dark_iron"])
+		anvil_waist.position.y = 0.75
+		root.add_child(anvil_waist)
+		
+		var anvil_face = _make_box(Vector3(0.75, 0.2, 0.3), _material_cache["dark_iron"])
+		anvil_face.position = Vector3(-0.05, 0.95, 0)
+		root.add_child(anvil_face)
+		
+		# Anvil Horn (conical tip)
+		var horn = _make_cone(0.12, 0.35, _material_cache["dark_iron"])
+		horn.position = Vector3(0.42, 0.95, 0)
+		horn.rotation = Vector3(0, 0, -PI * 0.5)
+		root.add_child(horn)
+		return root
+
+	elif "ingot" in lower_p:
+		# Pyramid Stack of Refined Ingots
+		for layer in range(3):
+			var count = 3 - layer
+			for i in range(count):
+				var mat = _material_cache["gold"] if (layer + i) % 2 == 0 else _material_cache["steel"]
+				var ingot = _make_box(Vector3(0.35, 0.12, 0.18), mat)
+				ingot.position = Vector3((i - float(count - 1) * 0.5) * 0.38, 0.06 + layer * 0.12, 0)
+				root.add_child(ingot)
+		return root
+
+	# Default styled prop (carved stone / wood box)
+	var default_box = _make_box(Vector3(1, 1, 1), _material_cache["stone"])
+	default_box.position.y = 0.5
+	root.add_child(default_box)
+	return root

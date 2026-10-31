@@ -6,6 +6,8 @@ const CASTLE_ORIGIN = Vector3(0.0, -100.0, 0.0)
 const TAVERN_ORIGIN = Vector3(60.0, -100.0, 0.0)
 const FORGE_ORIGIN = Vector3(120.0, -100.0, 0.0)
 const COTTAGE_ORIGIN = Vector3(180.0, -100.0, 0.0)
+const RUSTY_ANCHOR_ORIGIN = Vector3(240.0, -100.0, 0.0)
+const STONEGATE_FORGE_ORIGIN = Vector3(300.0, -100.0, 0.0)
 
 static func build_all_interiors(parent: Node3D) -> Node3D:
 	var interiors_root = Node3D.new()
@@ -16,6 +18,8 @@ static func build_all_interiors(parent: Node3D) -> Node3D:
 	_build_tavern_interior(interiors_root)
 	_build_forge_interior(interiors_root)
 	_build_cottage_interior(interiors_root)
+	_build_rusty_anchor_interior(interiors_root)
+	_build_stonegate_forge_interior(interiors_root)
 	
 	return interiors_root
 
@@ -404,3 +408,95 @@ static func _spawn_seated_npc(parent: Node3D, model_p: String, pos: Vector3, rot
 		elif ap.has_animation("Idle"):
 			ap.play("Idle")
 	return patron
+
+# --- 5. PORT BLACKWATER: THE RUSTY ANCHOR HARBOR TAVERN ---
+static func _build_rusty_anchor_interior(parent: Node3D) -> void:
+	var room = Node3D.new()
+	room.name = "Interior_RustyAnchor"
+	room.position = RUSTY_ANCHOR_ORIGIN
+	parent.add_child(room)
+	
+	# Floor (15m x 15m dark maritime wood)
+	_add_room_box_collider(room, Vector3(0, -0.25, 0), Vector3(15.0, 0.5, 15.0))
+	_create_room_floor(room, Vector3(15.0, 0.02, 15.0), Color(0.18, 0.16, 0.14), "res://assets/village/Floor_WoodDark.gltf")
+	
+	# Perimeter Walls
+	_add_wall_with_mesh(room, Vector3(0, 2.25, -7.5), Vector3(15.0, 4.5, 0.6), Color(0.28, 0.22, 0.18))
+	_add_wall_with_mesh(room, Vector3(-7.5, 2.25, 0), Vector3(0.6, 4.5, 15.0), Color(0.28, 0.22, 0.18))
+	_add_wall_with_mesh(room, Vector3(7.5, 2.25, 0), Vector3(0.6, 4.5, 15.0), Color(0.28, 0.22, 0.18))
+	_add_wall_with_mesh(room, Vector3(-4.5, 2.25, 7.5), Vector3(6.0, 4.5, 0.6), Color(0.28, 0.22, 0.18))
+	_add_wall_with_mesh(room, Vector3(4.5, 2.25, 7.5), Vector3(6.0, 4.5, 0.6), Color(0.28, 0.22, 0.18))
+	
+	# Fireplace on North Wall
+	_place_model(room, "res://assets/furniture/fireplace.gltf", Vector3(0, 0, -6.8), Vector3.ONE * 2.2, 0.0)
+	_add_warm_light(room, Vector3(0, 1.2, -5.5), Color(1.0, 0.55, 0.2), 2.2, 8.5)
+	
+	# Bar Counter
+	_add_box(room, Vector3(-3.8, 0.55, -2.0), Vector3(1.2, 1.1, 7.0), Color(0.25, 0.18, 0.12))
+	for z in [-4.5, -3.0, -1.5, 0.0, 1.5]:
+		_place_model(room, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-2.6, 0, z), Vector3.ONE * 1.5)
+	
+	# Barrels & Kegs
+	_place_model(room, "res://assets/overworld/barrel.gltf", Vector3(-5.5, 0, -4.5), Vector3.ONE * 1.6)
+	_place_model(room, "res://assets/overworld/barrel.gltf", Vector3(-5.5, 0, -3.2), Vector3.ONE * 1.4)
+	_place_model(room, "res://assets/overworld/crate_A_big.gltf", Vector3(5.5, 0, -5.5), Vector3.ONE * 1.6)
+	
+	# Seated Corsair Patrons
+	_place_model(room, "res://assets/furniture/table_medium.gltf", Vector3(3.2, 0, 1.5), Vector3.ONE * 1.5)
+	_place_model(room, "res://assets/furniture/chair_stool_wood.gltf", Vector3(3.2, 0, 0.4), Vector3.ONE * 1.4)
+	_place_model(room, "res://assets/furniture/chair_stool_wood.gltf", Vector3(3.2, 0, 2.6), Vector3.ONE * 1.4)
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue_Hooded.glb", Vector3(3.2, 0.0, 0.4), 0.0, Vector3.ONE * 0.52)
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(3.2, 0.0, 2.6), 180.0, Vector3.ONE * 0.52)
+
+	# Exit Doorway back to Port Blackwater Docks
+	var exit_door = BuildingDoorway.new()
+	exit_door.door_id = "rusty_anchor_exit"
+	exit_door.prompt_text = "Return to Port Blackwater Docks"
+	exit_door.target_position = Vector3(-56.0, 0.0, 70.0)
+	exit_door.target_rotation_y = 135.0
+	exit_door.target_cam_distance = 16.0
+	exit_door.target_cam_pitch = 45.0
+	exit_door.target_bgm_key = "bgm_market"
+	exit_door.position = Vector3(0.0, 0.0, 6.8)
+	room.add_child(exit_door)
+
+# --- 6. KHAR-DRAKKEN: STONEGATE SMELTING FOUNDRY ---
+static func _build_stonegate_forge_interior(parent: Node3D) -> void:
+	var room = Node3D.new()
+	room.name = "Interior_StonegateSmelter"
+	room.position = STONEGATE_FORGE_ORIGIN
+	parent.add_child(room)
+	
+	# Floor (16m x 16m rough stone flagstones)
+	_add_room_box_collider(room, Vector3(0, -0.25, 0), Vector3(16.0, 0.5, 16.0))
+	_create_room_floor(room, Vector3(16.0, 0.02, 16.0), Color(0.22, 0.20, 0.20), "res://assets/village/Floor_UnevenBrick.gltf")
+	
+	# Perimeter Stone Walls
+	_add_wall_with_mesh(room, Vector3(0, 2.5, -8.0), Vector3(16.0, 5.0, 0.8), Color(0.30, 0.28, 0.26))
+	_add_wall_with_mesh(room, Vector3(-8.0, 2.5, 0), Vector3(0.8, 5.0, 16.0), Color(0.30, 0.28, 0.26))
+	_add_wall_with_mesh(room, Vector3(8.0, 2.5, 0), Vector3(0.8, 5.0, 16.0), Color(0.30, 0.28, 0.26))
+	_add_wall_with_mesh(room, Vector3(-4.8, 2.5, 8.0), Vector3(6.4, 5.0, 0.8), Color(0.30, 0.28, 0.26))
+	_add_wall_with_mesh(room, Vector3(4.8, 2.5, 8.0), Vector3(6.4, 5.0, 0.8), Color(0.30, 0.28, 0.26))
+	
+	# Massive Ancestral Smelting Furnace
+	_add_box(room, Vector3(0, 1.8, -6.5), Vector3(4.5, 3.6, 2.2), Color(0.20, 0.16, 0.15))
+	_add_warm_light(room, Vector3(0, 1.5, -5.0), Color(1.0, 0.40, 0.1), 3.2, 9.0)
+	
+	# Heavy Dwarven Anvil on Stump
+	_place_model(room, "res://assets/overworld/anvil.gltf", Vector3(0, 0, -2.5), Vector3.ONE * 2.5)
+	_place_model(room, "res://assets/overworld/ingot_stacked.gltf", Vector3(-4.5, 0, -4.5), Vector3.ONE * 2.2)
+	_place_model(room, "res://assets/overworld/ingot_stacked.gltf", Vector3(-4.5, 0, -2.5), Vector3.ONE * 2.0)
+	_place_model(room, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0, -3.0), Vector3.ONE * 2.0, -90.0)
+	_place_model(room, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0, 1.0), Vector3.ONE * 2.0, -90.0)
+
+	# Exit Doorway back to Stonegate Mountain Outpost
+	var exit_door = BuildingDoorway.new()
+	exit_door.door_id = "stonegate_forge_exit"
+	exit_door.prompt_text = "Return to Stonegate Outpost"
+	exit_door.target_position = Vector3(74.0, 0.0, -50.0)
+	exit_door.target_rotation_y = -90.0
+	exit_door.target_cam_distance = 16.0
+	exit_door.target_cam_pitch = 45.0
+	exit_door.target_bgm_key = "bgm_forge"
+	exit_door.position = Vector3(0.0, 0.0, 7.2)
+	room.add_child(exit_door)

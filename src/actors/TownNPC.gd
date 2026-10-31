@@ -214,6 +214,8 @@ func interact(player: Node3D) -> void:
 			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
 
 		"captain_marlo":
+			if not GameManager.world_repairs.get("port_crane", false):
+				actions.append({"id": "repair_port_crane", "label": "🔨 Rebuild Cargo Crane (1 Lumber + 1 Iron)", "color": Color(0.95, 0.65, 0.2), "closes": false})
 			if GameManager.quest_port_compass_completed:
 				active_dialogue = "The seas smile upon us, matey! The Tidecaller's Compass guides our ships through every storm. You're a true brother of the coast!"
 				actions.append({"id": "open_missions", "label": "📜 Port Bounties", "color": Color(0.18, 0.55, 0.75), "closes": true})
@@ -229,6 +231,8 @@ func interact(player: Node3D) -> void:
 			actions.append({"id": "open_missions", "label": "📜 Harbor Bounties", "color": Color(0.2, 0.45, 0.65), "closes": true})
 
 		"druid_thorne":
+			if not GameManager.world_repairs.get("druid_altar", false):
+				actions.append({"id": "repair_druid_altar", "label": "🌟 Cleanse Sun Altar (1 Arcane + 1 Emerald)", "color": Color(0.3, 0.85, 0.5), "closes": false})
 			if GameManager.quest_forest_heartwood_completed:
 				active_dialogue = "The great canopy breathes once more. The Living Heartwood pulse revitalizes every root and leaf. Nature's blessing flows in your veins, guardian!"
 				actions.append({"id": "druid_blessing", "label": "🌿 Receive Forest Blessing (+Full Heal)", "color": Color(0.25, 0.75, 0.35), "closes": false})
@@ -244,6 +248,8 @@ func interact(player: Node3D) -> void:
 			actions.append({"id": "open_missions", "label": "📜 Ranger Bounties", "color": Color(0.22, 0.52, 0.28), "closes": true})
 
 		"runesmith_torvald":
+			if not GameManager.world_repairs.get("smelter_bellows", false):
+				actions.append({"id": "repair_smelter_bellows", "label": "🔥 Rebuild Smelter Bellows (1 Gold + 1 Iron)", "color": Color(0.95, 0.45, 0.2), "closes": false})
 			if GameManager.quest_crags_runecore_completed:
 				active_dialogue = "The ancestral furnace burns red-hot! With the Runebound Core restored, our mountain fortress stands impenetrable! May your hammer strike true, kin!"
 				actions.append({"id": "open_upgrades", "label": "⚒️ Masterwork Upgrades", "color": Color(0.75, 0.45, 0.15), "closes": true})

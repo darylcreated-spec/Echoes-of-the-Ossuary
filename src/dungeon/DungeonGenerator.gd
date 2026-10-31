@@ -7,6 +7,7 @@ const TownNPCScript = preload("res://src/actors/TownNPC.gd")
 const QuestMaterialNodeScript = preload("res://src/world/QuestMaterialNode.gd")
 const AnimalAIScript = preload("res://src/actors/AnimalAI.gd")
 const EnemyAIScript = preload("res://src/actors/EnemyAI.gd")
+const WorldRepairStationScript = preload("res://src/world/WorldRepairStation.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -721,28 +722,28 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	# North fence line (Z = 31.0, dry land 3m south of river)
 	var x_cursor = p_x1
 	while x_cursor <= p_x2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z1), Vector3.ONE * 2.2)
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z1), Vector3.ONE * 2.2, 90.0)
 		x_cursor += f_step
 		
 	# South fence line (Z = 43.0)
 	x_cursor = p_x1
 	while x_cursor <= p_x2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z2), Vector3.ONE * 2.2)
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z2), Vector3.ONE * 2.2, 90.0)
 		x_cursor += f_step
 		
 	# East fence line (X = 41.0)
 	var z_cursor = p_z1
 	while z_cursor <= p_z2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x2, 0.0, z_cursor), Vector3.ONE * 2.2, 90.0)
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x2, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
 		z_cursor += f_step
 		
 	# West fence line (X = 23.0 with entrance gate at Z = 37.0)
 	z_cursor = p_z1
 	while z_cursor <= p_z2:
 		if abs(z_cursor - 37.0) < 1.3:
-			_place_prop(parent, "res://assets/overworld/fence_wood_straight_gate.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 90.0)
+			_place_prop(parent, "res://assets/overworld/fence_wood_straight_gate.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
 		else:
-			_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 90.0)
+			_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
 		z_cursor += f_step
 
 	# Pasture Perimeter Collision (Keeps livestock inside the corral)
@@ -1037,6 +1038,30 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	cottage_door.position = Vector3(19.5, 0.0, 14.0)
 	parent.add_child(cottage_door)
 
+	# 5. Port Blackwater: The Rusty Anchor Tavern Doorway
+	var rusty_door = BuildingDoorway.new()
+	rusty_door.door_id = "rusty_anchor_entrance"
+	rusty_door.prompt_text = "Enter The Rusty Anchor Tavern"
+	rusty_door.target_position = Vector3(240.0, -99.8, 4.5)
+	rusty_door.target_rotation_y = 0.0
+	rusty_door.target_cam_distance = 11.0
+	rusty_door.target_cam_pitch = 40.0
+	rusty_door.target_bgm_key = "bgm_tavern"
+	rusty_door.position = Vector3(-56.0, 0.0, 72.0)
+	parent.add_child(rusty_door)
+
+	# 6. Khar-Drakken: Stonegate Smelting Foundry Doorway
+	var stonegate_door = BuildingDoorway.new()
+	stonegate_door.door_id = "stonegate_forge_entrance"
+	stonegate_door.prompt_text = "Enter Stonegate Smelting Hall"
+	stonegate_door.target_position = Vector3(300.0, -99.8, 4.5)
+	stonegate_door.target_rotation_y = 0.0
+	stonegate_door.target_cam_distance = 11.0
+	stonegate_door.target_cam_pitch = 40.0
+	stonegate_door.target_bgm_key = "bgm_forge"
+	stonegate_door.position = Vector3(74.0, 0.0, -52.0)
+	parent.add_child(stonegate_door)
+
 func _spawn_enemy(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -> Node3D:
 	var enemy = EnemyAIScript.new()
 	enemy.enemy_type = type
@@ -1147,6 +1172,22 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	corin.position = Vector3(-53.0, 0.0, 52.0)
 	parent.add_child(corin)
 
+	# Interactive World Restoration Station: Harbor Cargo Crane
+	var crane_station = WorldRepairStationScript.new()
+	crane_station.repair_id = "port_crane"
+	crane_station.station_name = "Harbor Cargo Crane"
+	crane_station.required_materials = {"lumber": 1, "iron_ore": 1}
+	crane_station.target_story_act = 2
+	crane_station.gold_reward = 150
+	crane_station.echo_reward = 50
+	crane_station.position = Vector3(-64.0, 0.0, 62.0)
+	var ruined_crane = _place_prop(parent, "res://assets/overworld/scaffolding_straight.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(2.5, 3.2, 2.5), 15.0)
+	var restored_crane = _place_prop(parent, "res://assets/overworld/arch_wood.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(3.0, 4.0, 3.0), 0.0)
+	_place_prop(restored_crane, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.2, 0.0), Vector3.ONE * 2.0)
+	crane_station.ruined_node = ruined_crane
+	crane_station.restored_node = restored_crane
+	parent.add_child(crane_station)
+
 	# 6. Enemies
 	# Coastal Corsairs / Pirates
 	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-78.0, 0.0, 72.0), -60.0)
@@ -1239,6 +1280,27 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	elora.position = Vector3(-70.0, 0.0, -54.0)
 	parent.add_child(elora)
 
+	# Interactive World Restoration Station: Druidic Sun Altar
+	var altar_station = WorldRepairStationScript.new()
+	altar_station.repair_id = "druid_altar"
+	altar_station.station_name = "Whisperwood Sun Altar"
+	altar_station.required_materials = {"arcane_crystal": 1, "emerald_crystal": 1}
+	altar_station.target_story_act = 3
+	altar_station.gold_reward = 150
+	altar_station.echo_reward = 50
+	altar_station.position = Vector3(-84.0, 0.0, -68.0)
+	var ruined_altar = _place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-84.0, 0.0, -68.0), Vector3.ONE * 2.2, 45.0)
+	var restored_altar = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-84.0, 0.0, -68.0), Vector3.ONE * 2.6, 45.0)
+	var a_light = OmniLight3D.new()
+	a_light.light_color = Color(0.2, 1.0, 0.4)
+	a_light.light_energy = 2.2
+	a_light.omni_range = 8.0
+	a_light.position.y = 1.8
+	restored_altar.add_child(a_light)
+	altar_station.ruined_node = ruined_altar
+	altar_station.restored_node = restored_altar
+	parent.add_child(altar_station)
+
 	# 4. Enemies & Wildlife
 	# Forest Bandits
 	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-92.0, 0.0, -48.0), 60.0)
@@ -1312,6 +1374,28 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	torv.dialogue_text = "By the thunder of stone! The Orc Warlords have seized our upper stronghold and stolen the Runebound Mountain Core! Cleave through their ranks, return the Core, and I shall temper your weapons with ancient dwarven runes!"
 	torv.position = Vector3(69.0, 0.0, -58.0)
 	parent.add_child(torv)
+
+	# Interactive World Restoration Station: Smelter Blast Bellows
+	var bellows_station = WorldRepairStationScript.new()
+	bellows_station.repair_id = "smelter_bellows"
+	bellows_station.station_name = "Smelter Blast Bellows"
+	bellows_station.required_materials = {"gold_vein": 1, "iron_ore": 1}
+	bellows_station.target_story_act = 4
+	bellows_station.gold_reward = 180
+	bellows_station.echo_reward = 60
+	bellows_station.position = Vector3(73.0, 0.0, -56.0)
+	var ruined_bellows = _place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(73.0, 0.0, -56.0), Vector3.ONE * 2.2, -30.0)
+	var restored_bellows = _place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(73.0, 0.0, -56.0), Vector3.ONE * 2.6, -30.0)
+	var f_light = OmniLight3D.new()
+	f_light.light_color = Color(1.0, 0.5, 0.15)
+	f_light.light_energy = 2.5
+	f_light.omni_range = 9.0
+	f_light.position.y = 1.6
+	restored_bellows.add_child(f_light)
+	AmbientFX.create_chimney_smoke(restored_bellows, Vector3(0.0, 3.2, 0.0))
+	bellows_station.ruined_node = ruined_bellows
+	bellows_station.restored_node = restored_bellows
+	parent.add_child(bellows_station)
 
 	# 5. Enemies
 	# Orc Berserkers

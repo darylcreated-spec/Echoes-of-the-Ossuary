@@ -34,8 +34,8 @@ void fragment() {
 	float total_foam = clamp(edge_foam + crest_foam, 0.0, 0.5);
 	
 	ALBEDO = mix(water_col, foam_color.rgb, total_foam);
-	ROUGHNESS = mix(0.08, 0.28, total_foam);
-	METALLIC = 0.05;
-	SPECULAR = 0.65;
+	ROUGHNESS = mix(0.35, 0.55, total_foam);
+	METALLIC = 0.0;
+	SPECULAR = 0.25;
 	ALPHA = mix(deep_color.a, 0.95, bank_dist * 0.3);
 }

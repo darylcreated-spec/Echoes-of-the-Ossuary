@@ -5,6 +5,7 @@ const BoonSelectionModalScript = preload("res://src/ui/BoonSelectionModal.gd")
 const BoonSystemScript = preload("res://src/combat/BoonSystem.gd")
 const MissionMenuScript = preload("res://src/ui/MissionMenu.gd")
 const DialogueModalScript = preload("res://src/ui/DialogueModal.gd")
+const JournalModalScript = preload("res://src/ui/JournalModal.gd")
 
 # Health Bar references
 var hp_bar: ProgressBar = null
@@ -32,6 +33,7 @@ var boon_modal: Control = null
 var altar_modal: Control = null
 var death_modal: Control = null
 var mission_menu: Control = null
+var journal_modal: Control = null
 var dialogue_modal: DialogueModal = null
 var fade_curtain: ColorRect = null
 
@@ -134,11 +136,21 @@ func _build_ui_tree() -> void:
 	echoes_label.modulate = Color(0.2, 0.9, 0.85)
 	curr_box.add_child(echoes_label)
 	
+	var btn_box = HBoxContainer.new()
+	btn_box.add_theme_constant_override("separation", 8)
+	top_right.add_child(btn_box)
+
 	var missions_btn = Button.new()
 	missions_btn.text = "📜 Missions [M]"
-	missions_btn.custom_minimum_size = Vector2(110, 26)
+	missions_btn.custom_minimum_size = Vector2(105, 26)
 	missions_btn.pressed.connect(func(): if mission_menu: mission_menu.toggle_menu())
-	top_right.add_child(missions_btn)
+	btn_box.add_child(missions_btn)
+
+	var journal_btn = Button.new()
+	journal_btn.text = "📖 Journal [J]"
+	journal_btn.custom_minimum_size = Vector2(105, 26)
+	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
+	btn_box.add_child(journal_btn)
 	
 	# Bottom Left: Active Relic Boons
 	boons_container = HBoxContainer.new()
@@ -197,6 +209,9 @@ func _build_ui_tree() -> void:
 	mission_menu = MissionMenuScript.new()
 	add_child(mission_menu)
 	_create_mission_toast(root_control)
+
+	journal_modal = JournalModalScript.new()
+	add_child(journal_modal)
 
 	dialogue_modal = DialogueModalScript.new()
 	dialogue_modal.action_triggered.connect(_on_dialogue_action)
@@ -542,6 +557,61 @@ func _on_dialogue_action(action_id: String) -> void:
 						"A soothing emerald mist washes over your wounds. Your vitality is restored to the peak of health!",
 						[]
 					)
+		"repair_port_crane":
+			if GameManager.world_repairs.get("port_crane", false):
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Captain Marlo", "⚓", "The harbor crane is already turning like a dream! Goods are moving across the realm!", [])
+			elif GameManager.materials.get("lumber", 0) > 0 and (GameManager.materials.get("iron_ore", 0) > 0 or GameManager.materials.get("smugglers_chest", 0) > 0 or GameManager.gold >= 50):
+				GameManager.materials["lumber"] = maxi(0, GameManager.materials.get("lumber", 0) - 1)
+				if GameManager.materials.get("iron_ore", 0) > 0:
+					GameManager.materials["iron_ore"] -= 1
+				GameManager.repair_structure("port_crane")
+				GameManager.add_gold(150)
+				GameManager.advance_story_act(2)
+				AudioManager.play_sfx("level_up", 0.08, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Captain Marlo", "⚓", "By the high seas! The cargo crane is fully reconstructed! Trade routes are reopened, and the realm has taken another great stride forward! Here is 150 Gold!", [])
+			else:
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Captain Marlo", "⚓", "We still need sturdy timber (1 Lumber) and metal (1 Iron Ore) to hoist the crane back onto its bearings!", [])
+		"repair_druid_altar":
+			if GameManager.world_repairs.get("druid_altar", false):
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Elder Thorne", "🌿", "The Sun Altar radiates pure harmonic light! The forest spirits dance with gratitude!", [])
+			elif GameManager.materials.get("arcane_crystal", 0) > 0 and (GameManager.materials.get("emerald_crystal", 0) > 0 or GameManager.materials.get("living_heartwood", 0) > 0 or GameManager.echoes >= 40):
+				if GameManager.materials.get("arcane_crystal", 0) > 0:
+					GameManager.materials["arcane_crystal"] -= 1
+				if GameManager.materials.get("emerald_crystal", 0) > 0:
+					GameManager.materials["emerald_crystal"] -= 1
+				GameManager.repair_structure("druid_altar")
+				GameManager.add_gold(150)
+				GameManager.add_echoes(50)
+				GameManager.advance_story_act(3)
+				AudioManager.play_sfx("level_up", 0.08, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Elder Thorne", "🌿", "The sacred Sun Altar is restored! The canopy corruption fades away, and a celestial emerald beam rises to the heavens!", [])
+			else:
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Elder Thorne", "🌿", "To cleanse the altar, we require focused subterranean resonance: 1 Arcane Crystal and 1 Emerald Geo-Crystal!", [])
+		"repair_smelter_bellows":
+			if GameManager.world_repairs.get("smelter_bellows", false):
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Torvald Ironbreaker", "⛏️", "The bellows are pumping true mountain wind! The ancestral furnace will never freeze!", [])
+			elif GameManager.materials.get("iron_ore", 0) > 0 and (GameManager.materials.get("gold_vein", 0) > 0 or GameManager.materials.get("runebound_core", 0) > 0 or GameManager.gold >= 75):
+				if GameManager.materials.get("iron_ore", 0) > 0:
+					GameManager.materials["iron_ore"] -= 1
+				if GameManager.materials.get("gold_vein", 0) > 0:
+					GameManager.materials["gold_vein"] -= 1
+				GameManager.repair_structure("smelter_bellows")
+				GameManager.add_gold(180)
+				GameManager.add_echoes(60)
+				GameManager.advance_story_act(4)
+				AudioManager.play_sfx("anvil_strike", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Torvald Ironbreaker", "⛏️", "RRAAAAGH! Hear that roar?! The Great Bellows are pumping molten fire! The Khar-Drakken Smelter lives again!", [])
+			else:
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Torvald Ironbreaker", "⛏️", "We need highland metals to rebuild the air chambers: 1 Gold Ingot and 1 Iron Ore!", [])
 		"travel_oakhaven":
 			_fast_travel_to(Vector3(0.0, 0.0, 10.0), "Oakhaven Town Hub")
 		"travel_port":
@@ -667,12 +737,19 @@ func _on_mission_completed(m: Dictionary) -> void:
 	AudioManager.play_sfx("chest_open", 0.08, 0.5)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_missions"):
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
+		if journal_modal:
+			journal_modal.toggle_modal()
+			get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("toggle_missions"):
 		if mission_menu:
 			mission_menu.toggle_menu()
 			get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("pause"):
-		if mission_menu and mission_menu.visible:
+	elif event.is_action_pressed("pause") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE):
+		if journal_modal and journal_modal.visible:
+			journal_modal.close_modal()
+			get_viewport().set_input_as_handled()
+		elif mission_menu and mission_menu.visible:
 			mission_menu.close_menu()
 			get_viewport().set_input_as_handled()
 

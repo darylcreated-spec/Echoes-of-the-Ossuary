@@ -92,6 +92,63 @@ const BOONS: Array[Dictionary] = [
 		"rarity": "Mythic",
 		"description": "Unites Sea, Forest, and Mountain: +30% to all attributes and unseals the Abyssal Crypts!",
 		"color": Color(0.85, 0.35, 1.0)
+	},
+	# Class Specialization Talents
+	{
+		"id": "paladins_ward",
+		"name": "Paladin's Ward (Knight)",
+		"rarity": "Specialization",
+		"description": "The Iron Warden's holy oath: reduces all damage taken by 20% and emits a radiant sacred aura.",
+		"color": Color(1.0, 0.9, 0.4)
+	},
+	{
+		"id": "titans_cleave",
+		"name": "Titan's Cleave (Knight)",
+		"rarity": "Specialization",
+		"description": "The third strike of the melee combo unleashes an earth-shattering shockwave.",
+		"color": Color(0.9, 0.75, 0.3)
+	},
+	{
+		"id": "shadowstep",
+		"name": "Shadowstep (Rogue)",
+		"rarity": "Specialization",
+		"description": "Dash phases through enemies invisibly and grants +50% Critical Strike Chance for 2.0s.",
+		"color": Color(0.3, 0.9, 0.6)
+	},
+	{
+		"id": "venomous_blades",
+		"name": "Venomous Blades (Rogue)",
+		"rarity": "Specialization",
+		"description": "All critical strikes inflict virulent viper poison, dealing continuous damage over 3 seconds.",
+		"color": Color(0.2, 0.8, 0.2)
+	},
+	{
+		"id": "arcane_chain",
+		"name": "Arcane Chain (Mage)",
+		"rarity": "Specialization",
+		"description": "Magic missiles ricochet and chain to a second nearby foe for 75% damage.",
+		"color": Color(0.7, 0.3, 1.0)
+	},
+	{
+		"id": "frost_nova",
+		"name": "Frost Nova (Mage)",
+		"rarity": "Specialization",
+		"description": "Dashing erupts in a ring of arctic frost, dealing 25 damage and slowing surrounding foes.",
+		"color": Color(0.4, 0.8, 1.0)
+	},
+	{
+		"id": "berserker_rage",
+		"name": "Berserker Rage (Barbarian)",
+		"rarity": "Specialization",
+		"description": "While below 50% HP, gain +40% Attack Speed and +25% Attack Damage.",
+		"color": Color(0.95, 0.2, 0.2)
+	},
+	{
+		"id": "unstoppable_juggernaut",
+		"name": "Unstoppable Juggernaut (Barbarian)",
+		"rarity": "Specialization",
+		"description": "Immune to all knockback, hit-stuns, and environmental traps.",
+		"color": Color(0.8, 0.35, 0.15)
 	}
 ]
 

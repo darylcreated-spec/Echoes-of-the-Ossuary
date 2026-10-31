@@ -13,6 +13,8 @@ signal room_entered(room_index: int, total_rooms: int)
 signal mission_updated(mission: Dictionary)
 signal mission_completed(mission: Dictionary)
 signal mission_claimed(mission: Dictionary)
+signal story_act_advanced(new_act: int, act_title: String)
+signal world_structure_repaired(structure_id: String)
 
 # --- ENUMS ---
 enum HeroClass {
@@ -46,6 +48,14 @@ var soul_echoes: int = 150 # Starting echoes for initial altar testing
 var upgrade_max_hp_level: int = 0       # +20 Max HP per level (Max 5)
 var upgrade_attack_power_level: int = 0 # +12% Attack Power per level (Max 5)
 var upgrade_dash_cooldown_level: int = 0 # -12% Dash Cooldown per level (Max 5)
+
+# Story Campaign & Act Progression
+var current_story_act: int = 0 # 0: Prologue, 1: Act I, 2: Act II, 3: Act III, 4: Act IV, 5: Epilogue
+var world_repairs: Dictionary = {
+	"port_crane": false,
+	"druid_altar": false,
+	"dwarven_bellows": false
+}
 
 # Quest & Task States
 var quest_chalice_completed: bool = false
@@ -347,8 +357,95 @@ func get_base_hero_stats(h_class: HeroClass = selected_class) -> Dictionary:
 				stats["attack_damage"] *= 1.30
 				stats["move_speed"] *= 1.20
 				stats["defense"] += 8.0
+			"paladins_ward":
+				stats["defense"] += 6.0
+			"titans_cleave":
+				stats["attack_damage"] *= 1.15
+			"shadowstep":
+				stats["crit_chance"] += 0.15
+				stats["dash_speed"] *= 1.25
+			"venomous_blades":
+				stats["attack_damage"] *= 1.15
+			"arcane_chain":
+				stats["attack_damage"] *= 1.15
+			"frost_nova":
+				stats["dash_speed"] *= 1.15
+			"berserker_rage":
+				stats["attack_damage"] *= 1.20
+			"unstoppable_juggernaut":
+				stats["max_hp"] += 40.0
+				stats["defense"] += 4.0
 				
 	return stats
+
+# --- STORY CAMPAIGN ACTS & CODEX ---
+const STORY_ACTS: Array[Dictionary] = [
+	{
+		"act": 0,
+		"title": "Act 0: Shadows in the Courtyard",
+		"location": "Oakhaven Sanctuary",
+		"synopsis": "Awaken in the royal sanctuary. Meet with King Valerius and Commander Drake to swear fealty, choose your combat class, and undergo trial combat on the castle grounds.",
+		"main_objective": "Speak with King Valerius in the Castle Grand Hall and test your blade."
+	},
+	{
+		"act": 1,
+		"title": "Act I: Tides of Blackwater",
+		"location": "Port Blackwater",
+		"synopsis": "Travel south-west to Port Blackwater. Assist Harbormaster Corin and Captain Marlo, repair the collapsed harbor cargo crane, defeat the Deep Sea Creep, and retrieve the Tidecaller's Compass.",
+		"main_objective": "Repair the harbor crane and recover the Tidecaller's Compass."
+	},
+	{
+		"act": 2,
+		"title": "Act II: The Weeping Canopy",
+		"location": "Whisperwood Forest",
+		"synopsis": "Journey north-west into the ancient pines of Whisperwood. Meet Elder Thorne at Sylva's Rest, restore the desecrated Druidic Sun Altar, clear the bandit treehouse camp, and recover the Living Heartwood.",
+		"main_objective": "Cleanse the Sun Altar and reclaim the Living Heartwood."
+	},
+	{
+		"act": 3,
+		"title": "Act III: The Iron Crucible",
+		"location": "Khar-Drakken Crags",
+		"synopsis": "Scale the jagged mountain pass to the Stonegate Dwarven Outpost. Rebuild the ancestral forge bellows with Runesmith Torvald, storm the high Orc Bastion, and reclaim the Runebound Mountain Core.",
+		"main_objective": "Repair the Dwarven Bellows and reclaim the Runebound Core."
+	},
+	{
+		"act": 4,
+		"title": "Act IV: The Abyssal Descent",
+		"location": "The Ossuary Catacombs",
+		"synopsis": "Return to Oakhaven and place the Three Relics upon the Descent Sigil to awaken the Tri-Seal. Delve through the 5 subterranean chambers and vanquish the Bone Titan Skeletal Warden to save the realm.",
+		"main_objective": "Step upon the awakened Descent Sigil and defeat the Skeletal Warden."
+	},
+	{
+		"act": 5,
+		"title": "Epilogue: Champion of Aethelgard",
+		"location": "The Realm Restored",
+		"synopsis": "The Ossuary Core is sealed and corruption vanquished. King Valerius names you Protector of Aethelgard. All realms flourish and are open for infinite heroic expeditions.",
+		"main_objective": "Explore the restored realm and complete remaining regional bounties."
+	}
+]
+
+func get_current_act_info() -> Dictionary:
+	for a in STORY_ACTS:
+		if a["act"] == current_story_act:
+			return a
+	return STORY_ACTS[0]
+
+func advance_story_act(new_act: int) -> void:
+	if new_act > current_story_act:
+		current_story_act = new_act
+		save_game()
+		var act_info = get_current_act_info()
+		story_act_advanced.emit(current_story_act, act_info.get("title", ""))
+		AudioManager.play_sfx("sfx_victory_fanfare", 0.05, 1.5)
+
+func repair_structure(structure_id: String) -> bool:
+	if world_repairs.get(structure_id, false):
+		return false
+	world_repairs[structure_id] = true
+	save_game()
+	world_structure_repaired.emit(structure_id)
+	AudioManager.play_sfx("anvil_strike", 0.08, 1.2)
+	return true
 
 # --- CLASS SELECTION ---
 func set_hero_class(new_class: HeroClass) -> void:
@@ -575,6 +672,8 @@ func save_game() -> void:
 		"runs_attempted": runs_attempted,
 		"enemies_defeated": enemies_defeated,
 		"selected_class": int(selected_class),
+		"current_story_act": current_story_act,
+		"world_repairs": world_repairs,
 		"missions": missions_data
 	}
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -595,6 +694,11 @@ func load_game() -> void:
 			runs_attempted = parsed.get("runs_attempted", 0)
 			enemies_defeated = parsed.get("enemies_defeated", 0)
 			selected_class = parsed.get("selected_class", HeroClass.KNIGHT)
+			current_story_act = parsed.get("current_story_act", 0)
+			var saved_repairs = parsed.get("world_repairs", {})
+			if saved_repairs is Dictionary:
+				for k in saved_repairs.keys():
+					world_repairs[k] = saved_repairs[k]
 			
 			var saved_missions = parsed.get("missions", [])
 			if saved_missions is Array:

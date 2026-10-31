@@ -23,7 +23,7 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 func _setup_visuals() -> void:
-	_visual_tile = AssetLoader.load_or_generate_model("res://assets/dungeon/floor_spikes.glb", "dungeon", "floor_spikes")
+	_visual_tile = AssetLoader.load_or_generate_model("res://assets/dungeon/floor_tile_big_spikes.glb", "dungeon", "floor_spikes")
 	add_child(_visual_tile)
 	_spikes_node = _visual_tile.find_child("Spikes", true, false)
 	
