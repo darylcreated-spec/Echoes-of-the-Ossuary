@@ -8,6 +8,7 @@ const QuestMaterialNodeScript = preload("res://src/world/QuestMaterialNode.gd")
 const AnimalAIScript = preload("res://src/actors/AnimalAI.gd")
 const EnemyAIScript = preload("res://src/actors/EnemyAI.gd")
 const WorldRepairStationScript = preload("res://src/world/WorldRepairStation.gd")
+const PatrolNPCScript = preload("res://src/actors/PatrolNPC.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -506,6 +507,35 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	# Friendly Town Fox resting in the Courtyard Garden
 	_spawn_animated_fauna(parent, "res://assets/characters/animals/Fox.glb", Vector3(-6.2, 0.0, 5.5), Vector3.ONE * 0.12, 45.0, "AnimalArmature|Idle")
 
+	# Oakhaven Town Square Patrolling Guards (Continuous marching walk cycles)
+	var guard_highway = PatrolNPCScript.new()
+	guard_highway.npc_name = "Sentry Brand"
+	guard_highway.position = Vector3(1.8, 0.0, 10.0)
+	guard_highway.waypoints = [
+		Vector3(1.8, 0.0, 11.5),
+		Vector3(1.8, 0.0, 1.0),
+		Vector3(-1.8, 0.0, 1.0),
+		Vector3(-1.8, 0.0, 11.5)
+	]
+	parent.add_child(guard_highway)
+
+	var guard_cross = PatrolNPCScript.new()
+	guard_cross.npc_name = "Patrolman Kaelen"
+	guard_cross.position = Vector3(-6.0, 0.0, 2.0)
+	guard_cross.waypoints = [
+		Vector3(-8.0, 0.0, 2.0),
+		Vector3(8.0, 0.0, 2.0),
+		Vector3(8.0, 0.0, -2.0),
+		Vector3(-8.0, 0.0, -2.0)
+	]
+	parent.add_child(guard_cross)
+
+	# Merchant Supply Wagon & Pallets in Plaza
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-5.0, 0.0, 8.5), Vector3.ONE * 1.6, 25.0)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-6.2, 0.0, 7.5), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-6.2, 0.0, 7.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_long_B.gltf", Vector3(-6.0, 0.0, 9.2), Vector3.ONE * 1.3, 90.0)
+
 	# 7. EXPANDED OPEN WORLD MEDIEVAL REALM
 	_build_road_network(parent)
 	_build_town_quarter(parent)
@@ -612,6 +642,24 @@ func _build_town_quarter(parent: Node3D) -> void:
 	merchant.dialogue_text = "Finest goods from across the realm! Weapons tempered in dwarven fire and draughts brewed by eastern alchemists. Bring me ancient relics from the catacombs and I will pay a handsome fortune!"
 	merchant.position = Vector3(-14.5, 0.0, 16.0)
 	parent.add_child(merchant)
+
+	# Herbalist Stall & Elowen
+	_place_prop(parent, "res://assets/overworld/building_market_yellow.gltf", Vector3(-22.0, 0.0, 14.5), Vector3.ONE * 4.2, 15.0)
+	_add_static_box(parent, Vector3(-22.0, 2.5, 14.5), Vector3(6.5, 5.0, 5.5))
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-24.5, 0.0, 13.8), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-24.0, 0.0, 15.2), Vector3.ONE * 1.2)
+
+	var herbalist = TownNPCScript.new()
+	herbalist.npc_id = "herbalist"
+	herbalist.npc_name = "Elowen"
+	herbalist.npc_title = "Master Apothecary & Herbalist"
+	herbalist.icon = "🌿"
+	herbalist.model_path = "res://assets/characters/adventurers/Mage.glb"
+	herbalist.model_scale = Vector3(0.52, 0.52, 0.52)
+	herbalist.model_rotation_y = 45.0
+	herbalist.dialogue_text = "Greetings, wanderer! Fresh moon-sage, mountain thistle, and soothing draughts to cleanse wounds. Stay vigilant against the foul pestilence rising from the tombs!"
+	herbalist.position = Vector3(-20.5, 0.0, 14.2)
+	parent.add_child(herbalist)
 
 	# 3. Guard Archery Training Yard (East Sanctuary Green: X = 28.0, Z = 3.0 — clear of Riverside Watermill)
 	var range_bldg = _place_prop(parent, "res://assets/overworld/building_archeryrange_blue.gltf", Vector3(28.0, 0.0, 3.0), Vector3.ONE * 4.5, -45.0)
@@ -925,6 +973,20 @@ func _build_watermill_and_canal(parent: Node3D, pos: Vector3) -> void:
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(pos.x - 3.4, 0.0, 17.5), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(pos.x - 3.4, 0.0, 16.5), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(pos.x - 2.6, 0.0, 15.8), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(pos.x - 2.5, 0.0, 18.0), Vector3.ONE * 1.3)
+
+	# NPC: Miller Bronn
+	var bronn = TownNPCScript.new()
+	bronn.npc_id = "miller"
+	bronn.npc_name = "Miller Bronn"
+	bronn.npc_title = "River Grain Master"
+	bronn.icon = "⚙️"
+	bronn.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	bronn.model_scale = Vector3(0.54, 0.54, 0.54)
+	bronn.model_rotation_y = 150.0
+	bronn.dialogue_text = "Hear the rumble of the wheel! The river current powers the millstones day and night, grinding Giles's wheat into fine golden flour for the capital."
+	bronn.position = Vector3(pos.x - 3.2, 0.0, 18.2)
+	parent.add_child(bronn)
 
 func _build_farmlands_hamlet(parent: Node3D) -> void:
 	# Grand Windmill (Towering 14.3m high landmark with rotating blades)
@@ -1017,6 +1079,11 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(p_x2, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1 + 1.0))
 	_add_static_box(parent, Vector3(p_x1, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1 + 1.0))
 
+	# Farm Supply Wagon & Pallets near Pasture Gate
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(25.5, 0.0, 39.5), Vector3.ONE * 1.5, -20.0)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(24.0, 0.0, 39.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(24.0, 0.0, 39.0), Vector3.ONE * 1.2)
+
 	# Pasture Livestock Dressing (Water troughs, feed buckets)
 	_place_prop(parent, "res://assets/overworld/bucket_water.gltf", Vector3(25.5, 0.0, 33.0), Vector3.ONE * 2.5)
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(24.5, 0.0, 32.5), Vector3.ONE * 1.6)
@@ -1025,6 +1092,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	# Grazing Animals inside the dry fenced pasture
 	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(28.0, 0.0, 35.0), 45.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(36.0, 0.0, 39.0), -60.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(31.0, 0.0, 41.0), 15.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.BULL, Vector3(32.0, 0.0, 36.0), 120.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(27.0, 0.0, 40.0), 15.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(38.0, 0.0, 34.0), -85.0)
@@ -1390,6 +1458,19 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(px), 0.0, 65.0), Vector3(2.5, 2.0, 4.0), 90.0)
 		_add_static_box(parent, Vector3(float(px), 0.4, 65.0), Vector3(4.2, 0.8, 3.5))
 	
+	# Harbor Watchman Patrol along the pier
+	var harbor_guard = PatrolNPCScript.new()
+	harbor_guard.npc_name = "Boatswain Finn"
+	harbor_guard.npc_title = "Pier Watchman"
+	harbor_guard.position = Vector3(-54.0, 0.4, 65.0)
+	harbor_guard.waypoints = [
+		Vector3(-54.0, 0.4, 65.0),
+		Vector3(-82.0, 0.4, 65.0),
+		Vector3(-82.0, 0.4, 65.0),
+		Vector3(-54.0, 0.4, 65.0)
+	]
+	parent.add_child(harbor_guard)
+
 	# Second Jetty at Z = 80, X from -55 to -78
 	for px in range(-55, -79, -4):
 		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(px), 0.0, 80.0), Vector3(2.5, 2.0, 4.0), 90.0)

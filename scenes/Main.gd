@@ -251,8 +251,10 @@ func _run_gameplay_self_test() -> void:
 	assert(player.global_position.z < 20.0)
 
 	# 11. Realm Map Modal & Fast Travel System
-	print("\n[TEST 11] Realm Map Modal & Fast Travel System...")
+	print("\n[TEST 11] Realm Map Modal, Compass Bar & Patrolling Guards...")
 	assert(hud != null and hud.realm_map_modal != null)
+	assert(hud.compass_bar != null)
+	print(" -> Compass Navigation Bar verified on HUD!")
 	hud.realm_map_modal.open_map()
 	assert(hud.realm_map_modal.visible == true)
 	print(" -> Realm Map & Fast Travel Modal opened! Visible: true")
@@ -263,6 +265,13 @@ func _run_gameplay_self_test() -> void:
 	print(" -> Fast Traveled back to Oakhaven Hub at: ", player.global_position)
 	assert(player.global_position.distance_to(Vector3(0.0, 0.5, 3.8)) < 1.0)
 
+	# Verify Patrolling Guards in Realm
+	var patrol_npcs = get_tree().get_nodes_in_group("patrol_npc")
+	print(" -> Total Patrolling Guard Sentries found: ", patrol_npcs.size())
+	assert(patrol_npcs.size() >= 3)
+	for guard in patrol_npcs:
+		assert(guard._anim_player != null and guard._anim_player.is_playing())
+
 	# Verify NPC Looping Animations
 	var npcs = get_tree().get_nodes_in_group("interactable")
 	var animated_npc_count = 0
@@ -271,7 +280,7 @@ func _run_gameplay_self_test() -> void:
 			assert(npc._anim_player.is_playing() == true)
 			animated_npc_count += 1
 	print(" -> Total Actively Looping Animated NPCs verified: ", animated_npc_count)
-	assert(animated_npc_count >= 5)
+	assert(animated_npc_count >= 6)
 
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")

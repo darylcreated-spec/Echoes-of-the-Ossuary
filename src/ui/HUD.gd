@@ -37,6 +37,7 @@ var death_modal: Control = null
 var mission_menu: Control = null
 var journal_modal: Control = null
 var realm_map_modal: Control = null
+var compass_bar: Control = null
 var dialogue_modal: DialogueModal = null
 var fade_curtain: ColorRect = null
 
@@ -173,6 +174,12 @@ func _build_ui_tree() -> void:
 	region_badge.add_theme_font_size_override("font_size", 14)
 	region_badge.add_theme_color_override("font_color", Color(0.95, 0.90, 0.70))
 	root_control.add_child(region_badge)
+
+	# Compass Bar: shows nearby settlements, directions and distances
+	var CompassBarScript = load("res://src/ui/CompassBar.gd")
+	if CompassBarScript:
+		compass_bar = CompassBarScript.new()
+		root_control.add_child(compass_bar)
 	
 	# Bottom Left: Active Relic Boons
 	boons_container = HBoxContainer.new()
