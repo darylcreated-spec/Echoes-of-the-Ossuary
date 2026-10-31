@@ -491,10 +491,20 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 		_place_prop(parent, model_p, t_pos, Vector3.ONE * 3.0, float((i * 47) % 360))
 		_add_static_cyl(parent, t_pos, 1.0, 7.0)
 
-	# Decorative Courtyard Props
+	# Decorative Courtyard Props & Market Stalls
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-2.8, 0, 12.0), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-2.1, 0, 12.5), Vector3.ONE * 1.1)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(2.8, 0, 12.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(3.5, 0, 11.5), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(3.2, 0, 12.8), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/wheelbarrow.gltf", Vector3(-4.5, 0, 10.5), Vector3.ONE * 1.6, 35.0)
+	_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(-3.8, 0, 11.2), Vector3.ONE * 0.4)
+	_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(-3.5, 0, 11.5), Vector3.ONE * 0.35)
+	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(-5.5, 0, 4.0), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(5.5, 0, 4.0), Vector3.ONE * 1.8, -90.0)
+
+	# Friendly Town Fox resting in the Courtyard Garden
+	_spawn_animated_fauna(parent, "res://assets/characters/animals/Fox.glb", Vector3(-6.2, 0.0, 5.5), Vector3.ONE * 0.12, 45.0, "AnimalArmature|Idle")
 
 	# 7. EXPANDED OPEN WORLD MEDIEVAL REALM
 	_build_road_network(parent)
@@ -611,6 +621,19 @@ func _build_town_quarter(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/bucket_arrows.gltf", Vector3(24.5, 0.0, 2.0), Vector3.ONE * 1.8)
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(24.5, 0.0, 4.5), Vector3.ONE * 1.8, 90.0)
 
+	# NPC: Cadet Ronin - Sanctuary Marksman practicing at the target
+	var archer = TownNPCScript.new()
+	archer.npc_id = "archer_apprentice"
+	archer.npc_name = "Cadet Ronin"
+	archer.npc_title = "Sanctuary Marksman"
+	archer.icon = "🎯"
+	archer.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	archer.model_scale = Vector3(0.53, 0.53, 0.53)
+	archer.model_rotation_y = 90.0
+	archer.dialogue_text = "Steady breath, steady aim! Captain Vane says the outlaws in Whisperwood won't wait for us to draw. Practice makes lethal!"
+	archer.position = Vector3(26.2, 0.0, 3.1)
+	parent.add_child(archer)
+
 	# 4. Street Lantern Posts along Thoroughfares
 	_place_lantern_post(parent, Vector3(-5.0, 0.0, 15.0), 45.0)
 	_place_lantern_post(parent, Vector3(5.0, 0.0, 15.0), -45.0)
@@ -642,6 +665,9 @@ func _spawn_animated_fauna(parent: Node3D, model_path: String, pos: Vector3, sc:
 	parent.add_child(inst)
 	var anim: AnimationPlayer = inst.find_child("AnimationPlayer", true, false)
 	if anim and anim.has_animation(anim_name):
+		var a_res = anim.get_animation(anim_name)
+		if a_res:
+			a_res.loop_mode = Animation.LOOP_LINEAR
 		anim.play(anim_name)
 		anim.speed_scale = randf_range(0.85, 1.15)
 	return inst

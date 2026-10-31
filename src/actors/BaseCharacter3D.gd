@@ -105,22 +105,31 @@ func update_movement_animation(delta: float) -> void:
 				if move_anim != "":
 					break
 			if move_anim != "":
-				if anim_player.current_animation != move_anim:
+				var a_res = anim_player.get_animation(move_anim)
+				if a_res and a_res.loop_mode != Animation.LOOP_LINEAR:
+					a_res.loop_mode = Animation.LOOP_LINEAR
+				if anim_player.current_animation != move_anim or not anim_player.is_playing():
 					anim_player.play(move_anim, 0.15, run_speed)
 				else:
 					anim_player.speed_scale = run_speed
 		else:
 			var idle_anim = ""
 			var anim_list = anim_player.get_animation_list()
-			for candidate in ["idle", "eating"]:
+			for candidate in ["idle", "eating", "unarmed_idle", "layer0", "action"]:
 				for a in anim_list:
-					if candidate in a.to_lower():
+					var la = a.to_lower()
+					if la == candidate or candidate in la:
 						idle_anim = a
 						break
 				if idle_anim != "":
 					break
+			if idle_anim == "" and anim_list.size() > 0:
+				idle_anim = anim_list[0]
 			if idle_anim != "":
-				if anim_player.current_animation != idle_anim:
+				var a_res = anim_player.get_animation(idle_anim)
+				if a_res and a_res.loop_mode != Animation.LOOP_LINEAR:
+					a_res.loop_mode = Animation.LOOP_LINEAR
+				if anim_player.current_animation != idle_anim or not anim_player.is_playing():
 					anim_player.play(idle_anim, 0.2, 1.0)
 		return
 

@@ -6,6 +6,7 @@ const BoonSystemScript = preload("res://src/combat/BoonSystem.gd")
 const MissionMenuScript = preload("res://src/ui/MissionMenu.gd")
 const DialogueModalScript = preload("res://src/ui/DialogueModal.gd")
 const JournalModalScript = preload("res://src/ui/JournalModal.gd")
+const RealmMapModalScript = preload("res://src/ui/RealmMapModal.gd")
 
 # Health Bar references
 var hp_bar: ProgressBar = null
@@ -16,6 +17,7 @@ var hp_label: Label = null
 var floor_label: Label = null
 var gold_label: Label = null
 var echoes_label: Label = null
+var region_badge: Label = null
 
 # Boons Container
 var boons_container: HBoxContainer = null
@@ -34,6 +36,7 @@ var altar_modal: Control = null
 var death_modal: Control = null
 var mission_menu: Control = null
 var journal_modal: Control = null
+var realm_map_modal: Control = null
 var dialogue_modal: DialogueModal = null
 var fade_curtain: ColorRect = null
 
@@ -140,6 +143,12 @@ func _build_ui_tree() -> void:
 	btn_box.add_theme_constant_override("separation", 8)
 	top_right.add_child(btn_box)
 
+	var map_btn = Button.new()
+	map_btn.text = "🗺️ Map [N]"
+	map_btn.custom_minimum_size = Vector2(90, 26)
+	map_btn.pressed.connect(func(): if realm_map_modal: realm_map_modal.toggle_map())
+	btn_box.add_child(map_btn)
+
 	var missions_btn = Button.new()
 	missions_btn.text = "📜 Missions [M]"
 	missions_btn.custom_minimum_size = Vector2(105, 26)
@@ -151,6 +160,19 @@ func _build_ui_tree() -> void:
 	journal_btn.custom_minimum_size = Vector2(105, 26)
 	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
 	btn_box.add_child(journal_btn)
+
+	# Top Center: Current Region Location Badge
+	region_badge = Label.new()
+	region_badge.text = "📍 Region: Oakhaven Town Sanctuary"
+	region_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	region_badge.anchor_left = 0.5
+	region_badge.anchor_right = 0.5
+	region_badge.offset_left = -220
+	region_badge.offset_right = 220
+	region_badge.offset_top = 20
+	region_badge.add_theme_font_size_override("font_size", 14)
+	region_badge.add_theme_color_override("font_color", Color(0.95, 0.90, 0.70))
+	root_control.add_child(region_badge)
 	
 	# Bottom Left: Active Relic Boons
 	boons_container = HBoxContainer.new()
@@ -175,7 +197,7 @@ func _build_ui_tree() -> void:
 	
 	# Bottom Screen Controls Hint
 	var controls_bar = Label.new()
-	controls_bar.text = "[WASD] Move • [LMB] Strike • [Space] Dash/Leap • [Q] Swap Crossbow/Melee • [RMB] Shield Parry • [F] Mount Steed • [E] Interact • [J] Journal • [M] Quests"
+	controls_bar.text = "[WASD] Move • [LMB] Strike • [Space] Dash • [Q] Swap Crossbow/Melee • [RMB] Parry • [F] Mount • [E] Interact • [N] Realm Map • [J] Journal • [M] Quests"
 	controls_bar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	controls_bar.anchor_left = 0.5
 	controls_bar.anchor_right = 0.5
@@ -229,6 +251,9 @@ func _build_ui_tree() -> void:
 	journal_modal = JournalModalScript.new()
 	add_child(journal_modal)
 
+	realm_map_modal = RealmMapModalScript.new()
+	add_child(realm_map_modal)
+
 	dialogue_modal = DialogueModalScript.new()
 	dialogue_modal.action_triggered.connect(_on_dialogue_action)
 	add_child(dialogue_modal)
@@ -241,6 +266,31 @@ func _build_ui_tree() -> void:
 	fade_curtain.anchor_bottom = 1.0
 	fade_curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fade_curtain)
+
+func _process(_delta: float) -> void:
+	if region_badge:
+		var player = get_tree().get_first_node_in_group("player")
+		if player and GameManager.current_floor == 0:
+			var pos = player.global_position
+			var r_name = "Oakhaven Town Sanctuary"
+			if pos.x <= -40.0 and pos.z >= 30.0:
+				r_name = "Port Blackwater (Harbor Docks & Ocean)"
+			elif pos.x <= -40.0 and pos.z <= 0.0:
+				r_name = "Whisperwood (Druid Enclave & Pines)"
+			elif pos.x >= 40.0 and pos.z <= 0.0:
+				r_name = "Khar-Drakken (Dwarven Mines & Orcs)"
+			elif pos.x >= 20.0 and pos.z >= 28.0:
+				r_name = "Sunrise Farmlands (Windmill & Pasture)"
+			elif pos.z >= 35.0 and abs(pos.x) <= 15.0:
+				r_name = "Citadel Keep & Watchtowers"
+			elif pos.z >= 20.0 and pos.z <= 28.0:
+				r_name = "Royal River Highway Bridge"
+			elif pos.y < -50.0:
+				r_name = "Building Interior Chamber"
+			region_badge.text = "📍 " + r_name
+			region_badge.visible = true
+		elif region_badge:
+			region_badge.text = "💀 Catacombs Floor %d" % GameManager.current_floor
 
 func fade_screen(to_black: bool, duration: float = 0.25) -> Signal:
 	if not fade_curtain:
@@ -782,7 +832,11 @@ func show_toast(text: String, duration: float = 2.6) -> void:
 	_toast_tween.tween_callback(func(): if mission_toast: mission_toast.visible = false)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
+		if realm_map_modal:
+			realm_map_modal.toggle_map()
+			get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
 		if journal_modal:
 			journal_modal.toggle_modal()
 			get_viewport().set_input_as_handled()
@@ -791,7 +845,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			mission_menu.toggle_menu()
 			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE):
-		if journal_modal and journal_modal.visible:
+		if realm_map_modal and realm_map_modal.visible:
+			realm_map_modal.close_map()
+			get_viewport().set_input_as_handled()
+		elif journal_modal and journal_modal.visible:
 			journal_modal.close_modal()
 			get_viewport().set_input_as_handled()
 		elif mission_menu and mission_menu.visible:

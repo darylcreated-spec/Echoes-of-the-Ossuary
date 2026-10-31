@@ -250,6 +250,29 @@ func _run_gameplay_self_test() -> void:
 	print(" -> Player blocked at North Riverbank edge Z=", snapped(player.global_position.z, 0.01), " (cannot walk onto river water at Z>=20.0)")
 	assert(player.global_position.z < 20.0)
 
+	# 11. Realm Map Modal & Fast Travel System
+	print("\n[TEST 11] Realm Map Modal & Fast Travel System...")
+	assert(hud != null and hud.realm_map_modal != null)
+	hud.realm_map_modal.open_map()
+	assert(hud.realm_map_modal.visible == true)
+	print(" -> Realm Map & Fast Travel Modal opened! Visible: true")
+	hud.realm_map_modal._execute_fast_travel("port", Vector3(-58.0, 0.5, 66.0), "Port Blackwater")
+	print(" -> Fast Traveled to Port Blackwater at: ", player.global_position)
+	assert(player.global_position.distance_to(Vector3(-58.0, 0.5, 66.0)) < 1.0)
+	hud.realm_map_modal._execute_fast_travel("hub", Vector3(0.0, 0.5, 3.8), "Oakhaven Hub")
+	print(" -> Fast Traveled back to Oakhaven Hub at: ", player.global_position)
+	assert(player.global_position.distance_to(Vector3(0.0, 0.5, 3.8)) < 1.0)
+
+	# Verify NPC Looping Animations
+	var npcs = get_tree().get_nodes_in_group("interactable")
+	var animated_npc_count = 0
+	for npc in npcs:
+		if npc is TownNPC and npc._anim_player:
+			assert(npc._anim_player.is_playing() == true)
+			animated_npc_count += 1
+	print(" -> Total Actively Looping Animated NPCs verified: ", animated_npc_count)
+	assert(animated_npc_count >= 5)
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

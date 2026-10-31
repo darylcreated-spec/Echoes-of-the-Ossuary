@@ -37,6 +37,10 @@ func _process(delta: float) -> void:
 		var breath = sin(_idle_time * 2.4) * 0.015
 		_model.position.y = breath
 		
+		# Ensure animation continues looping without freezing or returning to T-pose
+		if _anim_player and (not _anim_player.is_playing() or _anim_player.current_animation == ""):
+			_play_default_idle()
+		
 		# Smooth player tracking when close
 		if not _target_player:
 			var players = get_tree().get_nodes_in_group("player")
@@ -78,19 +82,7 @@ func _build_visuals() -> void:
 	if _anim_player:
 		_play_default_idle()
 
-func _play_default_idle() -> void:
-	if not _anim_player:
-		return
-	var anims = _anim_player.get_animation_list()
-	if anims.size() > 0:
-		var idle_anim = anims[0]
-		for a in anims:
-			if "idle" in a.to_lower():
-				idle_anim = a
-				break
-		_anim_player.play(idle_anim, 0.2, 1.0)
-	
-	# Floating Name Tag & Prompt
+	# Floating Name Tag & Prompt (Always created for all NPCs)
 	_label = Label3D.new()
 	_label.text = icon + " " + npc_name + "\n[E] Speak"
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -100,6 +92,30 @@ func _play_default_idle() -> void:
 	_label.outline_modulate = Color(0.02, 0.03, 0.05)
 	_label.modulate = Color(1.0, 0.90, 0.55)
 	add_child(_label)
+
+func _play_default_idle() -> void:
+	if not _anim_player:
+		return
+	var anims = _anim_player.get_animation_list()
+	if anims.size() > 0:
+		var idle_anim = ""
+		# Priority candidates for natural standing idle
+		for candidate in ["idle", "unarmed_idle", "2h_melee_idle", "eating", "talking", "cheer", "layer0", "action"]:
+			for a in anims:
+				var la = a.to_lower()
+				if la == candidate or candidate in la:
+					idle_anim = a
+					break
+			if idle_anim != "":
+				break
+		if idle_anim == "":
+			idle_anim = anims[0]
+			
+		var a_res = _anim_player.get_animation(idle_anim)
+		if a_res:
+			a_res.loop_mode = Animation.LOOP_LINEAR
+		_anim_player.speed_scale = randf_range(0.85, 1.15)
+		_anim_player.play(idle_anim, 0.2, 1.0)
 
 func _build_interaction() -> void:
 	_interact_area = Area3D.new()
@@ -145,6 +161,12 @@ func interact(player: Node3D) -> void:
 	var hud = get_tree().get_first_node_in_group("hud")
 	if not hud:
 		return
+		
+	# Interactive Realm Map & Fast Travel Waystone
+	if npc_id.begins_with("signpost"):
+		if "realm_map_modal" in hud and hud.realm_map_modal:
+			hud.realm_map_modal.open_map()
+			return
 		
 	var actions: Array[Dictionary] = []
 	var active_dialogue = dialogue_text
