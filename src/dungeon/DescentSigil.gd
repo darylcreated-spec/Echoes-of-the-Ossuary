@@ -176,7 +176,7 @@ func trigger_descent() -> void:
 	else:
 		GameManager.advance_chamber()
 		
-	# Rebuild floor room
+	# Rebuild floor room safely outside physics callback
 	var main = get_tree().get_first_node_in_group("main")
 	if main and main.has_method("load_current_floor_room"):
-		main.load_current_floor_room()
+		main.call_deferred("load_current_floor_room")

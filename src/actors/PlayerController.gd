@@ -262,9 +262,9 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	update_movement_animation(delta)
 	
-	# Clamp vertical position: keep player securely planted on the ground plane
-	if global_position.y < 0.0:
-		global_position.y = 0.0
+	# Clamp vertical position: prevent falling through recessed basins while allowing natural height variation
+	if global_position.y < -0.6:
+		global_position.y = -0.6
 		velocity.y = 0.0
 
 	# Mounted hoofbeats & trample impact

@@ -154,10 +154,11 @@ func _run_gameplay_self_test() -> void:
 	assert(enemies.size() > 0)
 	
 	# Return to Overworld
+	await get_tree().physics_frame
 	GameManager.current_floor = 0
 	load_current_floor_room()
 	await get_tree().process_frame
-	await get_tree().process_frame
+	await get_tree().physics_frame
 	print(" -> Returned to Overworld Sanctuary Hub safely!")
 
 	# 8. Warsteed Mount & Cavalier System
@@ -229,13 +230,25 @@ func _run_gameplay_self_test() -> void:
 	player.global_position = Vector3(0.0, 0.0, 29.0)
 	print(" -> Player traversed to bridge south ramp at (0, 0, 29) - Bridge successfully crossed!")
 
-	# Check Watermill Canal & Splashes
-	var mill_canal = find_child("MillraceWaterSurface", true, false)
+	# Check Watermill Wheel in River & Splashes
+	var river_water = find_child("RiverWaterSurface", true, false)
 	var splashes = find_child("WaterWheelSplashes", true, false)
-	assert(mill_canal != null)
+	var mill_wheel = find_child("building_watermill_wheel_blue", true, false) as Node3D
+	assert(river_water != null)
 	assert(splashes != null)
-	print(" -> Watermill Millrace flowing canal found at: ", mill_canal.global_position)
+	assert(mill_wheel != null)
+	print(" -> River Water Surface found at: ", river_water.global_position)
+	print(" -> Watermill Wheel global position: ", mill_wheel.global_position)
+	assert(mill_wheel.global_position.z >= 20.0 and mill_wheel.global_position.z <= 28.0)
 	print(" -> Watermill water splash FX churning at: ", splashes.global_position)
+
+	# Verify Riverbank Collision Barrier prevents walking on water
+	player.global_position = Vector3(6.0, 0.1, 19.2)
+	player.velocity = Vector3(0.0, 0.0, 12.0)
+	for _step in range(10):
+		player.move_and_slide()
+	print(" -> Player blocked at North Riverbank edge Z=", snapped(player.global_position.z, 0.01), " (cannot walk onto river water at Z>=20.0)")
+	assert(player.global_position.z < 20.0)
 
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
