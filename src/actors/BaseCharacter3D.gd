@@ -177,6 +177,9 @@ func update_movement_animation(delta: float) -> void:
 
 func _ready() -> void:
 	current_health = max_health
+	floor_snap_length = 0.45
+	floor_max_angle = deg_to_rad(55.0)
+	floor_stop_on_slope = true
 	if hurtbox:
 		hurtbox.damage_received.connect(take_damage)
 	_setup_mesh_flash()

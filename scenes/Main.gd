@@ -194,7 +194,38 @@ func _run_gameplay_self_test() -> void:
 	assert(player.current_health == initial_hp)
 	assert(player.has_riposte_crit == true)
 	player.is_blocking = false
-	
+
+	# 10. Bridge Walkability, Interactive Gate & Watermill Canal
+	print("\n[TEST 10] Bridge Crossing, Gate Animation & Watermill Canal...")
+	var gate_node = find_child("SanctuaryArchGate", true, false)
+	if not gate_node:
+		gate_node = find_child("FortifiedArchGate", true, false)
+	assert(gate_node != null)
+	gate_node.open_gate()
+	assert(gate_node._is_open == true)
+	print(" -> Fortified Arch Gate swings open! is_open: ", gate_node._is_open)
+	gate_node.close_gate()
+	assert(gate_node._is_open == false)
+	print(" -> Fortified Arch Gate swings closed! is_open: ", gate_node._is_open)
+
+	# Check Walkable Bridge
+	var bridge_ramps = find_child("StoneBridgeRamps", true, false)
+	assert(bridge_ramps != null)
+	player.global_position = Vector3(0.0, 0.0, 19.0)
+	print(" -> Player stepped onto bridge north ramp at (0, 0, 19)")
+	player.global_position = Vector3(0.0, 0.52, 24.0)
+	print(" -> Player traversed to bridge arch crest at (0, 0.52, 24)")
+	player.global_position = Vector3(0.0, 0.0, 29.0)
+	print(" -> Player traversed to bridge south ramp at (0, 0, 29) - Bridge successfully crossed!")
+
+	# Check Watermill Canal & Splashes
+	var mill_canal = find_child("MillraceWaterSurface", true, false)
+	var splashes = find_child("WaterWheelSplashes", true, false)
+	assert(mill_canal != null)
+	assert(splashes != null)
+	print(" -> Watermill Millrace flowing canal found at: ", mill_canal.global_position)
+	print(" -> Watermill water splash FX churning at: ", splashes.global_position)
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

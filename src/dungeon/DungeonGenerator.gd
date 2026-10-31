@@ -287,29 +287,54 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	var ground_size = 260.0
 	var half_s = ground_size * 0.5
 	
-	# 1. Floor Static Collision & Safety Void Safeguard (Full 274m x 274m realm)
+	# 1. Slotted Floor Static Collision & Safety Void Safeguard (River & Canal cutouts)
 	var floor_body = StaticBody3D.new()
+	floor_body.name = "OverworldFloorColliders"
 	floor_body.collision_layer = 1
-	var col_shape = CollisionShape3D.new()
-	var box = BoxShape3D.new()
-	box.size = Vector3(ground_size + 14.0, 1.2, ground_size + 14.0)
-	col_shape.shape = box
-	col_shape.position.y = -0.6
-	floor_body.add_child(col_shape)
+	floor_body.collision_mask = 0
+
+	var add_f_col = func(b_size: Vector3, b_pos: Vector3):
+		var cs = CollisionShape3D.new()
+		var bx = BoxShape3D.new()
+		bx.size = b_size
+		cs.shape = bx
+		cs.position = b_pos
+		floor_body.add_child(cs)
+
+	# North Bank West of Canal (X: -137 to 9.5, Z: -137 to 20.0)
+	add_f_col.call(Vector3(146.5, 1.2, 157.0), Vector3(-63.75, -0.6, -58.5))
+	# North Bank East of Canal (X: 13.9 to 137, Z: -137 to 20.0)
+	add_f_col.call(Vector3(123.1, 1.2, 157.0), Vector3(75.45, -0.6, -58.5))
+	# North Bank North of Canal (X: 9.5 to 13.9, Z: -137 to 13.5)
+	add_f_col.call(Vector3(4.4, 1.2, 150.5), Vector3(11.7, -0.6, -61.75))
+	# South Bank (X: -137 to 137, Z: 28.0 to 137.0)
+	add_f_col.call(Vector3(274.0, 1.2, 109.0), Vector3(0.0, -0.6, 82.5))
+	# Wading Riverbed Floor (X: -137 to 137, Z: 20.0 to 28.0 at Y = -0.50m)
+	add_f_col.call(Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
+	# Wading Canalbed Floor (X: 9.5 to 13.9, Z: 13.5 to 20.0 at Y = -0.50m)
+	add_f_col.call(Vector3(4.4, 1.2, 6.5), Vector3(11.7, -1.10, 16.75))
+
 	parent.add_child(floor_body)
 	
-	# Visual Overworld Continuous Grass Landscape (Full seamless meadow base)
-	var ground_mesh_inst = MeshInstance3D.new()
-	ground_mesh_inst.name = "OverworldGroundVisual"
-	var p_mesh = PlaneMesh.new()
-	p_mesh.size = Vector2(ground_size + 14.0, ground_size + 14.0)
-	ground_mesh_inst.mesh = p_mesh
+	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River and Watermill Canal)
 	var g_mat = StandardMaterial3D.new()
 	g_mat.albedo_color = Color(0.24, 0.44, 0.18) # Lush stylized medieval grass
 	g_mat.roughness = 0.88
-	ground_mesh_inst.material_override = g_mat
-	ground_mesh_inst.position.y = 0.0
-	parent.add_child(ground_mesh_inst)
+
+	var add_grass_plane = func(p_name: String, p_size: Vector2, p_pos: Vector3):
+		var g_mesh_inst = MeshInstance3D.new()
+		g_mesh_inst.name = p_name
+		var pm = PlaneMesh.new()
+		pm.size = p_size
+		g_mesh_inst.mesh = pm
+		g_mesh_inst.material_override = g_mat
+		g_mesh_inst.position = p_pos
+		parent.add_child(g_mesh_inst)
+
+	add_grass_plane.call("NorthBank_West_Grass", Vector2(146.5, 157.0), Vector3(-63.75, 0.0, -58.5))
+	add_grass_plane.call("NorthBank_East_Grass", Vector2(123.1, 157.0), Vector3(75.45, 0.0, -58.5))
+	add_grass_plane.call("NorthBank_CanalNorth_Grass", Vector2(4.4, 150.5), Vector3(11.7, 0.0, -61.75))
+	add_grass_plane.call("SouthBank_Grass", Vector2(274.0, 109.0), Vector3(0.0, 0.0, 82.5))
 	
 	# Outer world perimeter boundary collision barriers (North, South, East, West at +-130m)
 	var wall_h = 18.0
@@ -415,15 +440,14 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(8.5, 0, -3.0), Vector3.ONE * 2.0, -45.0)
 	_place_prop(parent, "res://assets/furniture/cabinet_small_decorated.gltf", Vector3(11.5, 0, -3.2), Vector3.ONE * 1.8, -90.0)
 
-	# 6. South: Fortified Arch Gateway (6.6m tall gateway)
-	var gate = AssetLoader.load_or_generate_model("res://assets/overworld/arch_gate.gltf", "dungeon", "arch_gate")
-	gate.scale = Vector3.ONE * 1.6
+	# 6. South: Fortified Arch Gateway (Interactive Animated Portcullis Doors with Physics)
+	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
+	var gate = OverworldGateScript.new()
+	gate.name = "SanctuaryArchGate"
 	gate.position = Vector3(0, 0, 14.0)
 	parent.add_child(gate)
-	_add_static_box(parent, Vector3(-3.4, 3.0, 14.0), Vector3(2.0, 6.0, 2.0))
-	_add_static_box(parent, Vector3(3.4, 3.0, 14.0), Vector3(2.0, 6.0, 2.0))
 
-	# Captain Vane - Gate Sentinel NPC (Proportionate ~1.89m knight)
+	# Captain Vane - Gate Sentinel NPC (Guarding beside the gateway pillar)
 	var vane = TownNPCScript.new()
 	vane.npc_id = "guard"
 	vane.npc_name = "Captain Vane"
@@ -431,9 +455,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	vane.icon = "🛡️"
 	vane.model_path = "res://assets/characters/adventurers/Knight.glb"
 	vane.model_scale = Vector3(0.55, 0.55, 0.55)
-	vane.model_rotation_y = 180.0
+	vane.model_rotation_y = 160.0
 	vane.dialogue_text = "Halt, warrior! You stand before the threshold of the Ossuary Catacombs. Beneath the north crypt lies the descent sigil. Step upon the glowing seal to plunge into the underworld. Beware the Bone Titan's wrath on the final floor!"
-	vane.position = Vector3(0, 0, 11.5)
+	vane.position = Vector3(-2.4, 0.0, 12.2)
 	parent.add_child(vane)
 
 	# Fortified Town Walls flanking the South Arch Gateway
@@ -468,6 +492,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_build_road_network(parent)
 	_build_town_quarter(parent)
 	_build_river_and_bridges(parent)
+	_build_riverside_meadow_and_props(parent)
 	_build_farmlands_hamlet(parent)
 	_build_castle_citadel(parent)
 	_build_blackwood_forest(parent)
@@ -598,37 +623,109 @@ func _place_lantern_post(parent: Node3D, pos: Vector3, rot_y: float = 0.0) -> No
 	post.add_child(light)
 	return post
 
+func _spawn_animated_fauna(parent: Node3D, model_path: String, pos: Vector3, sc: Vector3, rot_y: float, anim_name: String) -> Node3D:
+	var scene = load(model_path)
+	if not scene:
+		return null
+	var inst = scene.instantiate()
+	inst.position = pos
+	inst.scale = sc
+	inst.rotation_degrees.y = rot_y
+	parent.add_child(inst)
+	var anim: AnimationPlayer = inst.find_child("AnimationPlayer", true, false)
+	if anim and anim.has_animation(anim_name):
+		anim.play(anim_name)
+		anim.speed_scale = randf_range(0.85, 1.15)
+	return inst
+
+func _build_riverside_meadow_and_props(parent: Node3D) -> void:
+	# 1. North-West Riverside Garden & Tavern Green (X in [-7, -2], Z in [15, 20])
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(-4.5, 0.0, 16.0), Vector3.ONE * 2.0, 90.0)
+	_place_prop(parent, "res://assets/overworld/fence_broken.gltf", Vector3(-4.5, 0.0, 18.2), Vector3.ONE * 2.0, 90.0)
+	_place_prop(parent, "res://assets/overworld/tree_single_A.gltf", Vector3(-5.2, 0.0, 19.2), Vector3.ONE * 2.5)
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-3.8, 0.0, 19.5), Vector3.ONE * 1.6, 25.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(-6.8, 0.0, 19.8), Vector3.ONE * 1.8, -45.0)
+
+	# 2. North-East Riverside Grove (X in [3, 9], Z in [15, 20])
+	_place_prop(parent, "res://assets/overworld/tree_pine_orange_small.gltf", Vector3(4.8, 0.0, 18.8), Vector3.ONE * 2.8)
+	_place_prop(parent, "res://assets/overworld/trees_A_small.gltf", Vector3(8.5, 0.0, 19.2), Vector3.ONE * 2.4)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(4.2, 0.0, 17.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(4.8, 0.0, 17.2), Vector3.ONE * 1.2)
+
+	# 3. South River Meadows & Grazing Pasture (Z in [28, 42])
+	# West Meadow - Shaded forest border with grazing deer & noble stag
+	_place_prop(parent, "res://assets/overworld/tree_single_B.gltf", Vector3(-8.5, 0.0, 31.0), Vector3.ONE * 3.0)
+	_place_prop(parent, "res://assets/overworld/tree_pine_yellow_small.gltf", Vector3(-14.0, 0.0, 34.0), Vector3.ONE * 3.2)
+	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-6.5, 0.0, 33.0), Vector3.ONE * 2.4, 40.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-11.5, 0.0, 36.0), Vector3.ONE * 2.0, -30.0)
+	_spawn_animated_fauna(parent, "res://assets/characters/animals/Deer.glb", Vector3(-9.2, 0.0, 33.5), Vector3.ONE * 0.55, 60.0, "AnimalArmature|Eating")
+	_spawn_animated_fauna(parent, "res://assets/characters/animals/Deer.glb", Vector3(-12.5, 0.0, 31.0), Vector3.ONE * 0.52, -45.0, "AnimalArmature|Idle_2")
+	_spawn_animated_fauna(parent, "res://assets/characters/animals/Stag.glb", Vector3(-7.0, 0.0, 36.5), Vector3.ONE * 0.60, 110.0, "AnimalArmature|Idle")
+
+	# East Meadow - Farm approach with wooden fences, birch trees, hay & barrel clutter
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(4.8, 0.0, 30.0), Vector3.ONE * 2.0, -25.0)
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(6.5, 0.0, 32.0), Vector3.ONE * 2.0, -25.0)
+	_place_prop(parent, "res://assets/overworld/fence_broken.gltf", Vector3(8.2, 0.0, 34.0), Vector3.ONE * 2.0, -25.0)
+	_place_prop(parent, "res://assets/overworld/trees_A_medium.gltf", Vector3(12.0, 0.0, 31.5), Vector3.ONE * 2.8)
+	_place_prop(parent, "res://assets/overworld/tree_pine_orange_small.gltf", Vector3(15.5, 0.0, 34.0), Vector3.ONE * 3.0)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(9.2, 0.0, 35.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(9.8, 0.0, 35.5), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(10.5, 0.0, 29.5), Vector3.ONE * 2.2, 70.0)
+
 func _build_river_and_bridges(parent: Node3D) -> void:
-	# 1. Sunken Riverbed Silt/Pebble Basin (Y = -0.45m)
+	# 1. Sunken Riverbed Silt/Pebble Basin (Y = -0.50m) across the full 274m realm width
 	var bed_mesh_inst = MeshInstance3D.new()
 	bed_mesh_inst.name = "RiverbedVisual"
 	var b_mesh = PlaneMesh.new()
-	b_mesh.size = Vector2(110.0, 8.8)
+	b_mesh.size = Vector2(274.0, 8.0)
 	bed_mesh_inst.mesh = b_mesh
 	var b_mat = StandardMaterial3D.new()
 	b_mat.albedo_color = Color(0.12, 0.16, 0.13) # Dark wet river silt and smooth stones
 	b_mat.roughness = 0.95
 	bed_mesh_inst.material_override = b_mat
-	bed_mesh_inst.position = Vector3(0.0, -0.45, 24.0)
+	bed_mesh_inst.position = Vector3(0.0, -0.50, 24.0)
 	parent.add_child(bed_mesh_inst)
 
-	# 2. Continuous River Water Surface (Y = -0.12m, recessed below ground level)
+	# 2. Continuous River Water Surface (Y = -0.15m, recessed below ground level)
 	var river_mesh_inst = MeshInstance3D.new()
 	river_mesh_inst.name = "RiverWaterSurface"
 	var r_mesh = PlaneMesh.new()
-	r_mesh.size = Vector2(110.0, 8.0)
+	r_mesh.size = Vector2(274.0, 8.0)
 	river_mesh_inst.mesh = r_mesh
 	var w_mat = ShaderMaterial.new()
 	w_mat.shader = load("res://shaders/river_flow.gdshader")
 	river_mesh_inst.material_override = w_mat
-	river_mesh_inst.position = Vector3(0.0, -0.12, 24.0)
+	river_mesh_inst.position = Vector3(0.0, -0.15, 24.0)
 	parent.add_child(river_mesh_inst)
 
-	# 3. Natural Stone Riverbanks: lining North Bank (Z=19.8) and South Bank (Z=28.2)
+	# 3. Vertical Earth/Stone Embankment Walls lining the river edges
+	var bank_mat = StandardMaterial3D.new()
+	bank_mat.albedo_color = Color(0.16, 0.20, 0.14)
+	bank_mat.roughness = 0.92
+
+	var n_bank = MeshInstance3D.new()
+	n_bank.name = "NorthRiverbankWall"
+	var nb_mesh = BoxMesh.new()
+	nb_mesh.size = Vector3(274.0, 0.50, 0.12)
+	n_bank.mesh = nb_mesh
+	n_bank.material_override = bank_mat
+	n_bank.position = Vector3(0.0, -0.25, 20.0)
+	parent.add_child(n_bank)
+
+	var s_bank = MeshInstance3D.new()
+	s_bank.name = "SouthRiverbankWall"
+	var sb_mesh = BoxMesh.new()
+	sb_mesh.size = Vector3(274.0, 0.50, 0.12)
+	s_bank.mesh = sb_mesh
+	s_bank.material_override = bank_mat
+	s_bank.position = Vector3(0.0, -0.25, 28.0)
+	parent.add_child(s_bank)
+
+	# 4. Natural Stone Riverbanks: lining North Bank (Z=19.8) and South Bank (Z=28.2)
 	for rx in range(-24, 25, 2):
 		var x_f = float(rx) * 2.2
-		# Skip where bridges cross (X ~ 0 and X ~ -18)
-		if abs(x_f) > 3.2 and abs(x_f - (-18.0)) > 3.2:
+		# Skip where bridges cross (X ~ 0 and X ~ -18) and watermill canal (X ~ 11.7)
+		if abs(x_f) > 3.2 and abs(x_f - (-18.0)) > 3.2 and abs(x_f - 11.7) > 2.5:
 			var r_model = "res://assets/overworld/rock_single_A.gltf" if (rx % 4 == 0) else "res://assets/overworld/rock_single_B.gltf"
 			_place_prop(parent, r_model, Vector3(x_f, 0.0, 19.8), Vector3(2.0, 1.4, 2.0), float((rx * 37) % 360))
 			_place_prop(parent, r_model, Vector3(x_f + 0.8, 0.0, 28.2), Vector3(2.0, 1.4, 2.0), float((rx * 53) % 360))
@@ -640,26 +737,214 @@ func _build_river_and_bridges(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(14.0, -0.12, 26.8), Vector3.ONE * 1.8)
 	_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", Vector3(-24.0, -0.12, 22.5), Vector3.ONE * 1.8)
 
-	# Main Highway Stone Arch Bridge (Spans the full 8m river width)
-	_place_prop(parent, "res://assets/overworld/building_bridge_A.gltf", Vector3(0.0, 0.0, 24.0), Vector3(4.0, 3.2, 7.5))
-	_add_static_box(parent, Vector3(0.0, 0.4, 24.0), Vector3(4.5, 0.8, 8.5))
-	_add_static_box(parent, Vector3(-2.4, 1.2, 24.0), Vector3(0.5, 1.6, 8.5))
-	_add_static_box(parent, Vector3(2.4, 1.2, 24.0), Vector3(0.5, 1.6, 8.5))
+	# Main Highway Stone Arch Bridge (Smoothly Walkable Arched Highway)
+	_build_walkable_stone_bridge(parent, Vector3(0.0, 0.0, 24.0), Vector3(4.0, 3.2, 7.5))
 
-	# Western Wooden Footbridge
-	_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(-18.0, 0.0, 24.0), Vector3(3.6, 2.8, 7.0))
-	_add_static_box(parent, Vector3(-18.0, 0.35, 24.0), Vector3(4.0, 0.7, 8.0))
-	_add_static_box(parent, Vector3(-20.2, 1.0, 24.0), Vector3(0.4, 1.4, 8.0))
-	_add_static_box(parent, Vector3(-15.8, 1.0, 24.0), Vector3(0.4, 1.4, 8.0))
+	# Western Wooden Footbridge (Smoothly Walkable Planked Footbridge)
+	_build_walkable_wooden_bridge(parent, Vector3(-18.0, 0.0, 24.0), Vector3(3.6, 2.8, 7.0))
 
-	# Riverside Watermill (10.4m tall with rotating water wheel)
-	var watermill = _place_prop(parent, "res://assets/overworld/building_watermill_blue.gltf", Vector3(12.0, 0.0, 19.0), Vector3.ONE * 6.0, -90.0)
-	_add_static_box(parent, Vector3(12.0, 3.5, 19.0), Vector3(6.5, 7.0, 7.0))
+	# Riverside Watermill with Dedicated Flowing Water Canal (Millrace) & Churning Foam
+	_build_watermill_and_canal(parent, Vector3(12.0, 0.0, 19.0))
+
+func _build_walkable_stone_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> void:
+	_place_prop(parent, "res://assets/overworld/building_bridge_A.gltf", pos, sc)
+	
+	var sb = StaticBody3D.new()
+	sb.name = "StoneBridgeRamps"
+	sb.collision_layer = 1
+	sb.collision_mask = 0
+	
+	# North Approach Ramp (Slopes up smoothly from ground level Y=0.0 to crest Y=0.52)
+	var r_north_shape = BoxShape3D.new()
+	r_north_shape.size = Vector3(4.2, 0.25, 4.2)
+	var r_north_col = CollisionShape3D.new()
+	r_north_col.shape = r_north_shape
+	r_north_col.position = pos + Vector3(0.0, 0.26, -2.6)
+	r_north_col.rotation_degrees.x = -8.0
+	sb.add_child(r_north_col)
+	
+	# Center Arch Crest (Smooth flat road deck spanning across the river at Y=0.52)
+	var r_center_shape = BoxShape3D.new()
+	r_center_shape.size = Vector3(4.2, 0.25, 2.8)
+	var r_center_col = CollisionShape3D.new()
+	r_center_col.shape = r_center_shape
+	r_center_col.position = pos + Vector3(0.0, 0.52, 0.0)
+	sb.add_child(r_center_col)
+	
+	# South Approach Ramp (Slopes down smoothly from crest Y=0.52 to ground level Y=0.0)
+	var r_south_shape = BoxShape3D.new()
+	r_south_shape.size = Vector3(4.2, 0.25, 4.2)
+	var r_south_col = CollisionShape3D.new()
+	r_south_col.shape = r_south_shape
+	r_south_col.position = pos + Vector3(0.0, 0.26, 2.6)
+	r_south_col.rotation_degrees.x = 8.0
+	sb.add_child(r_south_col)
+	
+	# Left Guardrail Barrier (East edge)
+	var rail_l_col = CollisionShape3D.new()
+	var rail_l_shape = BoxShape3D.new()
+	rail_l_shape.size = Vector3(0.5, 1.8, 9.4)
+	rail_l_col.shape = rail_l_shape
+	rail_l_col.position = pos + Vector3(-2.3, 1.1, 0.0)
+	sb.add_child(rail_l_col)
+	
+	# Right Guardrail Barrier (West edge)
+	var rail_r_col = CollisionShape3D.new()
+	var rail_r_shape = BoxShape3D.new()
+	rail_r_shape.size = Vector3(0.5, 1.8, 9.4)
+	rail_r_col.shape = rail_r_shape
+	rail_r_col.position = pos + Vector3(2.3, 1.1, 0.0)
+	sb.add_child(rail_r_col)
+	
+	parent.add_child(sb)
+
+func _build_walkable_wooden_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> void:
+	_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", pos, sc)
+	
+	var sb = StaticBody3D.new()
+	sb.name = "WoodBridgeRamps"
+	sb.collision_layer = 1
+	sb.collision_mask = 0
+	
+	var r_north_shape = BoxShape3D.new()
+	r_north_shape.size = Vector3(3.6, 0.25, 3.6)
+	var r_north_col = CollisionShape3D.new()
+	r_north_col.shape = r_north_shape
+	r_north_col.position = pos + Vector3(0.0, 0.22, -2.4)
+	r_north_col.rotation_degrees.x = -7.5
+	sb.add_child(r_north_col)
+	
+	var r_center_shape = BoxShape3D.new()
+	r_center_shape.size = Vector3(3.6, 0.25, 2.6)
+	var r_center_col = CollisionShape3D.new()
+	r_center_col.shape = r_center_shape
+	r_center_col.position = pos + Vector3(0.0, 0.44, 0.0)
+	sb.add_child(r_center_col)
+	
+	var r_south_shape = BoxShape3D.new()
+	r_south_shape.size = Vector3(3.6, 0.25, 3.6)
+	var r_south_col = CollisionShape3D.new()
+	r_south_col.shape = r_south_shape
+	r_south_col.position = pos + Vector3(0.0, 0.22, 2.4)
+	r_south_col.rotation_degrees.x = 7.5
+	sb.add_child(r_south_col)
+	
+	var rail_l_col = CollisionShape3D.new()
+	var rail_l_shape = BoxShape3D.new()
+	rail_l_shape.size = Vector3(0.4, 1.5, 8.6)
+	rail_l_col.shape = rail_l_shape
+	rail_l_col.position = pos + Vector3(-2.0, 1.0, 0.0)
+	sb.add_child(rail_l_col)
+	
+	var rail_r_col = CollisionShape3D.new()
+	var rail_r_shape = BoxShape3D.new()
+	rail_r_shape.size = Vector3(0.4, 1.5, 8.6)
+	rail_r_col.shape = rail_r_shape
+	rail_r_col.position = pos + Vector3(2.0, 1.0, 0.0)
+	sb.add_child(rail_r_col)
+	
+	parent.add_child(sb)
+
+func _build_watermill_and_canal(parent: Node3D, pos: Vector3) -> void:
+	# 1. Riverside Watermill building with rotating water wheel
+	var watermill = _place_prop(parent, "res://assets/overworld/building_watermill_blue.gltf", pos, Vector3.ONE * 6.0, -90.0)
+	_add_static_box(parent, pos + Vector3(0.0, 3.5, 0.0), Vector3(6.5, 7.0, 7.0))
 	var wm_rot = RotatingProp.new()
 	wm_rot.target_node_name = "building_watermill_wheel_blue"
 	wm_rot.rotation_axis = Vector3(0, 0, 1)
 	wm_rot.rpm = 12.0
 	watermill.add_child(wm_rot)
+
+	# 2. Dedicated Sunken Mill Race Canal Basin (X: 9.5 to 13.9, Z: 13.5 to 20.0)
+	var canal_bed = MeshInstance3D.new()
+	canal_bed.name = "MillraceBed"
+	var cb_mesh = PlaneMesh.new()
+	cb_mesh.size = Vector2(4.4, 6.5)
+	canal_bed.mesh = cb_mesh
+	var cb_mat = StandardMaterial3D.new()
+	cb_mat.albedo_color = Color(0.10, 0.14, 0.12)
+	cb_mat.roughness = 0.95
+	canal_bed.material_override = cb_mat
+	canal_bed.position = Vector3(11.7, -0.50, 16.75)
+	parent.add_child(canal_bed)
+
+	# 3. Flowing Canal Water Surface (Recessed at Y = -0.15m, merging into the main river at Z=20.0)
+	var canal_water = MeshInstance3D.new()
+	canal_water.name = "MillraceWaterSurface"
+	var cw_mesh = PlaneMesh.new()
+	cw_mesh.size = Vector2(4.4, 6.5)
+	canal_water.mesh = cw_mesh
+	var cw_mat = ShaderMaterial.new()
+	cw_mat.shader = load("res://shaders/river_flow.gdshader")
+	canal_water.material_override = cw_mat
+	canal_water.position = Vector3(11.7, -0.15, 16.75)
+	parent.add_child(canal_water)
+
+	# Vertical Canal Masonry Retaining Walls
+	var wall_mat = StandardMaterial3D.new()
+	wall_mat.albedo_color = Color(0.20, 0.22, 0.20)
+	wall_mat.roughness = 0.88
+	
+	var c_west_wall = MeshInstance3D.new()
+	c_west_wall.name = "CanalWestWall"
+	var ww_mesh = BoxMesh.new()
+	ww_mesh.size = Vector3(0.12, 0.50, 6.5)
+	c_west_wall.mesh = ww_mesh
+	c_west_wall.material_override = wall_mat
+	c_west_wall.position = Vector3(9.5, -0.25, 16.75)
+	parent.add_child(c_west_wall)
+
+	var c_east_wall = MeshInstance3D.new()
+	c_east_wall.name = "CanalEastWall"
+	var ew_mesh = BoxMesh.new()
+	ew_mesh.size = Vector3(0.12, 0.50, 6.5)
+	c_east_wall.mesh = ew_mesh
+	c_east_wall.material_override = wall_mat
+	c_east_wall.position = Vector3(13.9, -0.25, 16.75)
+	parent.add_child(c_east_wall)
+
+	var c_north_wall = MeshInstance3D.new()
+	c_north_wall.name = "CanalNorthWall"
+	var nw_mesh = BoxMesh.new()
+	nw_mesh.size = Vector3(4.4, 0.50, 0.12)
+	c_north_wall.mesh = nw_mesh
+	c_north_wall.material_override = wall_mat
+	c_north_wall.position = Vector3(11.7, -0.25, 13.5)
+	parent.add_child(c_north_wall)
+
+	# 4. Active Churning Water Spray & Foam Particles under the spinning wheel
+	var splashes = CPUParticles3D.new()
+	splashes.name = "WaterWheelSplashes"
+	splashes.position = Vector3(11.7, -0.10, 19.0)
+	splashes.amount = 36
+	splashes.lifetime = 0.45
+	splashes.explosiveness = 0.15
+	splashes.direction = Vector3(0.0, 0.8, 1.0)
+	splashes.spread = 50.0
+	splashes.initial_velocity_min = 2.5
+	splashes.initial_velocity_max = 4.4
+	splashes.gravity = Vector3(0.0, -9.8, 0.0)
+	splashes.scale_amount_min = 0.8
+	splashes.scale_amount_max = 1.6
+	
+	var drop_mesh = SphereMesh.new()
+	drop_mesh.radius = 0.06
+	drop_mesh.height = 0.12
+	var drop_mat = StandardMaterial3D.new()
+	drop_mat.albedo_color = Color(0.85, 0.95, 1.0, 0.8)
+	drop_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	drop_mat.emission_enabled = true
+	drop_mat.emission = Color(0.6, 0.85, 1.0)
+	drop_mat.emission_energy_multiplier = 0.8
+	drop_mesh.material = drop_mat
+	splashes.mesh = drop_mesh
+	parent.add_child(splashes)
+
+	# 5. Canal Embankment Rocks & Storage Dressing
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(pos.x - 2.8, 0.0, pos.z - 2.5), Vector3(1.6, 1.2, 1.6), 40.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(pos.x - 2.8, 0.0, pos.z + 2.0), Vector3(1.8, 1.3, 1.8), -65.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(pos.x + 2.6, 0.0, pos.z - 3.2), Vector3(1.5, 1.1, 1.5), 110.0)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(pos.x - 2.6, 0.0, pos.z), Vector3.ONE * 1.3)
 
 func _build_farmlands_hamlet(parent: Node3D) -> void:
 	# Grand Windmill (Towering 14.3m high landmark with rotating blades)
@@ -1369,8 +1654,11 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	AmbientFX.create_chimney_smoke(parent, Vector3(70.0, 4.0, -62.0))
 
 	# 3. The Orc Stronghold & Bastion (Upper Plateau: X in [92, 110], Z in [-85, -110])
-	_place_prop(parent, "res://assets/overworld/arch_gate.gltf", Vector3(94.0, 0.0, -88.0), Vector3.ONE * 1.8, 45.0)
-	_add_static_box(parent, Vector3(94.0, 3.0, -88.0), Vector3(4.5, 6.0, 2.0))
+	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
+	var orc_gate = OverworldGateScript.new()
+	orc_gate.position = Vector3(94.0, 0.0, -88.0)
+	orc_gate.rotation_degrees.y = 45.0
+	parent.add_child(orc_gate)
 	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(89.0, 0.0, -85.0), Vector3(3.5, 4.0, 2.5), 45.0)
 	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(99.0, 0.0, -91.0), Vector3(3.5, 4.0, 2.5), 45.0)
 	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(93.0, 0.0, -86.0), Vector3.ONE * 2.2)
