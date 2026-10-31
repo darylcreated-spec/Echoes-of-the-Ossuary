@@ -2,9 +2,9 @@ extends Node3D
 class_name CirclingFlock
 
 @export var bird_count: int = 5
-@export var circle_radius: float = 14.0
-@export var circle_speed: float = 22.0 # Deg/sec
-@export var flight_height: float = 26.0
+@export var circle_radius: float = 16.0
+@export var circle_speed: float = 20.0 # Deg/sec
+@export var flight_height: float = 32.0 # True sky altitude high above castle spires
 
 var _birds: Array[Node3D] = []
 var _wings_left: Array[Node3D] = []
@@ -41,6 +41,7 @@ func _ready() -> void:
 		b_mesh.material = feather_mat
 		body.mesh = b_mesh
 		body.rotation_degrees.x = 90.0 # Align along forward Z
+		body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bird_root.add_child(body)
 		
 		# 2. Bird Head
@@ -51,6 +52,7 @@ func _ready() -> void:
 		h_mesh.material = feather_mat
 		head.mesh = h_mesh
 		head.position = Vector3(0.0, 0.05, -0.26)
+		head.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bird_root.add_child(head)
 		
 		# 3. Pointed Beak
@@ -61,6 +63,7 @@ func _ready() -> void:
 		beak.mesh = bk_mesh
 		beak.position = Vector3(0.0, 0.03, -0.38)
 		beak.rotation_degrees.x = -90.0
+		beak.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bird_root.add_child(beak)
 		
 		# 4. Fanned Tail Feathers
@@ -71,6 +74,7 @@ func _ready() -> void:
 		tail.mesh = t_mesh
 		tail.position = Vector3(0.0, 0.02, 0.32)
 		tail.rotation_degrees.x = 90.0
+		tail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bird_root.add_child(tail)
 		
 		# 5. Articulated Left Wing (Pivot at shoulder X = -0.10)
@@ -83,6 +87,7 @@ func _ready() -> void:
 		w_inner_mesh.material = feather_mat
 		l_inner.mesh = w_inner_mesh
 		l_inner.position = Vector3(-0.19, 0.0, 0.0)
+		l_inner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		l_wing_pivot.add_child(l_inner)
 		
 		# Left Outer Wing Tip (Feathered sweep)
@@ -95,6 +100,7 @@ func _ready() -> void:
 		l_outer.mesh = w_outer_mesh
 		l_outer.position = Vector3(-0.17, 0.0, 0.0)
 		l_outer.rotation_degrees.z = -90.0
+		l_outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		l_tip_pivot.add_child(l_outer)
 		l_wing_pivot.add_child(l_tip_pivot)
 		
@@ -109,6 +115,7 @@ func _ready() -> void:
 		var r_inner = MeshInstance3D.new()
 		r_inner.mesh = w_inner_mesh
 		r_inner.position = Vector3(0.19, 0.0, 0.0)
+		r_inner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		r_wing_pivot.add_child(r_inner)
 		
 		var r_tip_pivot = Node3D.new()
@@ -117,6 +124,7 @@ func _ready() -> void:
 		r_outer.mesh = w_outer_mesh
 		r_outer.position = Vector3(0.17, 0.0, 0.0)
 		r_outer.rotation_degrees.z = 90.0
+		r_outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		r_tip_pivot.add_child(r_outer)
 		r_wing_pivot.add_child(r_tip_pivot)
 		

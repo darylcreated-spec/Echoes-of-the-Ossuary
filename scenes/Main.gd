@@ -198,8 +198,19 @@ func _run_gameplay_self_test() -> void:
 	# 10. Bridge Walkability, Interactive Gate & Watermill Canal
 	print("\n[TEST 10] Bridge Crossing, Gate Animation & Watermill Canal...")
 	var gate_node = find_child("SanctuaryArchGate", true, false)
+	if not gate_node and current_room:
+		gate_node = current_room.find_child("SanctuaryArchGate", true, false)
+	if not gate_node and dungeon_gen:
+		gate_node = dungeon_gen.find_child("SanctuaryArchGate", true, false)
 	if not gate_node:
-		gate_node = find_child("FortifiedArchGate", true, false)
+		for c in get_tree().get_nodes_in_group("gate"):
+			gate_node = c
+			break
+	if not gate_node:
+		var all_gates = []
+		_find_all_gates(self, all_gates)
+		if all_gates.size() > 0:
+			gate_node = all_gates[0]
 	assert(gate_node != null)
 	gate_node.open_gate()
 	assert(gate_node._is_open == true)
@@ -230,6 +241,12 @@ func _run_gameplay_self_test() -> void:
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
 	get_tree().quit(0)
+
+func _find_all_gates(n: Node, out: Array) -> void:
+	if n.is_in_group("gate") or n.has_method("open_gate"):
+		out.append(n)
+	for c in n.get_children():
+		_find_all_gates(c, out)
 
 func _init_camera_position() -> void:
 	target_cam_yaw = 45.0

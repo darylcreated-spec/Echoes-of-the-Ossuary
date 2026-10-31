@@ -14,6 +14,7 @@ var _tween: Tween = null
 var _target_player: Node3D = null
 
 func _init() -> void:
+	add_to_group("gate")
 	name = "FortifiedArchGate"
 	_setup_model()
 	_setup_collision()
