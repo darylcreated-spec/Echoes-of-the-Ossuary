@@ -76,15 +76,19 @@ func _build_visuals() -> void:
 	# Look for AnimationPlayer and start idle
 	_anim_player = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim_player:
-		var anims = _anim_player.get_animation_list()
-		if anims.size() > 0:
-			# Play first idle-like or default animation
-			var idle_anim = anims[0]
-			for a in anims:
-				if "idle" in a.to_lower():
-					idle_anim = a
-					break
-			_anim_player.play(idle_anim)
+		_play_default_idle()
+
+func _play_default_idle() -> void:
+	if not _anim_player:
+		return
+	var anims = _anim_player.get_animation_list()
+	if anims.size() > 0:
+		var idle_anim = anims[0]
+		for a in anims:
+			if "idle" in a.to_lower():
+				idle_anim = a
+				break
+		_anim_player.play(idle_anim, 0.2, 1.0)
 	
 	# Floating Name Tag & Prompt
 	_label = Label3D.new()
@@ -119,6 +123,24 @@ func interact(player: Node3D) -> void:
 			look_at(look_target, Vector3.UP)
 			rotation.x = 0.0
 			rotation.z = 0.0
+
+	# Welcoming gesture / emote
+	if _anim_player:
+		var gesture = ""
+		var anims = _anim_player.get_animation_list()
+		for candidate in ["cheer", "interact", "talking", "block"]:
+			for a in anims:
+				if candidate in a.to_lower():
+					gesture = a
+					break
+			if gesture != "":
+				break
+		if gesture != "":
+			_anim_player.play(gesture, 0.15, 1.2)
+			get_tree().create_timer(1.2).timeout.connect(func():
+				if is_instance_valid(self) and _anim_player:
+					_play_default_idle()
+			)
 
 	var hud = get_tree().get_first_node_in_group("hud")
 	if not hud:

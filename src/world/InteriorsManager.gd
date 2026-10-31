@@ -65,17 +65,21 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	_place_model(room, "res://assets/overworld/candle_triple.gltf", Vector3(2.2, 0.6, -10.5), Vector3.ONE * 1.5)
 	_add_warm_light(room, Vector3(0, 3.8, -9.5), Color(1.0, 0.88, 0.55), 1.8, 9.0)
 	
+	# Royal Honor Guards flanking the throne
+	_spawn_guard_npc(room, Vector3(-3.2, 0.6, -9.5), 25.0)
+	_spawn_guard_npc(room, Vector3(3.2, 0.6, -9.5), -25.0)
+
 	# NPC: Royal Steward Alden
 	var steward = TownNPC.new()
 	steward.npc_id = "steward"
 	steward.npc_name = "Steward Alden"
 	steward.npc_title = "Royal Castellan"
 	steward.icon = "👑"
-	steward.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	steward.model_path = "res://assets/characters/adventurers/Knight.glb"
 	steward.model_scale = Vector3(0.55, 0.55, 0.55)
 	steward.model_rotation_y = 180.0
 	steward.dialogue_text = "Welcome to the Grand Hall, champion. The Ossuary stirs below, and our King seeks heroes of fortitude. The royal chalice was lost to the northern ruins—bring it to me and receive the blessing of the Crown!"
-	steward.position = Vector3(2.5, 0.6, -8.5)
+	steward.position = Vector3(1.8, 0.6, -8.5)
 	room.add_child(steward)
 	
 	# Exit Doorway back to Town Castle Exterior
@@ -87,6 +91,7 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
+	exit_door.target_bgm_key = "bgm_overworld"
 	exit_door.position = Vector3(0.0, 0.0, 12.0)
 	room.add_child(exit_door)
 
@@ -136,14 +141,18 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	_add_warm_light(room, Vector3(2.5, 3.2, 1.0), Color(1.0, 0.82, 0.50), 1.6, 9.0)
 	_add_warm_light(room, Vector3(-4.5, 2.8, -2.0), Color(1.0, 0.78, 0.48), 1.4, 7.5)
 	
+	# Seated Tavern Patrons at dining tables
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(2.5, 0.0, -2.5), 0.0, Vector3(0.52, 0.52, 0.52))
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue.glb", Vector3(2.5, 0.0, -0.5), 180.0, Vector3(0.50, 0.50, 0.50))
+
 	# NPC: Barkeep Barnaby (behind bar)
 	var barkeep = TownNPC.new()
 	barkeep.npc_id = "barkeep"
 	barkeep.npc_name = "Barkeep Barnaby"
 	barkeep.npc_title = "Tavern Master"
 	barkeep.icon = "🍺"
-	barkeep.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-	barkeep.model_scale = Vector3(0.55, 0.55, 0.55)
+	barkeep.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	barkeep.model_scale = Vector3(0.54, 0.54, 0.54)
 	barkeep.model_rotation_y = 90.0
 	barkeep.dialogue_text = "Welcome to The Boar's Tusk! Rest your boots by the hearth, traveler. Say, my granddad's secret spiced mead recipe scroll was lost near the old watchtower cemetery. If you retrieve it, I've got gold and my finest draughts for you!"
 	barkeep.position = Vector3(-5.2, 0, -2.0)
@@ -155,7 +164,7 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	bard.npc_name = "Bard Finn"
 	bard.npc_title = "Minstrel of Oakhaven"
 	bard.icon = "🪕"
-	bard.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	bard.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	bard.model_scale = Vector3(0.52, 0.52, 0.52)
 	bard.model_rotation_y = -45.0
 	bard.dialogue_text = "Listen close to the embers, traveler... 'Beneath the stone, the ossuary sighs, where fallen kings and hollow shadows rise!' Keep your sword sharp when you step into the depths."
@@ -171,6 +180,7 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
+	exit_door.target_bgm_key = "bgm_overworld"
 	exit_door.position = Vector3(0.0, 0.0, 6.8)
 	room.add_child(exit_door)
 
@@ -227,6 +237,7 @@ static func _build_forge_interior(parent: Node3D) -> void:
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
+	exit_door.target_bgm_key = "bgm_overworld"
 	exit_door.position = Vector3(0.0, 0.0, 5.8)
 	room.add_child(exit_door)
 
@@ -270,7 +281,7 @@ static func _build_cottage_interior(parent: Node3D) -> void:
 	giles.npc_name = "Elder Giles"
 	giles.npc_title = "Village Patriarch"
 	giles.icon = "🌾"
-	giles.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	giles.model_path = "res://assets/characters/adventurers/Barbarian.glb"
 	giles.model_scale = Vector3(0.55, 0.55, 0.55)
 	giles.dialogue_text = "Good day, traveler. Welcome to our humble home. Ferocious timber wolves have crept out from the eastern woods and stalked our sheep pasture! If you can hunt 3 wolves, our hamlet will reward you with gold and soul echoes."
 	giles.position = Vector3(2.4, 0, 0.5)
@@ -285,6 +296,7 @@ static func _build_cottage_interior(parent: Node3D) -> void:
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
+	exit_door.target_bgm_key = "bgm_overworld"
 	exit_door.position = Vector3(0.0, 0.0, 4.8)
 	room.add_child(exit_door)
 
@@ -360,3 +372,35 @@ static func _add_warm_light(parent: Node3D, pos: Vector3, color: Color, energy: 
 	light.omni_attenuation = 1.2
 	parent.add_child(light)
 	return light
+
+static func _spawn_guard_npc(parent: Node3D, pos: Vector3, rot_y: float) -> Node3D:
+	var guard = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "royal_guard")
+	guard.position = pos
+	guard.scale = Vector3(0.55, 0.55, 0.55)
+	guard.rotation_degrees.y = rot_y
+	parent.add_child(guard)
+	var ap = guard.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if ap:
+		if ap.has_animation("Idle_Combat"):
+			ap.play("Idle_Combat")
+		elif ap.has_animation("Block"):
+			ap.play("Block")
+		elif ap.has_animation("Idle"):
+			ap.play("Idle")
+	return guard
+
+static func _spawn_seated_npc(parent: Node3D, model_p: String, pos: Vector3, rot_y: float, s_scale: Vector3) -> Node3D:
+	var patron = AssetLoader.load_or_generate_model(model_p, "character", "tavern_patron")
+	patron.position = pos
+	patron.scale = s_scale
+	patron.rotation_degrees.y = rot_y
+	parent.add_child(patron)
+	var ap = patron.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if ap:
+		if ap.has_animation("Sit_Chair_Idle"):
+			ap.play("Sit_Chair_Idle")
+		elif ap.has_animation("Sit_Chair_Pose"):
+			ap.play("Sit_Chair_Pose")
+		elif ap.has_animation("Idle"):
+			ap.play("Idle")
+	return patron

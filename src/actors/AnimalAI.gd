@@ -222,6 +222,11 @@ func _process_wander(delta: float) -> void:
 		_state_timer = randf_range(2.0, 5.0)
 		velocity.x = 0.0
 		velocity.z = 0.0
+		if anim_player:
+			if animal_type != AnimalType.WOLF and randf() > 0.4 and anim_player.has_animation("AnimalArmature|Eating"):
+				anim_player.play("AnimalArmature|Eating", 0.2, 1.0)
+			else:
+				play_anim("Idle", 0.2, 1.0)
 	else:
 		var dir = to_target.normalized()
 		velocity.x = dir.x * (move_speed * 0.45) # Walk speed
@@ -288,6 +293,11 @@ func _process_attack(delta: float) -> void:
 	if _state_timer <= 0.0:
 		current_ai_state = AIState.CHASE
 
+func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	super.take_damage(amount, knockback, is_crit, source)
+	if not is_dead and anim_player:
+		play_anim("Idle_HitReact_Left", 0.05, 1.6)
+
 func die() -> void:
 	if is_dead:
 		return
@@ -323,4 +333,11 @@ func die() -> void:
 	
 	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.8, 0), Color(0.9, 0.6, 0.2))
 	AudioManager.play_sfx("sword_swing", 0.1, 1.5)
-	queue_free()
+	if anim_player:
+		play_anim("Death", 0.08, 1.2)
+		collision_layer = 0
+		collision_mask = 0
+		set_physics_process(false)
+		get_tree().create_timer(1.2).timeout.connect(queue_free)
+	else:
+		queue_free()

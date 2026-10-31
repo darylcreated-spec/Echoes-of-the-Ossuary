@@ -169,6 +169,12 @@ func _setup_visuals() -> void:
 			shield.name = "Shield"
 			AssetLoader.attach_weapon_socket(visual_model_root, shield, "handslot.l")
 
+	if anim_player:
+		if anim_player.has_animation("Spawn_Ground_Skeletons"):
+			anim_player.play("Spawn_Ground_Skeletons", 0.05, 1.3)
+		elif anim_player.has_animation("Skeletons_Awaken_Floor"):
+			anim_player.play("Skeletons_Awaken_Floor", 0.05, 1.3)
+
 func _create_telegraph_indicator() -> void:
 	telegraph_indicator = MeshInstance3D.new()
 	var cyl = CylinderMesh.new()
@@ -366,6 +372,9 @@ func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3
 			
 	super.take_damage(final_dmg, knockback, is_crit, source)
 	
+	if not is_dead and not is_attacking and anim_player:
+		play_anim("Hit_A", 0.05, 1.5)
+
 	if current_ai_state == AIState.TELEGRAPH and is_crit:
 		# Heavy crit staggers and interrupts telegraph!
 		current_ai_state = AIState.STAGGER
@@ -395,4 +404,13 @@ func die() -> void:
 	else:
 		CombatJuice.spawn_bone_burst(global_position)
 		AudioManager.play_sfx("skeleton_bones", 0.1, 2.0)
-	queue_free()
+		
+	if anim_player:
+		var death_anim = "Death_C_Skeletons" if anim_player.has_animation("Death_C_Skeletons") else "Death_A"
+		play_anim(death_anim, 0.08, 1.3)
+		collision_layer = 0
+		collision_mask = 0
+		set_physics_process(false)
+		get_tree().create_timer(1.2).timeout.connect(queue_free)
+	else:
+		queue_free()

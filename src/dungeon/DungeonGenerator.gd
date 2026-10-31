@@ -989,6 +989,7 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	castle_door.target_rotation_y = 180.0
 	castle_door.target_cam_distance = 12.0
 	castle_door.target_cam_pitch = 40.0
+	castle_door.target_bgm_key = "bgm_castle"
 	castle_door.position = Vector3(0.0, 0.0, 39.0)
 	parent.add_child(castle_door)
 
@@ -1000,6 +1001,7 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	tavern_door.target_rotation_y = 0.0
 	tavern_door.target_cam_distance = 11.0
 	tavern_door.target_cam_pitch = 40.0
+	tavern_door.target_bgm_key = "bgm_tavern"
 	tavern_door.position = Vector3(-7.5, 0.0, 17.5)
 	parent.add_child(tavern_door)
 
@@ -1011,6 +1013,7 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	forge_door.target_rotation_y = 0.0
 	forge_door.target_cam_distance = 10.0
 	forge_door.target_cam_pitch = 40.0
+	forge_door.target_bgm_key = "bgm_forge"
 	forge_door.position = Vector3(-11.5, 0.0, 0.0)
 	parent.add_child(forge_door)
 
@@ -1022,5 +1025,6 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	cottage_door.target_rotation_y = 0.0
 	cottage_door.target_cam_distance = 10.0
 	cottage_door.target_cam_pitch = 40.0
+	cottage_door.target_bgm_key = "bgm_overworld"
 	cottage_door.position = Vector3(19.5, 0.0, 14.0)
 	parent.add_child(cottage_door)

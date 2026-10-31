@@ -321,6 +321,8 @@ func _process_landing_slam(delta: float) -> void:
 func _start_whirlwind() -> void:
 	current_action = BossAction.WHIRLWIND
 	_action_timer = 2.4
+	if anim_player:
+		play_anim("2H_Melee_Attack_Spin", 0.08, 1.8)
 	if hitbox:
 		hitbox.damage = attack_damage * 0.7
 		hitbox.damage_source = self
@@ -367,8 +369,17 @@ func die() -> void:
 	CombatJuice.freeze_frame(0.2, 0.02)
 	CombatJuice.spawn_bone_burst(global_position, 50)
 	AudioManager.play_sfx("skeleton_bones", 0.05, 6.0)
+	AudioManager.play_sfx("sfx_victory_fanfare", 0.0, 3.0)
+	
+	if anim_player:
+		var death_anim = "Death_C_Skeletons" if anim_player.has_animation("Death_C_Skeletons") else "Death_A"
+		play_anim(death_anim, 0.08, 1.0)
 	
 	GameManager.add_gold(150)
 	GameManager.add_echoes(100)
 	GameManager.trigger_game_over(true)
-	queue_free()
+	
+	collision_layer = 0
+	collision_mask = 0
+	set_physics_process(false)
+	get_tree().create_timer(1.8).timeout.connect(queue_free)

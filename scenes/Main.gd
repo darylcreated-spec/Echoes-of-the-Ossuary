@@ -311,9 +311,11 @@ func load_current_floor_room() -> Node3D:
 	
 	_update_environment_lighting(GameManager.current_floor)
 	
-	# Select appropriate music theme: Overworld village vs. Underworld Catacombs
+	# Select appropriate music theme: Overworld village vs. Underworld Catacombs vs Boss Battle
 	if GameManager.current_floor == 0:
 		AudioManager.play_bgm("bgm_overworld", -12.0)
+	elif GameManager.current_floor >= 5:
+		AudioManager.play_bgm("bgm_boss", -10.0)
 	else:
 		AudioManager.play_bgm("bgm_dungeon", -10.0)
 	

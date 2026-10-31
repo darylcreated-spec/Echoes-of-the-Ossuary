@@ -259,6 +259,8 @@ func _handle_actions() -> void:
 		
 	# Interact
 	if Input.is_action_just_pressed("interact") and current_interactable:
+		if anim_player:
+			play_anim("Interact", 0.08, 1.6)
 		if current_interactable.has_method("interact"):
 			current_interactable.interact(self)
 		elif current_interactable.has_meta("action"):
@@ -378,8 +380,16 @@ func _animate_melee_combo(step: int) -> void:
 				0: 
 					anim_to_play = "2H_Melee_Attack_Spin"
 					anim_speed = 2.4
+		elif GameManager.selected_class == GameManager.HeroClass.MAGE:
+			match step:
+				1: anim_to_play = "Spellcast_Shoot"
+				2: anim_to_play = "Spellcast_Raise"
+				0: anim_to_play = "Spellcast_Long"
 		elif GameManager.selected_class == GameManager.HeroClass.ROGUE:
-			anim_to_play = "1H_Melee_Attack_Stab"
+			match step:
+				1: anim_to_play = "1H_Melee_Attack_Stab"
+				2: anim_to_play = "1H_Melee_Attack_Slice_Diagonal"
+				0: anim_to_play = "Dualwield_Melee_Attack_Slice"
 		else:
 			match step:
 				1: anim_to_play = "1H_Melee_Attack_Slice_Horizontal"
@@ -493,6 +503,9 @@ func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3
 	if GameManager.has_boon("knight_crest"):
 		amount *= 0.85
 	super.take_damage(amount, knockback, is_crit, source)
+	if not is_dead and not is_attacking and anim_player:
+		var hit_anim = "Hit_A" if randf() > 0.5 else "Hit_B"
+		play_anim(hit_anim, 0.05, 1.4)
 	# Thorns of Bone Boon: reflect damage
 	if GameManager.has_boon("thorns_of_bone") and source and source != self:
 		if source.has_method("take_damage"):
@@ -510,6 +523,8 @@ func die() -> void:
 		return
 	is_dead = true
 	character_died.emit()
+	if anim_player:
+		play_anim("Death_A", 0.08, 1.0)
 	CombatJuice.spawn_bone_burst(global_position, 24)
 	AudioManager.play_sfx("skeleton_bones", 0.05, 4.0)
 	GameManager.trigger_game_over(false)

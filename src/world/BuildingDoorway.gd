@@ -11,6 +11,7 @@ signal player_transitioned(door_id: String)
 @export var target_cam_distance: float = 12.0
 @export var target_cam_pitch: float = 40.0
 @export var target_cam_yaw: float = 45.0
+@export var target_bgm_key: String = ""
 @export var interior_name: String = "Castle Grand Hall"
 
 var _is_transitioning: bool = false
@@ -80,6 +81,9 @@ func interact(player: Node3D) -> void:
 			main.target_cam_pitch = target_cam_pitch
 		if "target_cam_yaw" in main:
 			main.target_cam_yaw = target_cam_yaw
+
+	if target_bgm_key != "":
+		AudioManager.crossfade_to_bgm(target_bgm_key, 0.85, -12.0)
 			
 	# Door close sound on arrival
 	AudioManager.play_sfx("door_close", 0.05, 0.0)
