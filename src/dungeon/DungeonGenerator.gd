@@ -764,6 +764,21 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(27.0, 0.0, 40.0), 15.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(38.0, 0.0, 34.0), -85.0)
 
+	# NPC: Barnaby the Stable Master (Outside the Pasture Gate)
+	var stablemaster = TownNPCScript.new()
+	stablemaster.npc_id = "stablemaster"
+	stablemaster.npc_name = "Barnaby"
+	stablemaster.npc_title = "Royal Ostler & Stable Master"
+	stablemaster.icon = "🐎"
+	stablemaster.model_path = "res://assets/characters/adventurers/Knight.glb"
+	stablemaster.model_scale = Vector3(0.55, 0.55, 0.55)
+	stablemaster.model_rotation_y = 90.0
+	stablemaster.position = Vector3(20.8, 0.0, 37.0)
+	parent.add_child(stablemaster)
+	
+	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(20.5, 0.0, 39.0), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(20.5, 0.0, 35.0), Vector3.ONE * 1.4)
+
 func _build_castle_citadel(parent: Node3D) -> void:
 	# Royal Castle Keep (Imposing 25.8m tall imperial fortress)
 	_place_prop(parent, "res://assets/overworld/building_castle_blue.gltf", Vector3(0.0, 0.0, 44.0), Vector3.ONE * 6.5)

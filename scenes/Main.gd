@@ -156,7 +156,44 @@ func _run_gameplay_self_test() -> void:
 	# Return to Overworld
 	GameManager.current_floor = 0
 	load_current_floor_room()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	print(" -> Returned to Overworld Sanctuary Hub safely!")
+
+	# 8. Warsteed Mount & Cavalier System
+	print("\n[TEST 8] Warsteed Mount & Cavalier System (Pillar 1)...")
+	assert(player != null)
+	player.mount("Horse")
+	print(" -> Mounted Warsteed successfully! is_mounted: ", player.is_mounted)
+	assert(player.is_mounted == true)
+	assert(player.mount_node != null)
+	player._mounted_leap()
+	print(" -> Mounted obstacle leap executed successfully!")
+	player.dismount()
+	print(" -> Dismounted successfully! is_mounted: ", player.is_mounted)
+	assert(player.is_mounted == false)
+
+	# 9. Dual-Stance Weapon Swap, Crossbow & Shield Parry
+	print("\n[TEST 9] Dual-Stance Weapon Swap, Crossbow & Shield Parry (Pillar 2)...")
+	var initial_hp = player.current_health
+	player.toggle_weapon_stance()
+	print(" -> Swapped to Ranged Stance: ", player.current_stance == player.WeaponStance.RANGED)
+	assert(player.current_stance == player.WeaponStance.RANGED)
+	player._execute_attack()
+	print(" -> Crossbow piercing bolt loosed successfully!")
+	
+	player.toggle_weapon_stance()
+	print(" -> Swapped back to Melee Stance: ", player.current_stance == player.WeaponStance.MELEE)
+	assert(player.current_stance == player.WeaponStance.MELEE)
+	
+	# Test Perfect Parry
+	player.is_blocking = true
+	player.parry_window_timer = 0.20
+	player.take_damage(25.0, Vector3.ZERO, false, null)
+	print(" -> Perfect Parry Executed! Health preserved: ", player.current_health == initial_hp, " Riposte Primed: ", player.has_riposte_crit)
+	assert(player.current_health == initial_hp)
+	assert(player.has_riposte_crit == true)
+	player.is_blocking = false
 	
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")

@@ -34,7 +34,12 @@ const SFX_PATHS: Dictionary = {
 	"door_close": "res://assets/audio/sfx_door_close.ogg",
 	"footstep": "res://assets/audio/sfx_footstep_0.ogg",
 	"button_click": "res://assets/audio/sfx_button_click.wav",
-	"ui_switch": "res://assets/audio/sfx_ui_switch.wav"
+	"ui_switch": "res://assets/audio/sfx_ui_switch.wav",
+	"steed_whistle": "res://assets/audio/sfx_steed_whistle.ogg",
+	"hoofbeat": "res://assets/audio/sfx_hoofbeat.ogg",
+	"crossbow_shoot": "res://assets/audio/sfx_crossbow_shoot.ogg",
+	"parry_ring": "res://assets/audio/sfx_parry_ring.ogg",
+	"weapon_swap": "res://assets/audio/sfx_weapon_swap.ogg"
 }
 
 # Synth buffer fallbacks
@@ -285,6 +290,84 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var t = float(i) / sample_rate
 				var env = exp(-t * 80.0)
 				var val = sin(2.0 * PI * 1200.0 * t) * env * 0.5
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"steed_whistle":
+			# Piercing two-tone ascending equestrian whistle
+			var duration: float = 0.42
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var freq = lerp(1760.0, 2640.0, t / duration)
+				var vibrato = sin(2.0 * PI * 14.0 * t) * 60.0
+				var val = sin(2.0 * PI * (freq + vibrato) * t) * env * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"hoofbeat":
+			# Acoustic double-tap equestrian hoofbeat (clip-clop)
+			var duration: float = 0.18
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				# First clop at 0.0s, second clop at 0.08s
+				var t1 = t
+				var env1 = exp(-t1 * 60.0)
+				var pop1 = sin(2.0 * PI * 140.0 * t1) * env1
+				
+				var t2 = max(0.0, t - 0.08)
+				var env2 = exp(-t2 * 65.0) if t >= 0.08 else 0.0
+				var pop2 = sin(2.0 * PI * 190.0 * t2) * env2
+				
+				var wood = (pop1 * 0.7 + pop2 * 0.85) + randf_range(-0.1, 0.1) * (env1 + env2) * 0.3
+				var val = wood * 0.8
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"crossbow_shoot":
+			# Crisp mechanical string release snap & projectile whiz
+			var duration: float = 0.22
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 32.0)
+				var snap = (randf_range(-0.8, 0.8) * exp(-t * 90.0))
+				var thrum = sin(2.0 * PI * lerp(340.0, 120.0, t / duration) * t) * env * 0.6
+				var val = (snap * 0.6 + thrum * 0.5) * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"parry_ring":
+			# Brilliant ringing anvil deflection chime (2800 Hz + 5600 Hz harmonic)
+			var duration: float = 0.65
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 9.5)
+				var ping1 = sin(2.0 * PI * 2793.8 * t) * 0.65
+				var ping2 = sin(2.0 * PI * 5587.6 * t) * 0.25
+				var sub_clack = sin(2.0 * PI * 440.0 * t) * exp(-t * 40.0) * 0.3
+				var val = (ping1 + ping2 + sub_clack) * env * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"weapon_swap":
+			# Metallic blade draw / sheathe scrape
+			var duration: float = 0.25
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var scrape = randf_range(-0.5, 0.5) * env * 0.4
+				var ring = sin(2.0 * PI * 1800.0 * t) * exp(-t * 18.0) * 0.4
+				var val = (scrape + ring) * 0.75
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 

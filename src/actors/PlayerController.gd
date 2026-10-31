@@ -13,6 +13,27 @@ var dash_duration: float = 0.22
 var is_ranged: bool = false
 var crit_chance: float = 0.1
 
+# --- MOUNT SYSTEM (PILLAR 1) ---
+var is_mounted: bool = false
+var mount_node: Node3D = null
+var mount_anim: AnimationPlayer = null
+var mount_breed: String = "Horse" # "Horse", "Horse_White", "Stag"
+var mount_speed: float = 12.8
+var _hoofbeat_timer: float = 0.0
+var _trample_cooldown: float = 0.0
+var _mount_cooldown: float = 0.0
+
+# --- WEAPON STANCE & SHIELD PARRY (PILLAR 2) ---
+enum WeaponStance { MELEE, RANGED }
+var current_stance: WeaponStance = WeaponStance.MELEE
+var is_blocking: bool = false
+var parry_window_timer: float = 0.0
+const PARRY_WINDOW: float = 0.22
+var has_riposte_crit: bool = false
+var primary_weapon_node: Node3D = null
+var shield_node: Node3D = null
+var crossbow_node: Node3D = null
+
 # Timers & States
 var _can_attack: bool = true
 var _attack_timer: Timer = null
@@ -113,17 +134,56 @@ func _setup_model_and_weapon() -> void:
 	invalidate_model_cache()
 	_cache_model_nodes()
 	
-	# Weapon Attachment
+	# Primary Weapon Attachment
 	var weapon_path = "res://assets/weapons/" + weapon_name_str + ".glb"
-	var weapon_node = AssetLoader.load_or_generate_model(weapon_path, "weapon", weapon_name_str)
-	weapon_node.name = "EquippedWeapon"
-	AssetLoader.attach_weapon_socket(visual_model_root, weapon_node, "handslot.r")
+	primary_weapon_node = AssetLoader.load_or_generate_model(weapon_path, "weapon", weapon_name_str)
+	primary_weapon_node.name = "EquippedPrimary"
+	AssetLoader.attach_weapon_socket(visual_model_root, primary_weapon_node, "handslot.r")
 
-	# Additional shield for Knight
-	if GameManager.selected_class == GameManager.HeroClass.KNIGHT:
-		var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square.glb", "weapon", "shield_square")
-		shield.name = "EquippedShield"
-		AssetLoader.attach_weapon_socket(visual_model_root, shield, "handslot.l")
+	# Shield Attachment (Knight gets classic shield_square, other classes get shield_badge_color)
+	var shield_file = "res://assets/weapons/shield_square.glb" if GameManager.selected_class == GameManager.HeroClass.KNIGHT else "res://assets/weapons/shield_badge_color.gltf"
+	shield_node = AssetLoader.load_or_generate_model(shield_file, "weapon", "shield")
+	shield_node.name = "EquippedShield"
+	AssetLoader.attach_weapon_socket(visual_model_root, shield_node, "handslot.l")
+
+	# Secondary Crossbow Attachment
+	var xbow_file = "res://assets/weapons/crossbow_1handed.gltf"
+	crossbow_node = AssetLoader.load_or_generate_model(xbow_file, "weapon", "crossbow_1handed")
+	crossbow_node.name = "EquippedCrossbow"
+	AssetLoader.attach_weapon_socket(visual_model_root, crossbow_node, "handslot.r")
+
+	_update_weapon_visibility()
+
+func _update_weapon_visibility() -> void:
+	if current_stance == WeaponStance.MELEE:
+		if primary_weapon_node and is_instance_valid(primary_weapon_node):
+			primary_weapon_node.visible = true
+		if shield_node and is_instance_valid(shield_node):
+			shield_node.visible = true
+		if crossbow_node and is_instance_valid(crossbow_node):
+			crossbow_node.visible = false
+		is_ranged = (GameManager.selected_class == GameManager.HeroClass.MAGE)
+	else:
+		if primary_weapon_node and is_instance_valid(primary_weapon_node):
+			primary_weapon_node.visible = false
+		if shield_node and is_instance_valid(shield_node):
+			shield_node.visible = false
+		if crossbow_node and is_instance_valid(crossbow_node):
+			crossbow_node.visible = true
+		is_ranged = true
+
+func toggle_weapon_stance() -> void:
+	if current_stance == WeaponStance.MELEE:
+		current_stance = WeaponStance.RANGED
+		is_blocking = false
+		_update_weapon_visibility()
+		AudioManager.play_sfx("weapon_swap", 0.08, -1.0)
+		_show_hud_toast("🏹 Stance: Crossbow (Ranged Piercing)")
+	else:
+		current_stance = WeaponStance.MELEE
+		_update_weapon_visibility()
+		AudioManager.play_sfx("weapon_swap", 0.08, -1.0)
+		_show_hud_toast("⚔️ Stance: Primary Blade & Shield (Melee / Parry)")
 
 func _setup_interaction() -> void:
 	if not interaction_area:
@@ -174,6 +234,11 @@ func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
 	handle_knockback(delta)
 	
+	if parry_window_timer > 0.0:
+		parry_window_timer -= delta
+	if _mount_cooldown > 0.0:
+		_mount_cooldown -= delta
+	
 	if _combo_reset_timer > 0.0:
 		_combo_reset_timer -= delta
 		if _combo_reset_timer <= 0.0:
@@ -202,6 +267,16 @@ func _physics_process(delta: float) -> void:
 		global_position.y = 0.0
 		velocity.y = 0.0
 
+	# Mounted hoofbeats & trample impact
+	if is_mounted:
+		var horiz_vel = Vector2(velocity.x, velocity.z).length()
+		if horiz_vel > 0.5:
+			_hoofbeat_timer += delta
+			if _hoofbeat_timer >= 0.28:
+				_hoofbeat_timer = 0.0
+				AudioManager.play_sfx("hoofbeat", 0.08, -5.0)
+		_process_trample(delta)
+
 	# Living Heartwood / Tri-Seal Passive Regeneration
 	if GameManager.has_boon("living_heartwood") or GameManager.has_boon("tri_seal_mastery"):
 		_regen_timer += delta
@@ -215,6 +290,8 @@ func _handle_movement(_delta: float) -> void:
 		velocity.x = _dash_direction.x * dash_speed
 		velocity.z = _dash_direction.z * dash_speed
 		return
+
+	var current_move_speed = mount_speed if is_mounted else (move_speed * 0.55 if is_blocking else move_speed)
 
 	var raw_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var cam = get_viewport().get_camera_3d()
@@ -230,11 +307,11 @@ func _handle_movement(_delta: float) -> void:
 		cam_right = cam_right.normalized()
 		
 		var move_dir = (cam_right * raw_input.x + cam_forward * -raw_input.y).normalized()
-		velocity.x = move_dir.x * move_speed
-		velocity.z = move_dir.z * move_speed
+		velocity.x = move_dir.x * current_move_speed
+		velocity.z = move_dir.z * current_move_speed
 	else:
-		velocity.x = move_toward(velocity.x, 0.0, move_speed * 0.2)
-		velocity.z = move_toward(velocity.z, 0.0, move_speed * 0.2)
+		velocity.x = move_toward(velocity.x, 0.0, current_move_speed * 0.2)
+		velocity.z = move_toward(velocity.z, 0.0, current_move_speed * 0.2)
 
 func _handle_aiming() -> void:
 	var cam = get_viewport().get_camera_3d()
@@ -258,13 +335,36 @@ func _handle_aiming() -> void:
 			rotation.y = lerp_angle(rotation.y, target_rot_y, 0.28)
 
 func _handle_actions() -> void:
+	# Weapon Swap [Q]
+	if Input.is_action_just_pressed("swap_weapon") or Input.is_action_just_pressed("ability"):
+		toggle_weapon_stance()
+
+	# Mount / Dismount [F]
+	if Input.is_action_just_pressed("mount_toggle"):
+		toggle_mount()
+
+	# Shield Block & Parry (Hold RMB / C)
+	if Input.is_action_pressed("block") and not is_mounted and current_stance == WeaponStance.MELEE:
+		if not is_blocking:
+			is_blocking = true
+			parry_window_timer = PARRY_WINDOW
+			if anim_player:
+				play_anim("Blocking", 0.06, 1.2)
+	elif is_blocking and not Input.is_action_pressed("block"):
+		is_blocking = false
+		if anim_player:
+			play_anim("Idle", 0.1, 1.0)
+
 	# Attack (Primary)
 	if (Input.is_action_pressed("attack_primary") or Input.is_action_pressed("attack")) and _can_attack and not _is_dashing:
 		_execute_attack()
 		
-	# Special / Dash
-	if Input.is_action_just_pressed("dash") and _dash_cd_timer.is_stopped() and not _is_dashing:
-		_start_dash()
+	# Special / Dash (or Leap while mounted)
+	if Input.is_action_just_pressed("dash"):
+		if is_mounted:
+			_mounted_leap()
+		elif _dash_cd_timer.is_stopped() and not _is_dashing:
+			_start_dash()
 		
 	# Interact
 	if Input.is_action_just_pressed("interact") and current_interactable:
@@ -286,12 +386,54 @@ func _execute_attack() -> void:
 	_attack_timer.start(attack_cooldown)
 	_combo_reset_timer = combo_reset_time
 	
-	var is_crit = randf() < crit_chance
+	var is_crit = (randf() < crit_chance) or has_riposte_crit
 	var forward = -transform.basis.z
+
+	# Ranged Crossbow Stance
+	if current_stance == WeaponStance.RANGED:
+		var dmg_mult = 2.5 if has_riposte_crit else (1.8 if is_crit else 1.0)
+		has_riposte_crit = false
+		var final_dmg = attack_damage * 1.5 * dmg_mult
+		
+		var proj = Projectile3DScript.new()
+		proj.damage = final_dmg
+		proj.is_crit = is_crit
+		proj.is_enemy = false
+		proj.source_node = self
+		proj.direction = forward
+		proj.speed = 24.0
+		get_tree().current_scene.add_child(proj)
+		proj.global_position = global_position + Vector3(0, 1.1, 0) + forward * 0.8
+		
+		# Twin Echoes Boon: extra bolt
+		if GameManager.has_boon("twin_echoes"):
+			var proj2 = Projectile3DScript.new()
+			proj2.damage = final_dmg * 0.7
+			proj2.is_crit = is_crit
+			proj2.is_enemy = false
+			proj2.source_node = self
+			proj2.direction = forward.rotated(Vector3.UP, deg_to_rad(12.0))
+			proj2.speed = 24.0
+			get_tree().current_scene.add_child(proj2)
+			proj2.global_position = global_position + Vector3(0, 1.1, 0) + forward * 0.8
+			
+		AudioManager.play_sfx("crossbow_shoot", 0.08, 0.0)
+		CombatJuice.add_trauma(0.08)
+		if anim_player:
+			is_attacking = true
+			play_anim("1H_Ranged_Shoot", 0.04, 2.2)
+			get_tree().create_timer(0.22).timeout.connect(func():
+				if is_instance_valid(self) and anim_player and not is_dead:
+					play_anim("1H_Ranged_Reload", 0.04, 2.0)
+					get_tree().create_timer(0.20).timeout.connect(func(): is_attacking = false)
+			)
+		return
 	
-	if is_ranged:
-		# Mage Ranged Bolts
-		var final_dmg = attack_damage * (1.8 if is_crit else 1.0)
+	# Mage Arcane Staff Ranged
+	if is_ranged and GameManager.selected_class == GameManager.HeroClass.MAGE:
+		var dmg_mult = 2.5 if has_riposte_crit else (1.8 if is_crit else 1.0)
+		has_riposte_crit = false
+		var final_dmg = attack_damage * dmg_mult
 		var proj = Projectile3DScript.new()
 		proj.damage = final_dmg
 		proj.is_crit = is_crit
@@ -341,7 +483,9 @@ func _execute_attack() -> void:
 				combo_step = 0 # Loop back
 				CombatJuice.add_trauma(0.18)
 				
-		var final_dmg = attack_damage * combo_mult * (1.8 if is_crit else 1.0)
+		var crit_mult = 2.5 if has_riposte_crit else (1.8 if is_crit else 1.0)
+		has_riposte_crit = false
+		var final_dmg = attack_damage * combo_mult * crit_mult
 		
 		# Lunge impulse
 		velocity += forward * lunge_force
@@ -507,8 +651,173 @@ func _trigger_lightning_discharge() -> void:
 	get_tree().current_scene.add_child(shock_hitbox)
 	get_tree().create_timer(0.15).timeout.connect(shock_hitbox.queue_free)
 
+# --- MOUNT SYSTEM (PILLAR 1) ---
+func toggle_mount() -> void:
+	if _mount_cooldown > 0.0:
+		return
+	_mount_cooldown = 0.4
+	
+	if is_mounted:
+		dismount()
+	else:
+		if GameManager.current_floor != 0:
+			_show_hud_toast("Mounts cannot enter the subterranean catacombs.")
+			return
+		mount()
+
+func mount(breed: String = "") -> void:
+	if breed != "":
+		mount_breed = breed
+	is_mounted = true
+	is_blocking = false
+	
+	# Spawn or replace mount model
+	if mount_node and is_instance_valid(mount_node):
+		mount_node.queue_free()
+		
+	var m_path = "res://assets/characters/animals/" + mount_breed + ".glb"
+	mount_node = AssetLoader.load_or_generate_model(m_path, "character", mount_breed)
+	var m_scale = Vector3(0.32, 0.32, 0.32)
+	if mount_breed == "Stag":
+		m_scale = Vector3(0.38, 0.38, 0.38)
+	mount_node.scale = m_scale
+	mount_node.name = "ActiveMount"
+	add_child(mount_node)
+	
+	mount_anim = mount_node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if mount_anim:
+		mount_anim.play("AnimalArmature|Idle", 0.1)
+		
+	# Lift player into saddle atop horse back
+	if visual_model_root:
+		visual_model_root.position.y = 0.95
+		visual_model_root.position.z = -0.05
+		if anim_player:
+			play_anim("Sit_Floor_Idle", 0.1, 1.0)
+			
+	AudioManager.play_sfx("steed_whistle", 0.05, 0.0)
+	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.3, 0), Color(0.85, 0.75, 0.5))
+	_show_hud_toast("🐎 Mounted Warsteed! [Space] Leap | [F] Dismount")
+
+func dismount() -> void:
+	if not is_mounted:
+		return
+	is_mounted = false
+	
+	if visual_model_root:
+		visual_model_root.position = Vector3.ZERO
+		if anim_player:
+			play_anim("Idle", 0.1, 1.0)
+			
+	if mount_node and is_instance_valid(mount_node):
+		mount_node.queue_free()
+		mount_node = null
+		mount_anim = null
+		
+	AudioManager.play_sfx("footstep", 0.05, 0.0)
+	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.2, 0), Color(0.7, 0.65, 0.5))
+	_show_hud_toast("Dismounted.")
+
+func _mounted_leap() -> void:
+	if not is_on_floor() and velocity.y > 0.0:
+		return
+	velocity.y = 6.2
+	var forward = -transform.basis.z
+	velocity += forward * 6.5
+	if mount_anim:
+		mount_anim.play("AnimalArmature|Gallop_Jump", 0.06, 1.3)
+	AudioManager.play_sfx("dash", 0.08, -1.0)
+	CombatJuice.add_trauma(0.12)
+	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.3, 0), Color(0.9, 0.8, 0.5))
+
+func _process_trample(delta: float) -> void:
+	if _trample_cooldown > 0.0:
+		_trample_cooldown -= delta
+	var horiz_speed = Vector2(velocity.x, velocity.z).length()
+	if horiz_speed < 4.0 or _trample_cooldown > 0.0:
+		return
+		
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	for enemy in enemies:
+		if is_instance_valid(enemy) and not enemy.get("is_dead"):
+			var dist = global_position.distance_to(enemy.global_position)
+			if dist < 2.2:
+				var forward = -transform.basis.z
+				var trample_dir = (enemy.global_position - global_position).normalized()
+				trample_dir.y = 0.35
+				if enemy.has_method("take_damage"):
+					enemy.take_damage(28.0, trample_dir * 12.0, false, self)
+				CombatJuice.spawn_hit_spark(enemy.global_position + Vector3(0, 0.8, 0), Color(1.0, 0.75, 0.2))
+				CombatJuice.add_trauma(0.12)
+				AudioManager.play_sfx("hit_flesh", 0.08, 1.5)
+				_trample_cooldown = 0.35
+				break
+
+func _show_hud_toast(msg: String) -> void:
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_toast"):
+		hud.show_toast(msg)
+
+func update_movement_animation(delta: float) -> void:
+	if is_dead:
+		return
+	if is_mounted:
+		if is_attacking:
+			return
+		if anim_player:
+			if anim_player.current_animation != "Sit_Floor_Idle" and anim_player.current_animation != "Sit_Chair_Idle":
+				play_anim("Sit_Floor_Idle", 0.12, 1.0)
+		if mount_anim:
+			var horiz = Vector2(velocity.x, velocity.z).length()
+			if not mount_anim.current_animation.ends_with("Gallop_Jump") or not mount_anim.is_playing():
+				if horiz > 0.5:
+					mount_anim.play("AnimalArmature|Gallop", 0.12, clamp(horiz / 6.0, 1.0, 2.0))
+				else:
+					mount_anim.play("AnimalArmature|Idle", 0.2)
+		return
+	if is_blocking:
+		if anim_player and not is_attacking:
+			if not anim_player.current_animation.begins_with("Block"):
+				play_anim("Blocking", 0.08, 1.0)
+		return
+	super.update_movement_animation(delta)
+
 # --- OVERRIDES ---
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	var forward = -transform.basis.z
+	var is_frontal = true
+	if source and source != self:
+		var to_source = (source.global_position - global_position).normalized()
+		is_frontal = forward.dot(to_source) > 0.05
+		
+	# Active Shield Block & Perfect Parry (Pillar 2)
+	if is_frontal and is_blocking and not is_mounted:
+		if parry_window_timer > 0.0:
+			# PERFECT PARRY! 100% damage negated + attacker stagger + riposte crit primed
+			AudioManager.play_sfx("parry_ring", 0.05, 3.5)
+			CombatJuice.freeze_frame(0.08)
+			CombatJuice.add_trauma(0.25)
+			CombatJuice.spawn_hit_spark(global_position + Vector3(0, 1.0, 0) + forward * 0.7, Color(1.0, 0.9, 0.25))
+			if anim_player:
+				play_anim("Block_Hit", 0.02, 2.2)
+			CombatJuice.spawn_damage_number(global_position + Vector3(0, 1.8, 0), 0.0, true, false)
+			has_riposte_crit = true
+			if source and "current_ai_state" in source:
+				source.current_ai_state = source.AIState.STAGGER
+				source.set("_state_timer", 1.8)
+				source.velocity = -forward * 7.0
+			_show_hud_toast("⚔️ PERFECT PARRY! Riposte Counter Ready (2.5x Crit)!")
+			return
+		else:
+			# REGULAR SHIELD BLOCK: 75% damage absorbed
+			amount *= 0.25
+			knockback *= 0.15
+			AudioManager.play_sfx("anvil_strike", 0.08, -1.0)
+			CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.9, 0) + forward * 0.5, Color(0.8, 0.8, 0.9))
+			if anim_player:
+				play_anim("Block_Hit", 0.04, 1.6)
+			CombatJuice.add_trauma(0.08)
+
 	if GameManager.has_boon("knight_crest"):
 		amount *= 0.85
 	if GameManager.has_boon("paladins_ward"):

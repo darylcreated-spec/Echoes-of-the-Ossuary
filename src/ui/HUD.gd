@@ -173,6 +173,22 @@ func _build_ui_tree() -> void:
 	interact_prompt.visible = false
 	root_control.add_child(interact_prompt)
 	
+	# Bottom Screen Controls Hint
+	var controls_bar = Label.new()
+	controls_bar.text = "[WASD] Move • [LMB] Strike • [Space] Dash/Leap • [Q] Swap Crossbow/Melee • [RMB] Shield Parry • [F] Mount Steed • [E] Interact • [J] Journal • [M] Quests"
+	controls_bar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	controls_bar.anchor_left = 0.5
+	controls_bar.anchor_right = 0.5
+	controls_bar.anchor_top = 1.0
+	controls_bar.anchor_bottom = 1.0
+	controls_bar.offset_left = -560
+	controls_bar.offset_right = 560
+	controls_bar.offset_top = -24
+	controls_bar.offset_bottom = -6
+	controls_bar.add_theme_font_size_override("font_size", 11)
+	controls_bar.modulate = Color(0.85, 0.88, 0.95, 0.72)
+	root_control.add_child(controls_bar)
+	
 	# Top Center: Boss Health Bar
 	boss_container = VBoxContainer.new()
 	boss_container.anchor_left = 0.5
@@ -620,6 +636,21 @@ func _on_dialogue_action(action_id: String) -> void:
 			_fast_travel_to(Vector3(-80.0, 0.0, -65.0), "Whisperwood Forest (Sylva's Rest)")
 		"travel_crags":
 			_fast_travel_to(Vector3(80.0, 0.0, -65.0), "Khar-Drakken Crags (Stonegate)")
+		"select_mount_horse":
+			if player and "mount_breed" in player:
+				player.mount_breed = "Horse"
+				show_toast("🐎 Selected Chestnut Warhorse! Press [F] to ride.")
+		"select_mount_horse_white":
+			if player and "mount_breed" in player:
+				player.mount_breed = "Horse_White"
+				show_toast("🦄 Selected Royal White Courser! Press [F] to ride.")
+		"select_mount_stag":
+			if player and "mount_breed" in player:
+				player.mount_breed = "Stag"
+				show_toast("🦌 Selected Elder Antlered Stag! Press [F] to ride.")
+		"whistle_steed":
+			if player and player.has_method("mount"):
+				player.mount()
 
 func show_altar_modal() -> void:
 	altar_modal.visible = true
@@ -735,6 +766,20 @@ func _on_mission_completed(m: Dictionary) -> void:
 	_toast_tween.tween_callback(func(): mission_toast.visible = false)
 	
 	AudioManager.play_sfx("chest_open", 0.08, 0.5)
+
+func show_toast(text: String, duration: float = 2.6) -> void:
+	if not mission_toast or not mission_toast_lbl:
+		return
+	mission_toast_lbl.text = text
+	mission_toast.visible = true
+	mission_toast.modulate.a = 0.0
+	if _toast_tween and _toast_tween.is_valid():
+		_toast_tween.kill()
+	_toast_tween = mission_toast.create_tween()
+	_toast_tween.tween_property(mission_toast, "modulate:a", 1.0, 0.18)
+	_toast_tween.tween_interval(duration)
+	_toast_tween.tween_property(mission_toast, "modulate:a", 0.0, 0.35)
+	_toast_tween.tween_callback(func(): if mission_toast: mission_toast.visible = false)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:

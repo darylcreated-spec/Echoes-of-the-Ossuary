@@ -197,6 +197,13 @@ func interact(player: Node3D) -> void:
 				active_dialogue = "Good day, traveler. Welcome to our humble home. Ferocious timber wolves have crept out from the eastern woods and stalked our sheep pasture! If you can hunt 2 wild beasts, our hamlet will reward you with gold and soul echoes."
 				actions.append({"id": "open_missions", "label": "📜 Hamlet Requests", "color": Color(0.25, 0.52, 0.22), "closes": true})
 
+		"stablemaster":
+			active_dialogue = "Hail, cavalier! Welcome to the Royal Stables. Press [F] anytime across the overworld to summon your warsteed with a whistle! Leap over obstacles with [Space], and charge into enemies to trample them underhoof. Which noble steed shall carry you across the realm?"
+			actions.append({"id": "select_mount_horse", "label": "🐎 Chestnut Warhorse", "color": Color(0.65, 0.40, 0.20), "closes": false})
+			actions.append({"id": "select_mount_horse_white", "label": "🦄 Royal White Courser", "color": Color(0.85, 0.85, 0.95), "closes": false})
+			actions.append({"id": "select_mount_stag", "label": "🦌 Elder Antlered Stag", "color": Color(0.40, 0.65, 0.35), "closes": false})
+			actions.append({"id": "whistle_steed", "label": "🎺 Mount Up Now [F]", "color": Color(0.85, 0.65, 0.15), "closes": true})
+
 		"bard":
 			active_dialogue = "Listen close to the crackling hearth, traveler... 'Beneath the stone, the ossuary sighs, where fallen kings and hollow shadows rise! Steel your heart, brave soul, where glory lies!'"
 			actions.append({"id": "bard_song", "label": "🎶 Request Ballad", "color": Color(0.4, 0.25, 0.6), "closes": false})

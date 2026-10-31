@@ -52,6 +52,16 @@ const CODEX_ENTRIES: Array[Dictionary] = [
 		"title": "💀 The Abyssal Seal & The Bone Titan",
 		"chapter": "Chapter V: The Descent into the Crypts",
 		"content": "Beneath the mausoleum lies the four-tiered underworld known as the Ossuary. Each descent plunges deeper through bone-strewn crypts, guarded by skeletal warriors and cursed traps.\n\nAt the deepest floor slumbers the Bone Titan—a colossus stitched together from thousands of fallen warriors. Only a hero who has unified the blessings of Port Blackwater, Whisperwood, and Khar-Drakken can endure the Titan's devastating earth-shattering strikes."
+	},
+	{
+		"title": "🐎 The Warsteeds of Oakhaven (Cavalry Guide)",
+		"chapter": "Field Treatise: Equestrian Mastery",
+		"content": "Across the open provinces of Aethelgard, champions may summon their loyal warsteed at any time on the surface world using [F]. Riding increases travel speed to 12.8 m/s, turning distant journeys into swift patrols.\n\nLeap across fences and hazards using [Space], or charge directly through enemy lines to trample foes with crushing hooves. Stable Master Barnaby at the Oakhaven pasture can outfit you with Chestnut Warhorses, Royal White Coursers, or Antlered Greatstags."
+	},
+	{
+		"title": "🏹 The Arsenal of Kings: Crossbows & Parrying",
+		"chapter": "Field Treatise: Dual-Stance Combat",
+		"content": "Press [Q] at any time to toggle combat stances between primary melee armaments and the high-velocity Crossbow.\n\nIn Crossbow stance, [LMB] fires piercing bolts that punch straight through enemy lines with lethal velocity. In Melee stance, holding [RMB] raises your shield, absorbing 75% of incoming damage.\n\nTiming a block within 0.22 seconds of an incoming strike executes a Perfect Parry—completely negating damage, staggering the attacker into a defenseless daze, and guaranteeing a 2.5x critical counter-strike!"
 	}
 ]
 

@@ -74,6 +74,31 @@ func _setup_collision_and_hurtbox() -> void:
 		add_child(hb)
 		hurtbox = hb
 
+	# Mount interaction for Horses & Stags
+	if animal_type in [AnimalType.HORSE, AnimalType.STAG]:
+		var ia = Area3D.new()
+		ia.name = "MountInteractArea"
+		ia.collision_layer = 1 << 5 # Layer 6: Interactable
+		ia.collision_mask = 0
+		var ishape = SphereShape3D.new()
+		ishape.radius = 2.4
+		var icol = CollisionShape3D.new()
+		icol.shape = ishape
+		icol.position.y = 0.8
+		ia.add_child(icol)
+		add_child(ia)
+
+func get_prompt_text() -> String:
+	if animal_type == AnimalType.STAG:
+		return "[E] Mount Elder Stag"
+	return "[E] Mount Warhorse"
+
+func interact(player: Node) -> void:
+	if player and player.has_method("mount"):
+		var breed = "Stag" if animal_type == AnimalType.STAG else "Horse"
+		player.mount(breed)
+		queue_free()
+
 func _configure_type_stats() -> void:
 	match animal_type:
 		AnimalType.STAG:
@@ -184,8 +209,11 @@ func _process_idle(delta: float) -> void:
 			if dist < 9.0:
 				current_ai_state = AIState.CHASE
 				return
+		elif animal_type in [AnimalType.HORSE, AnimalType.COW, AnimalType.BULL]:
+			# Domestic livestock stay calm around the player
+			pass
 		else:
-			# Herbivores flee when player gets too close!
+			# Wild herbivores flee when player gets too close!
 			if dist < 6.5:
 				current_ai_state = AIState.FLEE
 				_state_timer = randf_range(3.0, 5.0)
