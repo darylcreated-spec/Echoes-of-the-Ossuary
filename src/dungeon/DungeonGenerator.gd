@@ -1181,8 +1181,8 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	crane_station.gold_reward = 150
 	crane_station.echo_reward = 50
 	crane_station.position = Vector3(-64.0, 0.0, 62.0)
-	var ruined_crane = _place_prop(parent, "res://assets/overworld/scaffolding_straight.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(2.5, 3.2, 2.5), 15.0)
-	var restored_crane = _place_prop(parent, "res://assets/overworld/arch_wood.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(3.0, 4.0, 3.0), 0.0)
+	var ruined_crane = _place_prop(parent, "res://assets/overworld/building_scaffolding.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(2.5, 3.2, 2.5), 15.0)
+	var restored_crane = _place_prop(parent, "res://assets/overworld/arch.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(3.0, 4.0, 3.0), 0.0)
 	_place_prop(restored_crane, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.2, 0.0), Vector3.ONE * 2.0)
 	crane_station.ruined_node = ruined_crane
 	crane_station.restored_node = restored_crane
