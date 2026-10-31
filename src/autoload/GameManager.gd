@@ -47,6 +47,12 @@ var upgrade_max_hp_level: int = 0       # +20 Max HP per level (Max 5)
 var upgrade_attack_power_level: int = 0 # +12% Attack Power per level (Max 5)
 var upgrade_dash_cooldown_level: int = 0 # -12% Dash Cooldown per level (Max 5)
 
+# Quest & Task States
+var quest_chalice_completed: bool = false
+var quest_vintage_completed: bool = false
+var quest_steel_completed: bool = false
+var quest_wolves_completed: bool = false
+
 # Active Boons in the current descent
 var relic_boons: Array[Dictionary] = []
 
@@ -330,6 +336,14 @@ func has_boon(boon_id: String) -> bool:
 		if b.get("id") == boon_id:
 			return true
 	return false
+
+func acquire_boon_by_id(boon_id: String) -> void:
+	if has_boon(boon_id):
+		return
+	for b in BoonSystem.BOONS:
+		if b.get("id") == boon_id:
+			add_boon(b)
+			return
 
 # --- RUN FLOW ---
 func start_new_run() -> void:

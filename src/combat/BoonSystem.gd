@@ -57,6 +57,13 @@ const BOONS: Array[Dictionary] = [
 		"rarity": "Common",
 		"description": "Reflect 50% of received damage back to attackers.",
 		"color": Color(0.7, 0.7, 0.7)
+	},
+	{
+		"id": "knight_crest",
+		"name": "Knight's Royal Crest",
+		"rarity": "Legendary",
+		"description": "The Crown's blessing grants +15% damage reduction and +30 Max HP.",
+		"color": Color(0.95, 0.82, 0.25)
 	}
 ]
 

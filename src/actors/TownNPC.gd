@@ -125,49 +125,71 @@ func interact(player: Node3D) -> void:
 		return
 		
 	var actions: Array[Dictionary] = []
+	var active_dialogue = dialogue_text
+
 	match npc_id:
+		"steward":
+			if GameManager.quest_chalice_completed:
+				active_dialogue = "The Sacred Chalice shines upon the imperial altar! You have the eternal gratitude and favor of the Royal Court, champion!"
+				actions.append({"id": "open_missions", "label": "📜 Royal Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
+			elif GameManager.materials.get("sacred_chalice", 0) > 0:
+				active_dialogue = "By the King! You have returned the Sacred Chalice of the First Kings! Hand it over to receive the royal bounty and the legendary Knight's Crest!"
+				actions.append({"id": "turn_in_chalice", "label": "🏆 Turn in Sacred Chalice", "color": Color(0.85, 0.65, 0.15), "closes": false})
+			else:
+				active_dialogue = "Welcome to the Grand Throne Room, warrior. The royal chalice was lost to the northern ruins when the catacombs stirred. Bring it back to honor the crown and earn the Knight's Royal Crest (+15% Defense)!"
+				actions.append({"id": "open_missions", "label": "📜 Royal Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
+
+		"barkeep":
+			if GameManager.quest_vintage_completed:
+				active_dialogue = "The patrons are cheering and the spiced mead is flowing freely! You're always welcome at the Boar's Tusk, hero!"
+				actions.append({"id": "barkeep_ale", "label": "🍺 Buy Flagon (Heal 20 HP - 5 Gold)", "color": Color(0.7, 0.45, 0.15), "closes": false})
+			elif GameManager.materials.get("ossuary_codex", 0) > 0:
+				active_dialogue = "Sweet Mother of Malt! That's my granddad's secret spiced mead recipe parchment! Hand it over and I'll reward you with gold and my finest invigorating draughts!"
+				actions.append({"id": "turn_in_scroll", "label": "📜 Turn in Vintage Scroll", "color": Color(0.85, 0.65, 0.15), "closes": false})
+			else:
+				active_dialogue = "Welcome to The Boar's Tusk! Rest your boots by the hearth. My granddad's secret spiced mead recipe was lost near the old watchtower cemetery. If you can recover it, I've got gold and rare elixirs for you!"
+				actions.append({"id": "barkeep_ale", "label": "🍺 Buy Flagon (Heal 20 HP - 5 Gold)", "color": Color(0.7, 0.45, 0.15), "closes": false})
+
 		"blacksmith":
-			actions.append({
-				"id": "open_upgrades",
-				"label": "⚒️ Forge Upgrades",
-				"color": Color(0.62, 0.28, 0.12),
-				"closes": true
-			})
-		"priestess":
-			actions.append({
-				"id": "open_missions",
-				"label": "📜 View Bounties",
-				"color": Color(0.18, 0.42, 0.65),
-				"closes": true
-			})
-		"guard":
-			actions.append({
-				"id": "gate_info",
-				"label": "🛡️ Catacomb Advice",
-				"color": Color(0.24, 0.32, 0.48),
-				"closes": false
-			})
+			var has_metal = GameManager.materials.get("smugglers_chest", 0) > 0 or GameManager.materials.get("gold_vein", 0) > 0 or GameManager.materials.get("iron_ore", 0) > 0
+			if GameManager.quest_steel_completed:
+				active_dialogue = "Your blade holds a lethal razor edge! What else can I forge or temper for you today, warrior?"
+				actions.append({"id": "open_upgrades", "label": "⚒️ Forge Upgrades", "color": Color(0.62, 0.28, 0.12), "closes": true})
+			elif has_metal:
+				active_dialogue = "By the molten hammer! You brought back refined ingots and raw ore from the ruins! Give them here, and I'll grant you gold and permanently temper your blade!"
+				actions.append({"id": "turn_in_ingots", "label": "⚒️ Turn in Ingots (+3 Attack)", "color": Color(0.85, 0.65, 0.15), "closes": false})
+				actions.append({"id": "open_upgrades", "label": "⚒️ Forge Upgrades", "color": Color(0.62, 0.28, 0.12), "closes": true})
+			else:
+				active_dialogue = "Step into the heart of the forge, warrior! My bellows roar day and night. If you scavenge refined ingots or quarry ore from the ruins, I'll temper your blade with razor lethality!"
+				actions.append({"id": "open_upgrades", "label": "⚒️ Forge Upgrades", "color": Color(0.62, 0.28, 0.12), "closes": true})
+
 		"farmer":
-			actions.append({
-				"id": "open_missions",
-				"label": "📜 Hamlet Requests",
-				"color": Color(0.25, 0.52, 0.22),
-				"closes": true
-			})
+			var wolves_down = GameManager.get_mission("wild_hunt").get("current", 0) >= 2
+			if GameManager.quest_wolves_completed:
+				active_dialogue = "The sheep graze quietly on the green slopes thanks to you, champion. The whole hamlet sings your praises!"
+				actions.append({"id": "open_missions", "label": "📜 Hamlet Requests", "color": Color(0.25, 0.52, 0.22), "closes": true})
+			elif wolves_down:
+				active_dialogue = "Bless you, brave warrior! The shepherds tell me the wild wolf pack has been driven back! Take this gold and these soul echoes with our deepest gratitude!"
+				actions.append({"id": "turn_in_wolves", "label": "🐺 Report Wolves Hunted", "color": Color(0.85, 0.65, 0.15), "closes": false})
+			else:
+				active_dialogue = "Good day, traveler. Welcome to our humble home. Ferocious timber wolves have crept out from the eastern woods and stalked our sheep pasture! If you can hunt 2 wild beasts, our hamlet will reward you with gold and soul echoes."
+				actions.append({"id": "open_missions", "label": "📜 Hamlet Requests", "color": Color(0.25, 0.52, 0.22), "closes": true})
+
+		"bard":
+			active_dialogue = "Listen close to the crackling hearth, traveler... 'Beneath the stone, the ossuary sighs, where fallen kings and hollow shadows rise! Steel your heart, brave soul, where glory lies!'"
+			actions.append({"id": "bard_song", "label": "🎶 Request Ballad", "color": Color(0.4, 0.25, 0.6), "closes": false})
+
+		"priestess":
+			actions.append({"id": "open_missions", "label": "📜 View Bounties", "color": Color(0.18, 0.42, 0.65), "closes": true})
+
+		"guard":
+			actions.append({"id": "gate_info", "label": "🛡️ Catacomb Advice", "color": Color(0.24, 0.32, 0.48), "closes": false})
+
 		"commander":
-			actions.append({
-				"id": "open_missions",
-				"label": "🛡️ Royal Decrees",
-				"color": Color(0.55, 0.22, 0.22),
-				"closes": true
-			})
+			actions.append({"id": "open_missions", "label": "🛡️ Royal Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
+
 		"hermit":
-			actions.append({
-				"id": "open_upgrades",
-				"label": "✨ Channel Soul Echoes",
-				"color": Color(0.35, 0.20, 0.58),
-				"closes": true
-			})
-			
+			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
+
 	if hud.has_method("open_dialogue"):
-		hud.open_dialogue(npc_name + " (" + npc_title + ")", icon, dialogue_text, actions)
+		hud.open_dialogue(npc_name + " (" + npc_title + ")", icon, active_dialogue, actions)

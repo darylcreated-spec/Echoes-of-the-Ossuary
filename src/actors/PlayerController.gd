@@ -154,6 +154,10 @@ func _on_interaction_area_entered(area: Area3D) -> void:
 		
 	var hud = get_tree().get_first_node_in_group("hud")
 	if hud and "interact_prompt" in hud and hud.interact_prompt:
+		if current_interactable.has_method("get_prompt_text"):
+			hud.interact_prompt.text = current_interactable.get_prompt_text()
+		else:
+			hud.interact_prompt.text = "[E] Interact"
 		hud.interact_prompt.visible = true
 
 func _on_interaction_area_exited(area: Area3D) -> void:
@@ -161,6 +165,7 @@ func _on_interaction_area_exited(area: Area3D) -> void:
 		current_interactable = null
 		var hud = get_tree().get_first_node_in_group("hud")
 		if hud and "interact_prompt" in hud and hud.interact_prompt:
+			hud.interact_prompt.text = "[E] Interact"
 			hud.interact_prompt.visible = false
 
 # --- INPUT & PHYSICS ---
@@ -485,6 +490,8 @@ func _trigger_lightning_discharge() -> void:
 
 # --- OVERRIDES ---
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	if GameManager.has_boon("knight_crest"):
+		amount *= 0.85
 	super.take_damage(amount, knockback, is_crit, source)
 	# Thorns of Bone Boon: reflect damage
 	if GameManager.has_boon("thorns_of_bone") and source and source != self:

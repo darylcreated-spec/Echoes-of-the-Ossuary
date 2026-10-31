@@ -33,6 +33,7 @@ var altar_modal: Control = null
 var death_modal: Control = null
 var mission_menu: Control = null
 var dialogue_modal: DialogueModal = null
+var fade_curtain: ColorRect = null
 
 # Mission Notification Toast
 var mission_toast: PanelContainer = null
@@ -201,6 +202,29 @@ func _build_ui_tree() -> void:
 	dialogue_modal.action_triggered.connect(_on_dialogue_action)
 	add_child(dialogue_modal)
 
+	# Full-screen transition curtain for building doorways & floor transitions
+	fade_curtain = ColorRect.new()
+	fade_curtain.name = "FadeCurtain"
+	fade_curtain.color = Color(0.0, 0.0, 0.0, 0.0)
+	fade_curtain.anchor_right = 1.0
+	fade_curtain.anchor_bottom = 1.0
+	fade_curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(fade_curtain)
+
+func fade_screen(to_black: bool, duration: float = 0.25) -> Signal:
+	if not fade_curtain:
+		fade_curtain = ColorRect.new()
+		fade_curtain.color = Color(0.0, 0.0, 0.0, 0.0)
+		fade_curtain.anchor_right = 1.0
+		fade_curtain.anchor_bottom = 1.0
+		fade_curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(fade_curtain)
+	var target_alpha = 1.0 if to_black else 0.0
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(fade_curtain, "color:a", target_alpha, duration)
+	return tween.finished
+
 func update_player_health(curr: float, max_v: float) -> void:
 	if hp_bar:
 		hp_bar.max_value = max_v
@@ -342,6 +366,7 @@ func open_dialogue(title_text: String, icon_str: String, body_text: String, acti
 		dialogue_modal.show_dialogue(title_text, icon_str, body_text, actions)
 
 func _on_dialogue_action(action_id: String) -> void:
+	var player = get_tree().get_first_node_in_group("player")
 	match action_id:
 		"open_upgrades":
 			show_altar_modal()
@@ -363,6 +388,100 @@ func _on_dialogue_action(action_id: String) -> void:
 					"🛡️",
 					"Beyond this archway lies the Descent Sigil into the Ossuary. The crypt grows more perilous with every floor. Steel your courage, claim bounties, and re-temper your soul at the forge!",
 					follow_up_actions
+				)
+		"turn_in_chalice":
+			if GameManager.materials.get("sacred_chalice", 0) > 0:
+				GameManager.materials["sacred_chalice"] = 0
+				GameManager.quest_chalice_completed = true
+				GameManager.add_gold(150)
+				GameManager.add_echoes(40)
+				GameManager.acquire_boon_by_id("knight_crest")
+				AudioManager.play_sfx("level_up", 0.08, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Steward Alden (Royal Castellan)",
+						"👑",
+						"Splendid! The Crown grants you 150 Gold, 40 Soul Echoes, and bestows the legendary Knight's Royal Crest (+15% Damage Reduction & +30 HP) upon your mantle!",
+						[]
+					)
+		"turn_in_scroll":
+			if GameManager.materials.get("ossuary_codex", 0) > 0:
+				GameManager.materials["ossuary_codex"] = 0
+				GameManager.quest_vintage_completed = true
+				GameManager.add_gold(80)
+				GameManager.add_echoes(25)
+				if player and player.has_method("heal"):
+					player.heal(player.max_health)
+				AudioManager.play_sfx("gold_pickup", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Barkeep Barnaby (Tavern Master)",
+						"🍺",
+						"Magnificent! Barnaby hands you 80 Gold, 25 Soul Echoes, and pours a grand flagon of restorative draught, restoring your health completely to full!",
+						[]
+					)
+		"turn_in_ingots":
+			var mat_key = ""
+			if GameManager.materials.get("smugglers_chest", 0) > 0:
+				mat_key = "smugglers_chest"
+			elif GameManager.materials.get("gold_vein", 0) > 0:
+				mat_key = "gold_vein"
+			elif GameManager.materials.get("iron_ore", 0) > 0:
+				mat_key = "iron_ore"
+			if mat_key != "":
+				GameManager.materials[mat_key] = maxi(0, GameManager.materials[mat_key] - 1)
+				GameManager.quest_steel_completed = true
+				GameManager.add_gold(100)
+				GameManager.upgrade_attack_power_level += 1
+				GameManager.player_stats_changed.emit()
+				AudioManager.play_sfx("anvil_strike", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Master Torval (Grand Forge Smith)",
+						"⚒️",
+						"By the roaring coals! Torval plunges the ingots into the furnace and strikes your blade. You receive 100 Gold and a permanent +3 Weapon Attack Power bonus!",
+						[]
+					)
+		"turn_in_wolves":
+			GameManager.quest_wolves_completed = true
+			GameManager.add_gold(60)
+			GameManager.add_echoes(30)
+			AudioManager.play_sfx("gold_pickup", 0.08, 1.0)
+			if dialogue_modal:
+				dialogue_modal.show_dialogue(
+					"Elder Giles (Hamlet Elder)",
+					"🌾",
+					"Elder Giles beams with relief! The hamlet grants you 60 Gold and 30 Soul Echoes for protecting the sheep pasture!",
+					[]
+				)
+		"barkeep_ale":
+			if GameManager.gold >= 5:
+				GameManager.add_gold(-5)
+				if player and player.has_method("heal"):
+					player.heal(20.0)
+				AudioManager.play_sfx("gold_pickup", 0.08, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Barkeep Barnaby",
+						"🍺",
+						"You down a rich, foaming flagon of spiced mead! A warm glow spreads through your limbs (+20 HP restored).",
+						[]
+					)
+			else:
+				if dialogue_modal:
+					dialogue_modal.show_dialogue(
+						"Barkeep Barnaby",
+						"🍺",
+						"Barnaby winks: 'Come back when you've got 5 gold coins in your pouch, friend!'",
+						[]
+					)
+		"bard_song":
+			if dialogue_modal:
+				dialogue_modal.show_dialogue(
+					"Bard Finn (Minstrel of Oakhaven)",
+					"🪕",
+					"Bard Finn strums a haunting lute ballad: 'The stones beneath whisper of an ancient king... He who braves the five tiers shall wear the crown of dawn!' You feel a serene focus settle in your veins.",
+					[]
 				)
 
 func show_altar_modal() -> void:

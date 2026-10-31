@@ -471,6 +471,10 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_build_iron_mountains(parent)
 	_build_forgotten_ruins(parent)
 
+	# 8. SUBTERRANEAN INTERIOR CHAMBERS & ENTERABLE DOORWAYS
+	_build_enterable_building_doorways(parent)
+	InteriorsManager.build_all_interiors(parent)
+
 func _build_road_network(parent: Node3D) -> void:
 	# Main Highway: Sanctuary South Gate (Z=14) -> Stone Bridge (Z=24) -> Castle Keep (Z=44)
 	for z_step in range(14, 45, 2):
@@ -975,3 +979,48 @@ func _add_static_cyl(parent: Node3D, pos: Vector3, radius: float, height: float)
 	body.add_child(col)
 	parent.add_child(body)
 	return body
+
+func _build_enterable_building_doorways(parent: Node3D) -> void:
+	# 1. Castle Grand Throne Room Doorway
+	var castle_door = BuildingDoorway.new()
+	castle_door.door_id = "castle_entrance"
+	castle_door.prompt_text = "Enter Castle Grand Hall"
+	castle_door.target_position = Vector3(0.0, -99.8, 10.0)
+	castle_door.target_rotation_y = 180.0
+	castle_door.target_cam_distance = 12.0
+	castle_door.target_cam_pitch = 40.0
+	castle_door.position = Vector3(0.0, 0.0, 39.0)
+	parent.add_child(castle_door)
+
+	# 2. The Boar's Tusk Tavern Doorway
+	var tavern_door = BuildingDoorway.new()
+	tavern_door.door_id = "tavern_entrance"
+	tavern_door.prompt_text = "Enter The Boar's Tusk Tavern"
+	tavern_door.target_position = Vector3(60.0, -99.8, 4.8)
+	tavern_door.target_rotation_y = 0.0
+	tavern_door.target_cam_distance = 11.0
+	tavern_door.target_cam_pitch = 40.0
+	tavern_door.position = Vector3(-7.5, 0.0, 17.5)
+	parent.add_child(tavern_door)
+
+	# 3. Master Torval's Forge Doorway
+	var forge_door = BuildingDoorway.new()
+	forge_door.door_id = "forge_entrance"
+	forge_door.prompt_text = "Enter Master Torval's Forge"
+	forge_door.target_position = Vector3(120.0, -99.8, 4.0)
+	forge_door.target_rotation_y = 0.0
+	forge_door.target_cam_distance = 10.0
+	forge_door.target_cam_pitch = 40.0
+	forge_door.position = Vector3(-11.5, 0.0, 0.0)
+	parent.add_child(forge_door)
+
+	# 4. Giles's Thatched Cottage Doorway
+	var cottage_door = BuildingDoorway.new()
+	cottage_door.door_id = "cottage_entrance"
+	cottage_door.prompt_text = "Enter Giles's Thatched Cottage"
+	cottage_door.target_position = Vector3(180.0, -99.8, 3.0)
+	cottage_door.target_rotation_y = 0.0
+	cottage_door.target_cam_distance = 10.0
+	cottage_door.target_cam_pitch = 40.0
+	cottage_door.position = Vector3(19.5, 0.0, 14.0)
+	parent.add_child(cottage_door)
