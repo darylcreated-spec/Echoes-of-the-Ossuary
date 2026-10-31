@@ -43,6 +43,7 @@ var telegraph_indicator: MeshInstance3D = null
 
 func _ready() -> void:
 	super._ready()
+	add_to_group("enemies")
 	_configure_type_stats()
 	_setup_visuals()
 	_create_telegraph_indicator()

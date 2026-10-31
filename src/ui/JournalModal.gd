@@ -517,17 +517,17 @@ func _refresh_data() -> void:
 func _refresh_chronicles() -> void:
 	var act_info = GameManager.get_current_act_info()
 	if _act_title_lbl:
-		_act_title_lbl.text = "ACT " + str(act_info.get("act", 1)) + ": " + act_info.get("name", "Unknown Act").to_upper()
+		_act_title_lbl.text = act_info.get("title", "Act " + str(act_info.get("act", 1))).to_upper()
 	if _act_synopsis_lbl:
 		_act_synopsis_lbl.text = act_info.get("synopsis", "")
 	if _main_objective_lbl:
-		_main_objective_lbl.text = "🎯 Objective: " + act_info.get("objective", "")
+		_main_objective_lbl.text = "🎯 Objective: " + act_info.get("main_objective", "")
 
 	# Populate Bounties
 	if _bounties_list:
 		for c in _bounties_list.get_children():
 			c.queue_free()
-		for mission in GameManager.active_missions:
+		for mission in GameManager.missions:
 			var panel = PanelContainer.new()
 			var style = StyleBoxFlat.new()
 			style.bg_color = Color(0.09, 0.11, 0.16, 0.9)
@@ -707,14 +707,14 @@ func _refresh_hero_sheet() -> void:
 		for c in _relics_container.get_children():
 			c.queue_free()
 
-		if GameManager.active_boons.size() == 0:
+		if GameManager.relic_boons.size() == 0:
 			var empty_l = Label.new()
 			empty_l.text = "No soul relics collected yet. Brave the Catacomb descents or complete world quests to claim ancient artifacts!"
 			empty_l.add_theme_font_size_override("font_size", 12)
 			empty_l.modulate = Color(0.6, 0.65, 0.7)
 			_relics_container.add_child(empty_l)
 		else:
-			for boon in GameManager.active_boons:
+			for boon in GameManager.relic_boons:
 				var badge = PanelContainer.new()
 				badge.custom_minimum_size = Vector2(210, 54)
 				var b_style = StyleBoxFlat.new()

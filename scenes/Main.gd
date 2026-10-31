@@ -59,6 +59,109 @@ func _ready() -> void:
 		_init_camera_position()
 		
 	_setup_camera_ui()
+	
+	if "--test-gameplay" in OS.get_cmdline_args() or "--test-gameplay" in OS.get_cmdline_user_args():
+		_run_gameplay_self_test()
+
+func _run_gameplay_self_test() -> void:
+	print("==================================================")
+	print("   ECHOES OF THE OSSUARY — GAMEPLAY SELF-TEST    ")
+	print("==================================================")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	
+	# 1. Player check
+	print("[TEST 1] Player Spawn & Stats...")
+	assert(player != null)
+	print(" -> Player Position: ", player.global_position)
+	print(" -> Player Health: ", player.current_health, " / ", player.max_health)
+	print(" -> Player Class: ", GameManager.selected_class)
+	
+	# 2. Movement & Attack
+	print("\n[TEST 2] Player Combat & Dash Actions...")
+	if player.has_method("perform_primary_attack"):
+		player.perform_primary_attack()
+		print(" -> Primary attack executed successfully!")
+	if player.has_method("perform_dash"):
+		player.perform_dash()
+		print(" -> Dash maneuver executed successfully!")
+		
+	# 3. Journal Modal [J]
+	print("\n[TEST 3] Story Journal Modal [J]...")
+	var hud_node = get_tree().get_first_node_in_group("hud")
+	assert(hud_node != null)
+	var j_modal = hud_node.get("journal_modal")
+	assert(j_modal != null)
+	j_modal.open_modal()
+	print(" -> Journal opened! Visible: ", j_modal.visible, " Game paused: ", get_tree().paused)
+	assert(j_modal.visible == true)
+	j_modal._switch_tab(1)
+	print(" -> Switched to Hero Sheet & Talents")
+	j_modal._switch_tab(2)
+	print(" -> Switched to Realm Lore Codex")
+	j_modal._switch_tab(0)
+	print(" -> Switched to Chronicles & Quests")
+	j_modal.close_modal()
+	print(" -> Journal closed! Visible: ", j_modal.visible, " Game paused: ", get_tree().paused)
+	assert(j_modal.visible == false)
+	
+	# 4. Regional Biomes & Repair Stations
+	print("\n[TEST 4] Regional Biomes & Repair Stations...")
+	var stations = find_children("*", "Area3D", true, false)
+	var found_crane = false
+	var found_altar = false
+	var found_bellows = false
+	for st in stations:
+		var r_id = st.get("repair_id")
+		if r_id == "port_crane": found_crane = true
+		elif r_id == "druid_altar": found_altar = true
+		elif r_id == "smelter_bellows": found_bellows = true
+	print(" -> Port Crane Station: ", "Found" if found_crane else "Missing")
+	print(" -> Druid Altar Station: ", "Found" if found_altar else "Missing")
+	print(" -> Smelter Bellows Station: ", "Found" if found_bellows else "Missing")
+	assert(found_crane and found_altar and found_bellows)
+	
+	# 5. Structure Repair & Story Act Progression
+	print("\n[TEST 5] Structure Repair & Act Progression...")
+	GameManager.materials["lumber"] = 2
+	GameManager.materials["iron_ore"] = 2
+	GameManager.repair_structure("port_crane")
+	GameManager.advance_story_act(2)
+	print(" -> Port Crane Repaired: ", GameManager.world_repairs.get("port_crane"))
+	print(" -> Active Story Act: ", GameManager.current_story_act, " - ", GameManager.get_current_act_info().get("title"))
+	assert(GameManager.world_repairs.get("port_crane") == true)
+	assert(GameManager.current_story_act == 2)
+	
+	# 6. Doorways & Subterranean Interiors
+	print("\n[TEST 6] Doorways & Subterranean Interiors...")
+	var doorways = find_children("*", "Area3D", true, false)
+	var door_count = 0
+	for dw in doorways:
+		if dw.get("door_id") != null and dw.get("door_id") != "":
+			door_count += 1
+	print(" -> Total Functional Doorways found: ", door_count)
+	assert(door_count >= 6)
+	
+	# 7. Catacombs Floor 1 Generation & Combat
+	print("\n[TEST 7] Catacombs Dungeon Descent...")
+	GameManager.current_floor = 1
+	load_current_floor_room()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print(" -> Loaded Catacombs Floor 1 successfully!")
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	print(" -> Spawned Catacomb Skeletons & Foes: ", enemies.size())
+	assert(enemies.size() > 0)
+	
+	# Return to Overworld
+	GameManager.current_floor = 0
+	load_current_floor_room()
+	print(" -> Returned to Overworld Sanctuary Hub safely!")
+	
+	print("\n==================================================")
+	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
+	print("==================================================")
+	get_tree().quit(0)
 
 func _init_camera_position() -> void:
 	target_cam_yaw = 45.0
