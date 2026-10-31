@@ -56,10 +56,11 @@ func _process(delta: float) -> void:
 	# Role-specific timed animations
 	if npc_id == "blacksmith":
 		_spark_timer += delta
-		if _spark_timer >= 2.6:
+		if _spark_timer >= 3.4:
 			_spark_timer = 0.0
 			AmbientFX.create_forge_sparks(self, Vector3(0.6, 0.9, 0.4))
-			AudioManager.play_sfx("sword_swing", 0.05, 0.4)
+			if _target_player and global_position.distance_to(_target_player.global_position) < 18.0:
+				AudioManager.play_sfx("anvil_strike", 0.08, -10.0)
 
 func _build_role_effects() -> void:
 	if npc_id == "priestess":

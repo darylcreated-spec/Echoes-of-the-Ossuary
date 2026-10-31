@@ -7,16 +7,25 @@ var _audio_cache: Dictionary = {}
 
 const SFX_PATHS: Dictionary = {
 	"sword_swing": "res://assets/audio/sfx_sword_swing.ogg",
+	"sword_swing_heavy": "res://assets/audio/sfx_sword_swing_heavy.ogg",
 	"hit_flesh": "res://assets/audio/sfx_hit_flesh.ogg",
-	"skeleton_bones": "res://assets/audio/sfx_skeleton_bones.ogg",
+	"skeleton_bones": "res://assets/audio/sfx_hit_flesh.ogg",
 	"chest_open": "res://assets/audio/sfx_chest_open.ogg",
-	"dash": "res://assets/audio/sfx_dash.ogg",
+	"dash": "res://assets/audio/sfx_sword_swing.ogg",
 	"bgm_dungeon": "res://assets/audio/bgm_dungeon_loop.ogg",
+	"bgm_overworld": "res://assets/audio/bgm_overworld.ogg",
+	"bgm_market": "res://assets/audio/bgm_market.mp3",
 	"soul_pickup": "res://assets/audio/sfx_soul_pickup.ogg",
+	"gold_pickup": "res://assets/audio/sfx_gold_pickup.ogg",
 	"descent_sigil": "res://assets/audio/sfx_descent_sigil.ogg",
 	"level_up": "res://assets/audio/sfx_level_up.ogg",
-	"footstep": "res://assets/audio/sfx_footstep.ogg",
-	"button_click": "res://assets/audio/sfx_button_click.ogg"
+	"boon_acquired": "res://assets/audio/sfx_boon_acquired.ogg",
+	"anvil_strike": "res://assets/audio/sfx_anvil_strike.ogg",
+	"door_open": "res://assets/audio/sfx_door_open.ogg",
+	"door_close": "res://assets/audio/sfx_door_close.ogg",
+	"footstep": "res://assets/audio/sfx_footstep_0.ogg",
+	"button_click": "res://assets/audio/sfx_button_click.wav",
+	"ui_switch": "res://assets/audio/sfx_ui_switch.wav"
 }
 
 # Synth buffer fallbacks
@@ -47,6 +56,9 @@ func _load_or_generate_audio() -> void:
 		if FileAccess.file_exists(path) or ResourceLoader.exists(path):
 			var stream = ResourceLoader.load(path)
 			if stream is AudioStream:
+				if key.begins_with("bgm_"):
+					if "loop" in stream:
+						stream.loop = true
 				_audio_cache[key] = stream
 		else:
 			# Generate procedural AudioStreamWAV fallback so game is 100% playable with audio
@@ -64,14 +76,15 @@ func play_sfx(sfx_key: String, pitch_range: float = 0.08, volume_db: float = 0.0
 		player.volume_db = volume_db
 		player.play()
 
-func play_bgm(bgm_key: String = "bgm_dungeon", volume_db: float = -6.0) -> void:
+func play_bgm(bgm_key: String = "bgm_overworld", volume_db: float = -12.0) -> void:
 	if not _audio_cache.has(bgm_key):
 		return
 	var stream: AudioStream = _audio_cache[bgm_key]
-	if _bgm_player.stream != stream or not _bgm_player.playing:
-		_bgm_player.stream = stream
-		_bgm_player.volume_db = volume_db
-		_bgm_player.play()
+	if _bgm_player.stream == stream and _bgm_player.playing:
+		return
+	_bgm_player.stream = stream
+	_bgm_player.volume_db = volume_db
+	_bgm_player.play()
 
 func stop_bgm() -> void:
 	if _bgm_player:

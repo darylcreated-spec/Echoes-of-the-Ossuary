@@ -48,8 +48,8 @@ func _ready() -> void:
 	if camera:
 		CombatJuice.register_camera(camera)
 		
-	# Start background dungeon music
-	AudioManager.play_bgm("bgm_dungeon")
+	# Start serene Overworld theme on game start
+	AudioManager.play_bgm("bgm_overworld", -12.0)
 	
 	# Initial room build (Sanctuary Hub)
 	load_current_floor_room()
@@ -310,6 +310,12 @@ func load_current_floor_room() -> Node3D:
 	var room = current_room
 	
 	_update_environment_lighting(GameManager.current_floor)
+	
+	# Select appropriate music theme: Overworld village vs. Underworld Catacombs
+	if GameManager.current_floor == 0:
+		AudioManager.play_bgm("bgm_overworld", -12.0)
+	else:
+		AudioManager.play_bgm("bgm_dungeon", -10.0)
 	
 	# Reposition player: spawn in courtyard plaza in Overworld (floor 0), or north door in chambers
 	if player and is_instance_valid(player):
