@@ -113,25 +113,25 @@ func _setup_visuals() -> void:
 	match animal_type:
 		AnimalType.STAG:
 			file_name = "Stag"
-			model_scale = Vector3(32.0, 32.0, 32.0)
+			model_scale = Vector3(0.38, 0.38, 0.38) # ~1.85m tall with antlers
 		AnimalType.DEER:
 			file_name = "Deer"
-			model_scale = Vector3(28.0, 28.0, 28.0)
+			model_scale = Vector3(0.30, 0.30, 0.30) # ~1.35m tall
 		AnimalType.WOLF:
 			file_name = "Wolf"
-			model_scale = Vector3(17.0, 17.0, 17.0)
+			model_scale = Vector3(0.18, 0.18, 0.18) # ~0.95m tall
 		AnimalType.FOX:
 			file_name = "Fox"
-			model_scale = Vector3(9.0, 9.0, 9.0)
+			model_scale = Vector3(0.09, 0.09, 0.09) # ~0.50m tall
 		AnimalType.HORSE:
 			file_name = "Horse"
-			model_scale = Vector3(30.0, 30.0, 30.0)
+			model_scale = Vector3(0.30, 0.30, 0.30) # ~1.70m tall
 		AnimalType.COW:
 			file_name = "Cow"
-			model_scale = Vector3(20.0, 20.0, 20.0)
+			model_scale = Vector3(0.20, 0.20, 0.20) # ~1.55m tall
 		AnimalType.BULL:
 			file_name = "Bull"
-			model_scale = Vector3(22.0, 22.0, 22.0)
+			model_scale = Vector3(0.22, 0.22, 0.22) # ~1.70m tall
 
 	var model_path = "res://assets/characters/animals/" + file_name + ".glb"
 	visual_model_root = AssetLoader.load_or_generate_model(model_path, "character", file_name)
