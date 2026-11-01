@@ -12,6 +12,7 @@ var _anim_players: Array = []
 var _current_wp_idx: int = 0
 var _wait_timer: float = 0.0
 var _is_waiting: bool = false
+var _march_sfx_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("army_formation")
@@ -110,13 +111,18 @@ func _build_interaction() -> void:
 func get_prompt_text() -> String:
 	return "[E] Inspect " + regiment_name
 
-func interact(_player: Node = null) -> void:
+func interact(player: Node = null) -> void:
 	_is_waiting = true
 	_wait_timer = 3.5
+	AudioManager.play_sfx_at_position("horn_rally", global_position, 40.0, 0.05, 0.0)
 	for ap in _anim_players:
 		_play_soldier_anim(ap, "Cheer")
+	if player and player.has_method("heal"):
+		player.heal(20.0)
 	var hud = get_tree().get_first_node_in_group("hud")
-	if hud and hud.has_method("show_mission_notification"):
+	if hud and hud.has_method("show_toast"):
+		hud.show_toast("🎺 " + regiment_name + " salutes and sounds the War Horn! (+20 HP Morale Boost)")
+	elif hud and hud.has_method("show_mission_notification"):
 		hud.show_mission_notification("🛡️ " + regiment_name + ": 'Steel and honor! We hold the realm's borders!'")
 
 func _process(delta: float) -> void:
@@ -137,6 +143,11 @@ func _process(delta: float) -> void:
 			for ap in _anim_players:
 				_play_soldier_anim(ap, "Walking_A")
 		return
+
+	_march_sfx_timer += delta
+	if _march_sfx_timer >= 0.56:
+		_march_sfx_timer = 0.0
+		AudioManager.play_sfx_at_position("army_march", global_position, 26.0, 0.08, -7.0)
 
 	var target: Vector3 = waypoints[_current_wp_idx]
 	var diff = Vector3(target.x - global_position.x, 0.0, target.z - global_position.z)

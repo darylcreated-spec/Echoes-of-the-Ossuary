@@ -8,10 +8,16 @@ class_name MedievalShip3D
 
 var _hull_pivot: Node3D = null
 var _wave_time: float = 0.0
+var _creak_timer: float = 0.0
+var _left_oar: Node3D = null
+var _right_oar: Node3D = null
+var _crew_anims: Array = []
 
 func _ready() -> void:
 	add_to_group("medieval_ship")
+	add_to_group("interactable")
 	_wave_time = randf_range(0.0, 20.0)
+	_creak_timer = randf_range(0.0, 4.5)
 	_hull_pivot = Node3D.new()
 	_hull_pivot.name = "HullBuoyancyPivot"
 	add_child(_hull_pivot)
@@ -20,6 +26,7 @@ func _ready() -> void:
 		_build_rowboat()
 	else:
 		_build_medieval_cog()
+	_build_interaction()
 
 func _build_medieval_cog() -> void:
 	var hull_mat = StandardMaterial3D.new()
@@ -219,13 +226,34 @@ func _build_medieval_cog() -> void:
 
 	# Ship Nameplate
 	var lbl = Label3D.new()
-	lbl.text = "⛵ " + ship_name + " (Medieval Cog)"
+	lbl.text = "⛵ " + ship_name + " (Medieval Cog)\n[E] Inspect Vessel"
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.position = Vector3(0.0, 6.8, 0.0)
 	lbl.font_size = 26
 	lbl.outline_size = 6
 	lbl.modulate = Color(0.95, 0.90, 0.72)
 	_hull_pivot.add_child(lbl)
+
+	# 7. Animated Deck Crew (Quartermaster Helmsman & Bow Lookout)
+	var helmsman = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue_Hooded.glb", "character", "Helmsman")
+	helmsman.scale = Vector3.ONE * 0.54
+	helmsman.position = Vector3(0.0, 4.15, 4.2)
+	helmsman.rotation_degrees.y = 180.0
+	_hull_pivot.add_child(helmsman)
+	var hap = helmsman.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if hap:
+		_crew_anims.append(hap)
+		_play_ship_crew_anim(hap, "Idle")
+
+	var lookout = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "Lookout")
+	lookout.scale = Vector3.ONE * 0.54
+	lookout.position = Vector3(0.0, 3.0, -5.0)
+	lookout.rotation_degrees.y = 180.0
+	_hull_pivot.add_child(lookout)
+	var lap = lookout.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if lap:
+		_crew_anims.append(lap)
+		_play_ship_crew_anim(lap, "Cheer")
 
 func _build_rowboat() -> void:
 	var wood_mat = StandardMaterial3D.new()
@@ -249,9 +277,101 @@ func _build_rowboat() -> void:
 		bench.position = Vector3(0.0, 0.55, bench_z)
 		_hull_pivot.add_child(bench)
 
+	# Articulated Rowing Oars on Port & Starboard Gunwales
+	_left_oar = Node3D.new()
+	_left_oar.position = Vector3(-0.8, 0.62, 0.0)
+	var lo_mesh = MeshInstance3D.new()
+	var oar_box = BoxMesh.new()
+	oar_box.size = Vector3(1.9, 0.08, 0.16)
+	oar_box.material = wood_mat
+	lo_mesh.mesh = oar_box
+	lo_mesh.position = Vector3(-0.75, -0.15, 0.0)
+	lo_mesh.rotation_degrees.z = 16.0
+	_left_oar.add_child(lo_mesh)
+	_hull_pivot.add_child(_left_oar)
+
+	_right_oar = Node3D.new()
+	_right_oar.position = Vector3(0.8, 0.62, 0.0)
+	var ro_mesh = MeshInstance3D.new()
+	ro_mesh.mesh = oar_box
+	ro_mesh.position = Vector3(0.75, -0.15, 0.0)
+	ro_mesh.rotation_degrees.z = -16.0
+	_right_oar.add_child(ro_mesh)
+	_hull_pivot.add_child(_right_oar)
+
+	# Animated Harbor Oarsman on Center Bench
+	var rower = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rower")
+	rower.scale = Vector3.ONE * 0.48
+	rower.position = Vector3(0.0, 0.55, 0.0)
+	_hull_pivot.add_child(rower)
+	var rap = rower.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if rap:
+		_crew_anims.append(rap)
+		_play_ship_crew_anim(rap, "Interact")
+
+func _build_interaction() -> void:
+	var area = Area3D.new()
+	area.name = "InteractionArea"
+	area.collision_layer = 1 << 5
+	area.collision_mask = 0
+	var col = CollisionShape3D.new()
+	var sp = SphereShape3D.new()
+	sp.radius = 3.2 if is_rowboat else 7.5
+	col.shape = sp
+	col.position = Vector3(0.0, 1.5, 0.0)
+	area.add_child(col)
+	add_child(area)
+
+func get_prompt_text() -> String:
+	return "[E] Inspect " + ship_name
+
+func interact(_player: Node = null) -> void:
+	AudioManager.play_sfx_at_position("ship_creak", global_position, 36.0, 0.08, 0.0)
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_toast"):
+		var desc = "Harbor rowboat plying the Port Blackwater shoals." if is_rowboat else "High-seas medieval cog moored at Port Blackwater. Walk up the boarding gangplank to explore the weather deck!"
+		hud.show_toast("⛵ " + ship_name + ": " + desc)
+
+func _play_ship_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
+	if not ap:
+		return
+	var anims = ap.get_animation_list()
+	var chosen = ""
+	for candidate in [keyword.to_lower(), "idle", "interact", "cheer"]:
+		for a in anims:
+			if candidate in a.to_lower():
+				chosen = a
+				break
+		if chosen != "":
+			break
+	if chosen == "" and anims.size() > 0:
+		chosen = anims[0]
+	if chosen != "":
+		var res = ap.get_animation(chosen)
+		if res:
+			res.loop_mode = Animation.LOOP_LINEAR
+		ap.play(chosen, 0.2)
+
 func _process(delta: float) -> void:
 	_wave_time += delta
+	_creak_timer += delta
+	if _creak_timer >= 5.2:
+		_creak_timer = 0.0
+		AudioManager.play_sfx_at_position("ship_creak", global_position, 28.0, 0.1, -8.0)
+
+	for ap in _crew_anims:
+		if is_instance_valid(ap) and not ap.is_playing():
+			_play_ship_crew_anim(ap, "Idle")
+
 	if _hull_pivot:
 		_hull_pivot.position.y = sin(_wave_time * 1.6) * 0.12
 		_hull_pivot.rotation_degrees.z = sin(_wave_time * 1.2) * 1.8
 		_hull_pivot.rotation_degrees.x = cos(_wave_time * 0.9) * 1.2
+
+	if _left_oar and _right_oar:
+		var row_sweep = sin(_wave_time * 2.8) * 28.0
+		var row_dip = cos(_wave_time * 2.8) * 10.0
+		_left_oar.rotation_degrees.y = row_sweep
+		_left_oar.rotation_degrees.z = row_dip
+		_right_oar.rotation_degrees.y = -row_sweep
+		_right_oar.rotation_degrees.z = -row_dip

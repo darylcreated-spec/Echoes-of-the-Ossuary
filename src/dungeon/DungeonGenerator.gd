@@ -748,9 +748,9 @@ func _build_riverside_meadow_and_props(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/tree_pine_yellow_small.gltf", Vector3(-14.0, 0.0, 34.0), Vector3.ONE * 3.2)
 	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-6.5, 0.0, 33.0), Vector3.ONE * 2.4, 40.0)
 	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-11.5, 0.0, 36.0), Vector3.ONE * 2.0, -30.0)
-	_spawn_animated_fauna(parent, "res://assets/characters/animals/Deer.glb", Vector3(-9.2, 0.0, 33.5), Vector3.ONE * 0.55, 60.0, "AnimalArmature|Eating")
-	_spawn_animated_fauna(parent, "res://assets/characters/animals/Deer.glb", Vector3(-12.5, 0.0, 31.0), Vector3.ONE * 0.52, -45.0, "AnimalArmature|Idle_2")
-	_spawn_animated_fauna(parent, "res://assets/characters/animals/Stag.glb", Vector3(-7.0, 0.0, 36.5), Vector3.ONE * 0.60, 110.0, "AnimalArmature|Idle")
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-9.2, 0.0, 33.5), 60.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-12.5, 0.0, 31.0), -45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-7.0, 0.0, 36.5), 110.0)
 
 	# East Meadow - Farm approach with wooden fences, birch trees, hay & barrel clutter
 	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(4.8, 0.0, 30.0), Vector3.ONE * 2.0, -25.0)
@@ -2158,3 +2158,10 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 		Vector3(-46.0, 0.0, 50.0)
 	]
 	parent.add_child(caravan_west)
+
+	# 3. Roaming Wildlife in Greenhollow & Weeping Fen Outskirts
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-40.0, 0.0, -14.0), 45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-52.0, 0.0, -12.0), -30.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-46.0, 0.0, -24.0), 80.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(64.0, 0.0, 62.0), 120.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(68.0, 0.0, 82.0), -45.0)

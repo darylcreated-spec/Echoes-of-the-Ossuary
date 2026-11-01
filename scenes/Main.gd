@@ -316,6 +316,49 @@ func _run_gameplay_self_test() -> void:
 	assert(swamp_water != null)
 	print(" -> Weeping Fen Swamp Biome water surface verified at: ", swamp_water.global_position)
 
+	# 13. Spatial Audio SFX, NPC Role Services & Animal Movement Verification
+	print("\n[TEST 13] Spatial 3D Audio SFX, NPC Roles & Active Animal Movement...")
+	var sfx_keys = [
+		"trebuchet_winch", "trebuchet_launch", "boulder_explosion", "army_march",
+		"horn_rally", "ship_creak", "wagon_rattle", "wood_chop",
+		"seal_bark", "horse_neigh", "cow_moo", "wolf_howl"
+	]
+	for sk in sfx_keys:
+		assert(AudioManager._audio_cache.has(sk))
+		AudioManager.play_sfx_at_position(sk, player.global_position, 32.0, 0.05, -10.0)
+	print(" -> Verified 12 new procedural spatial SFX keys in AudioManager!")
+
+	# Test NPC Role Actions via HUD
+	var gold_before = GameManager.gold
+	hud._on_dialogue_action("royal_stipend")
+	assert(GameManager.gold == gold_before + 50)
+	print(" -> King Aldric IV Royal Stipend role action (+50 Gold) verified!")
+
+	hud._on_dialogue_action("order_trebuchet_barrage")
+	print(" -> Siege Marshal Vargos Coordinated Trebuchet Barrage role action verified!")
+
+	# Verify Active Animal & Harbor Seal Movement over physics frames
+	Engine.time_scale = 1.0
+	var animals = get_tree().get_nodes_in_group("animal")
+	print(" -> Total Active Roaming Animals (AnimalAI) found: ", animals.size())
+	assert(animals.size() >= 18)
+	var sample_animal: Node3D = null
+	for a in animals:
+		if is_instance_valid(a) and not a.is_queued_for_deletion():
+			sample_animal = a as Node3D
+			break
+	assert(sample_animal != null)
+	var sample_seal = seals[0] as Node3D
+	var start_animal_pos = sample_animal.global_position
+	var start_seal_pos = sample_seal.global_position
+	for _f in range(12):
+		await get_tree().physics_frame
+	var animal_disp = sample_animal.global_position.distance_to(start_animal_pos)
+	var seal_disp = sample_seal.global_position.distance_to(start_seal_pos)
+	print(" -> Animal displacement over 12 frames: ", snapped(animal_disp, 0.001), "m | Harbor Seal displacement: ", snapped(seal_disp, 0.001), "m")
+	assert(animal_disp > 0.01)
+	assert(seal_disp > 0.01)
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

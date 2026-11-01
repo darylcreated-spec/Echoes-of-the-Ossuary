@@ -9,6 +9,10 @@ var _arm_pivot: Node3D = null
 var _counterweight_pivot: Node3D = null
 var _loaded_boulder: Node3D = null
 var _active_projectile: Node3D = null
+var _winch_wheel_l: Node3D = null
+var _winch_wheel_r: Node3D = null
+var _crew_anims: Array = []
+var _winch_sfx_timer: float = 0.0
 
 enum SiegeState { WINCHING, ARMED, FIRING, RECOIL }
 var _state: SiegeState = SiegeState.WINCHING
@@ -154,6 +158,31 @@ func _build_trebuchet_assembly() -> void:
 			ammo.position = b_offset
 			add_child(ammo)
 
+	# 7. Rotating Windlass Winch Wheels at Rear of Frame (Z = 2.8m)
+	_winch_wheel_l = _create_winch_wheel(wood_mat, dark_iron_mat)
+	_winch_wheel_l.position = Vector3(-1.95, 1.1, 2.8)
+	add_child(_winch_wheel_l)
+
+	_winch_wheel_r = _create_winch_wheel(wood_mat, dark_iron_mat)
+	_winch_wheel_r.position = Vector3(1.95, 1.1, 2.8)
+	add_child(_winch_wheel_r)
+
+	# 8. Animated Siege Engineer Crew operating the Winch
+	var crew_configs = [
+		{"pos": Vector3(-2.5, 0.0, 2.8), "rot": 90.0, "model": "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf", "scale": Vector3.ONE * 0.38},
+		{"pos": Vector3(2.5, 0.0, 2.8), "rot": -90.0, "model": "res://assets/characters/adventurers/Knight.glb", "scale": Vector3.ONE * 0.52}
+	]
+	for cc in crew_configs:
+		var eng = AssetLoader.load_or_generate_model(cc["model"], "character", "Engineer")
+		eng.scale = cc["scale"]
+		eng.position = cc["pos"]
+		eng.rotation_degrees.y = cc["rot"]
+		add_child(eng)
+		var ap = eng.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if ap:
+			_crew_anims.append(ap)
+			_play_crew_anim(ap, "Interact")
+
 	# Static Physics Collider
 	var sb = StaticBody3D.new()
 	sb.collision_layer = 1
@@ -199,6 +228,9 @@ func interact(_player: Node = null) -> void:
 
 func _process(delta: float) -> void:
 	_timer += delta
+	for ap in _crew_anims:
+		if is_instance_valid(ap) and not ap.is_playing():
+			_play_crew_anim(ap, "Cheer" if _state in [SiegeState.FIRING, SiegeState.RECOIL] else "Interact")
 
 	match _state:
 		SiegeState.WINCHING:
@@ -208,6 +240,14 @@ func _process(delta: float) -> void:
 				_arm_pivot.rotation_degrees.x = lerp(60.0, -36.0, progress)
 			if _counterweight_pivot:
 				_counterweight_pivot.rotation_degrees.x = -_arm_pivot.rotation_degrees.x
+			if _winch_wheel_l:
+				_winch_wheel_l.rotation_degrees.x -= delta * 140.0
+			if _winch_wheel_r:
+				_winch_wheel_r.rotation_degrees.x -= delta * 140.0
+			_winch_sfx_timer += delta
+			if _winch_sfx_timer >= 0.95:
+				_winch_sfx_timer = 0.0
+				AudioManager.play_sfx_at_position("trebuchet_winch", global_position, 34.0, 0.08, -6.0)
 			if _loaded_boulder:
 				_loaded_boulder.visible = true
 			if progress >= 1.0:
@@ -244,6 +284,8 @@ func _process(delta: float) -> void:
 			if _timer >= 2.2:
 				_state = SiegeState.WINCHING
 				_timer = 0.0
+				for ap in _crew_anims:
+					_play_crew_anim(ap, "Interact")
 
 	# Update flying boulder ballistic trajectory
 	if _active_projectile and is_instance_valid(_active_projectile):
@@ -252,12 +294,19 @@ func _process(delta: float) -> void:
 		_active_projectile.global_position = p
 		_active_projectile.rotation.x += delta * 6.0
 		if p.y <= 0.2 and _proj_time > 0.3:
+			var impact_pos = Vector3(p.x, 0.15, p.z)
+			_spawn_impact_explosion(impact_pos)
+			AudioManager.play_sfx_at_position("boulder_explosion", impact_pos, 48.0, 0.08, 0.0)
 			_active_projectile.queue_free()
 			_active_projectile = null
 
 func _launch_boulder() -> void:
 	if _loaded_boulder:
 		_loaded_boulder.visible = false
+
+	for ap in _crew_anims:
+		_play_crew_anim(ap, "Cheer")
+	AudioManager.play_sfx_at_position("trebuchet_launch", global_position, 42.0, 0.06, 0.0)
 
 	if _active_projectile and is_instance_valid(_active_projectile):
 		_active_projectile.queue_free()
@@ -285,3 +334,76 @@ func _launch_boulder() -> void:
 	var dir = -global_transform.basis.z.normalized()
 	_proj_vel = dir * 24.0 + Vector3(0.0, 15.0, 0.0)
 	_proj_time = 0.0
+
+func _create_winch_wheel(wood_mat: Material, iron_mat: Material) -> Node3D:
+	var root = Node3D.new()
+	var rim = MeshInstance3D.new()
+	var r_mesh = CylinderMesh.new()
+	r_mesh.top_radius = 0.75
+	r_mesh.bottom_radius = 0.75
+	r_mesh.height = 0.16
+	r_mesh.material = iron_mat
+	rim.mesh = r_mesh
+	rim.rotation_degrees.z = 90.0
+	root.add_child(rim)
+
+	for angle_deg in [0.0, 45.0, 90.0, 135.0]:
+		var spoke = MeshInstance3D.new()
+		var s_mesh = BoxMesh.new()
+		s_mesh.size = Vector3(0.20, 1.75, 0.12)
+		s_mesh.material = wood_mat
+		spoke.mesh = s_mesh
+		spoke.rotation_degrees.x = angle_deg
+		root.add_child(spoke)
+	return root
+
+func _play_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
+	if not ap:
+		return
+	var anims = ap.get_animation_list()
+	var chosen = ""
+	for candidate in [keyword.to_lower(), "interact", "attack", "walking", "idle"]:
+		for a in anims:
+			if candidate in a.to_lower():
+				chosen = a
+				break
+		if chosen != "":
+			break
+	if chosen == "" and anims.size() > 0:
+		chosen = anims[0]
+	if chosen != "":
+		var res = ap.get_animation(chosen)
+		if res:
+			res.loop_mode = Animation.LOOP_LINEAR
+		ap.play(chosen, 0.15)
+
+func _spawn_impact_explosion(pos: Vector3) -> void:
+	if not get_parent():
+		return
+	var burst = CPUParticles3D.new()
+	burst.position = pos
+	burst.emitting = true
+	burst.one_shot = true
+	burst.amount = 28
+	burst.lifetime = 0.65
+	burst.explosiveness = 0.92
+	burst.direction = Vector3(0.0, 1.0, 0.0)
+	burst.spread = 68.0
+	burst.initial_velocity_min = 4.5
+	burst.initial_velocity_max = 9.5
+	burst.gravity = Vector3(0.0, -14.0, 0.0)
+	var m = SphereMesh.new()
+	m.radius = 0.22
+	m.height = 0.44
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.45, 0.12)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.38, 0.08)
+	mat.emission_energy_multiplier = 2.4
+	m.material = mat
+	burst.mesh = m
+	get_parent().add_child(burst)
+	get_tree().create_timer(0.8).timeout.connect(func(): if is_instance_valid(burst): burst.queue_free())
+	var player = get_tree().get_first_node_in_group("player") as Node3D
+	if player and player.global_position.distance_to(pos) < 35.0:
+		CombatJuice.add_trauma(0.18)

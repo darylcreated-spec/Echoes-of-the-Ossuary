@@ -94,10 +94,12 @@ func update_movement_animation(delta: float) -> void:
 			return
 			
 		if speed > 0.35:
-			var run_speed = clamp(speed / max(move_speed, 1.0) * 1.3, 0.7, 1.8)
+			var is_sprinting = speed >= (move_speed * 0.72)
+			var run_speed = clamp(speed / max(move_speed, 1.0) * 1.35, 0.75, 1.8)
 			var move_anim = ""
 			var anim_list = anim_player.get_animation_list()
-			for candidate in ["running_a", "gallop", "run", "walking_a", "walk", "walk1_action"]:
+			var candidates = ["running_a", "gallop", "run", "walking_a", "walk", "walk1_action"] if is_sprinting else ["walking_a", "walk", "walk1_action", "running_a", "gallop", "run"]
+			for candidate in candidates:
 				for a in anim_list:
 					if candidate in a.to_lower():
 						move_anim = a
@@ -197,8 +199,9 @@ func _setup_mesh_flash() -> void:
 	visual_model_root = get_node_or_null("Model")
 
 func apply_gravity(delta: float) -> void:
+	var safe_delta = min(delta, 0.05)
 	if not is_on_floor():
-		velocity.y -= gravity * delta
+		velocity.y -= gravity * safe_delta
 	else:
 		velocity.y = -0.5
 		
@@ -207,6 +210,9 @@ func apply_gravity(delta: float) -> void:
 		if is_in_group("player"):
 			global_position = Vector3(0, 0.5, 0)
 			velocity = Vector3.ZERO
+		elif is_in_group("animal"):
+			global_position.y = 0.15
+			velocity.y = 0.0
 		else:
 			take_damage(9999.0, Vector3.ZERO, false, null)
 

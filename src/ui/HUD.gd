@@ -708,6 +708,140 @@ func _on_dialogue_action(action_id: String) -> void:
 		"whistle_steed":
 			if player and player.has_method("mount"):
 				player.mount()
+		"royal_stipend":
+			GameManager.add_gold(50)
+			AudioManager.play_sfx("gold_pickup", 0.06, 1.0)
+			if dialogue_modal:
+				dialogue_modal.show_dialogue("King Aldric IV (Sovereign of the Realm)", "👑", "King Aldric IV bestows a Royal War Stipend of 50 Gold Coins upon you! 'Spend it well on steel, timber, and provisions for the realm!'", [])
+		"queen_blessing":
+			GameManager.upgrade_max_health_level += 1
+			GameManager.player_stats_changed.emit()
+			if player and player.has_method("heal"):
+				player.heal(player.max_health)
+			AudioManager.play_sfx("level_up", 0.06, 1.0)
+			if dialogue_modal:
+				dialogue_modal.show_dialogue("Queen Seraphina (Queen Consort)", "👑", "Queen Seraphina raises her golden scepter. A radiant aura restores your health to full and permanently increases your Max Health!", [])
+		"order_trebuchet_barrage":
+			AudioManager.play_sfx("horn_rally", 0.05, 1.0)
+			var trebs = get_tree().get_nodes_in_group("siege_trebuchet")
+			for t in trebs:
+				if t.has_method("interact"):
+					t.interact(player)
+			if dialogue_modal:
+				dialogue_modal.show_dialogue("Siege Marshal Vargos", "☄️", "'LOOSE ALL COUNTERWEIGHTS!' Both Goliath and Dreadhammer Trebuchets whip skyward and hurl flaming boulders across the southern battlefield!", [])
+		"turn_in_fen_seal":
+			if GameManager.materials.get("fen_seal_relic", 0) > 0:
+				GameManager.materials["fen_seal_relic"] = 0
+				GameManager.add_gold(150)
+				GameManager.add_echoes(60)
+				GameManager.upgrade_attack_power_level += 1
+				GameManager.player_stats_changed.emit()
+				AudioManager.play_sfx("level_up", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Seeress Morrigan", "🐸", "The Ancient Seal of the Weeping Fen pulses with primordial power! Morrigan grants you 150 Gold, 60 Soul Echoes, and permanently infuses your weapon with Bog Venom!", [])
+		"buy_swamp_elixir":
+			if GameManager.gold >= 12:
+				GameManager.add_gold(-12)
+				if player and player.has_method("heal"):
+					player.heal(60.0)
+				AudioManager.play_sfx("soul_pickup", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Seeress Morrigan", "🐸", "You drink the bubbling emerald mire draught! (+60 HP restored).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Seeress Morrigan", "🐸", "Bring 12 Gold coins for the cauldron's brew, wanderer.", [])
+		"buy_smoked_fish":
+			if GameManager.gold >= 8:
+				GameManager.add_gold(-8)
+				if player and player.has_method("heal"):
+					player.heal(35.0)
+				AudioManager.play_sfx("gold_pickup", 0.08, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Fishmonger Greta", "🐟", "You feast on hot smoked silver-herring from the harbor nets! (+35 HP restored).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Fishmonger Greta", "🐟", "Fresh smoked herring costs 8 Gold coins, sailor!", [])
+		"seal_lore":
+			AudioManager.play_sfx("seal_bark", 0.06, 0.0)
+			if dialogue_modal:
+				dialogue_modal.show_dialogue("Fishmonger Greta", "🦭", "Hear them barking out on the shoals? The Coastal Harbor Seals waddle up onto the warm rocks by the north pier and swim in the surf. Sailors say petting one brings fair winds!", [])
+		"buy_lumber":
+			if GameManager.gold >= 25:
+				GameManager.add_gold(-25)
+				GameManager.add_material("lumber", 1)
+				AudioManager.play_sfx("wood_chop", 0.08, 0.5)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Timber Purchase", "🪵", "Acquired +1 Seasoned Oak Lumber! Use it to rebuild the Port Blackwater Cargo Crane or reinforce realm structures.", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Timber Purchase", "🪵", "Seasoned Oak Lumber requires 25 Gold coins.", [])
+		"woodcutter_sharpen":
+			if GameManager.gold >= 40:
+				GameManager.add_gold(-40)
+				GameManager.upgrade_attack_power_level += 1
+				GameManager.player_stats_changed.emit()
+				AudioManager.play_sfx("wood_chop", 0.06, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Forester Hal", "🪓", "Forester Hal hones your weapon edge on his heavy timber whetstone! Permanent Attack Power increased!", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Forester Hal", "🪓", "Bring 40 Gold coins and I'll hone your blade to cleave oak!", [])
+		"buy_iron_ore":
+			if GameManager.gold >= 30:
+				GameManager.add_gold(-30)
+				GameManager.add_material("iron_ore", 1)
+				AudioManager.play_sfx("anvil_strike", 0.08, 0.5)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Highland Iron Ore", "⛏️", "Acquired +1 Highland Iron Ore! Ideal for repairing the Port Crane, Smelter Bellows, or forging weapon upgrades.", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Highland Iron Ore", "⛏️", "Highland Iron Ore costs 30 Gold coins.", [])
+		"buy_arcane_crystal":
+			if GameManager.gold >= 40:
+				GameManager.add_gold(-40)
+				GameManager.add_material("arcane_crystal", 1)
+				AudioManager.play_sfx("soul_pickup", 0.08, 0.5)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Arcane Crystal", "💎", "Acquired +1 Arcane Cyan Crystal! Elder Thorne can use this to cleanse the Whisperwood Sun Altar.", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Arcane Crystal", "💎", "An Arcane Crystal costs 40 Gold coins.", [])
+		"buy_herbal_draught":
+			if GameManager.gold >= 10:
+				GameManager.add_gold(-10)
+				if player and player.has_method("heal"):
+					player.heal(50.0)
+				AudioManager.play_sfx("soul_pickup", 0.08, 0.5)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Apothecary Elowen", "🌿", "You drink the soothing Moon-Sage Herbal Draught! (+50 HP restored).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Apothecary Elowen", "🌿", "Moon-Sage Draught costs 10 Gold coins.", [])
+		"buy_vitality_tonic":
+			if GameManager.gold >= 45:
+				GameManager.add_gold(-45)
+				GameManager.upgrade_max_health_level += 1
+				GameManager.player_stats_changed.emit()
+				if player and player.has_method("heal"):
+					player.heal(25.0)
+				AudioManager.play_sfx("level_up", 0.08, 0.8)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Apothecary Elowen", "🧪", "Your constitution surges with herbal vigor! Permanent Max Health increased!", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Apothecary Elowen", "🧪", "A permanent Vitality Tonic requires 45 Gold coins.", [])
+		"buy_mill_bread":
+			if GameManager.gold >= 5:
+				GameManager.add_gold(-5)
+				if player and player.has_method("heal"):
+					player.heal(25.0)
+				AudioManager.play_sfx("gold_pickup", 0.08, 0.5)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Fresh Millstone Loaf", "🥖", "Warm, crusted wheat bread fresh from the riverside millstones! (+25 HP restored).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Fresh Millstone Loaf", "🥖", "A warm loaf of bread is 5 Gold coins, friend!", [])
+		"archer_training":
+			if GameManager.gold >= 35:
+				GameManager.add_gold(-35)
+				GameManager.upgrade_attack_power_level += 1
+				GameManager.player_stats_changed.emit()
+				AudioManager.play_sfx("crossbow_shoot", 0.06, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Marksman Drill", "🏹", "The Citadel Marksman drills your crossbow draw and blade stance! Permanent Attack Power increased!", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Marksman Drill", "🏹", "Marksman combat drills require 35 Gold coins for target bolts.", [])
 
 func show_altar_modal() -> void:
 	altar_modal.visible = true

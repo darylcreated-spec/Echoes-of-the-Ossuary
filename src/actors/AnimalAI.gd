@@ -22,19 +22,24 @@ enum AIState {
 
 @export var animal_type: AnimalType = AnimalType.STAG
 
-var current_ai_state: AIState = AIState.IDLE
+var current_ai_state: AIState = AIState.WANDER
 var target_player: Node3D = null
 var spawn_origin: Vector3 = Vector3.ZERO
 var wander_target: Vector3 = Vector3.ZERO
 var _state_timer: float = 0.0
 var _attack_cooldown: float = 0.0
+var _vocal_timer: float = 0.0
+var _origin_initialized: bool = false
 
 func _ready() -> void:
 	super._ready()
-	spawn_origin = global_position
+	add_to_group("animal")
+	spawn_origin = position
+	_vocal_timer = randf_range(3.0, 9.0)
 	_configure_type_stats()
 	_setup_collision_and_hurtbox()
 	_setup_visuals()
+	_pick_new_wander_target()
 	
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
@@ -74,8 +79,9 @@ func _setup_collision_and_hurtbox() -> void:
 		add_child(hb)
 		hurtbox = hb
 
-	# Mount interaction for Horses & Stags
-	if animal_type in [AnimalType.HORSE, AnimalType.STAG]:
+	# Interaction for Mounting (Horses & Stags) or Petting/Vocalizing (Cattle & Foxes)
+	if animal_type in [AnimalType.HORSE, AnimalType.STAG, AnimalType.COW, AnimalType.BULL, AnimalType.FOX]:
+		add_to_group("interactable")
 		var ia = Area3D.new()
 		ia.name = "MountInteractArea"
 		ia.collision_layer = 1 << 5 # Layer 6: Interactable
@@ -89,15 +95,35 @@ func _setup_collision_and_hurtbox() -> void:
 		add_child(ia)
 
 func get_prompt_text() -> String:
-	if animal_type == AnimalType.STAG:
-		return "[E] Mount Elder Stag"
-	return "[E] Mount Warhorse"
+	match animal_type:
+		AnimalType.STAG:
+			return "[E] Mount Elder Stag"
+		AnimalType.HORSE:
+			return "[E] Mount Warhorse"
+		AnimalType.COW, AnimalType.BULL:
+			return "[E] Pet Pasture Cattle"
+		AnimalType.FOX:
+			return "[E] Feed Woodland Fox"
+		_:
+			return "[E] Interact"
 
 func interact(player: Node) -> void:
-	if player and player.has_method("mount"):
-		var breed = "Stag" if animal_type == AnimalType.STAG else "Horse"
-		player.mount(breed)
-		queue_free()
+	if animal_type in [AnimalType.HORSE, AnimalType.STAG]:
+		AudioManager.play_sfx_at_position("horse_neigh", global_position, 28.0, 0.08, -2.0)
+		if player and player.has_method("mount"):
+			var breed = "Stag" if animal_type == AnimalType.STAG else "Horse"
+			player.mount(breed)
+			queue_free()
+	elif animal_type in [AnimalType.COW, AnimalType.BULL]:
+		AudioManager.play_sfx_at_position("cow_moo", global_position, 28.0, 0.08, 0.0)
+		var hud = get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast("🐄 The pasture cow moos contentedly and nudges your hand!")
+	elif animal_type == AnimalType.FOX:
+		AudioManager.play_sfx_at_position("seal_bark", global_position, 24.0, 0.15, -3.0)
+		var hud = get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast("🦊 The woodland fox yips happily and darts around your boots!")
 
 func _configure_type_stats() -> void:
 	match animal_type:
@@ -167,6 +193,11 @@ func _setup_visuals() -> void:
 	_cache_model_nodes()
 
 func _physics_process(delta: float) -> void:
+	if not _origin_initialized:
+		_origin_initialized = true
+		spawn_origin = global_position
+		_pick_new_wander_target()
+
 	apply_gravity(delta)
 	handle_knockback(delta)
 	
@@ -176,6 +207,19 @@ func _physics_process(delta: float) -> void:
 
 	if _attack_cooldown > 0.0:
 		_attack_cooldown -= delta
+
+	# Periodic ambient animal vocalization when player is nearby
+	_vocal_timer -= delta
+	if _vocal_timer <= 0.0:
+		_vocal_timer = randf_range(7.5, 15.0)
+		if target_player and is_instance_valid(target_player) and global_position.distance_to(target_player.global_position) < 22.0:
+			match animal_type:
+				AnimalType.COW, AnimalType.BULL:
+					AudioManager.play_sfx_at_position("cow_moo", global_position, 24.0, 0.1, -6.0)
+				AnimalType.HORSE:
+					AudioManager.play_sfx_at_position("horse_neigh", global_position, 24.0, 0.1, -6.0)
+				AnimalType.WOLF:
+					AudioManager.play_sfx_at_position("wolf_howl", global_position, 26.0, 0.1, -5.0)
 		
 	if not target_player or not is_instance_valid(target_player):
 		var players = get_tree().get_nodes_in_group("player")
@@ -197,6 +241,14 @@ func _physics_process(delta: float) -> void:
 	update_movement_animation(delta)
 	move_and_slide()
 
+func _pick_new_wander_target() -> void:
+	var angle = randf() * TAU
+	var max_r = 4.2 if animal_type in [AnimalType.COW, AnimalType.BULL, AnimalType.HORSE] else 6.8
+	var dist_w = randf_range(2.2, max_r)
+	wander_target = spawn_origin + Vector3(cos(angle) * dist_w, 0.0, sin(angle) * dist_w)
+	current_ai_state = AIState.WANDER
+	_state_timer = randf_range(2.8, 5.2)
+
 func _process_idle(delta: float) -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
@@ -207,6 +259,7 @@ func _process_idle(delta: float) -> void:
 		var dist = global_position.distance_to(target_player.global_position)
 		if animal_type == AnimalType.WOLF:
 			if dist < 9.0:
+				AudioManager.play_sfx_at_position("wolf_howl", global_position, 24.0, 0.08, -4.0)
 				current_ai_state = AIState.CHASE
 				return
 		elif animal_type in [AnimalType.HORSE, AnimalType.COW, AnimalType.BULL]:
@@ -220,12 +273,7 @@ func _process_idle(delta: float) -> void:
 				return
 				
 	if _state_timer <= 0.0:
-		# Pick random wander target nearby
-		var angle = randf() * TAU
-		var dist_w = randf_range(3.0, 7.0)
-		wander_target = spawn_origin + Vector3(cos(angle) * dist_w, 0, sin(angle) * dist_w)
-		current_ai_state = AIState.WANDER
-		_state_timer = randf_range(2.5, 4.5)
+		_pick_new_wander_target()
 
 func _process_wander(delta: float) -> void:
 	_state_timer -= delta
@@ -236,18 +284,23 @@ func _process_wander(delta: float) -> void:
 		if animal_type == AnimalType.WOLF and dist_p < 9.0:
 			current_ai_state = AIState.CHASE
 			return
-		elif animal_type != AnimalType.WOLF and dist_p < 6.5:
+		elif animal_type in [AnimalType.STAG, AnimalType.DEER, AnimalType.FOX] and dist_p < 6.5:
 			current_ai_state = AIState.FLEE
 			_state_timer = randf_range(3.0, 5.0)
 			return
+
+	# If colliding with a fence, tree, or boulder, immediately pick a new direction toward spawn_origin
+	if is_on_wall():
+		_pick_new_wander_target()
+		return
 			
 	var to_target = (wander_target - global_position)
 	to_target.y = 0.0
 	var dist = to_target.length()
 	
-	if dist < 0.6 or _state_timer <= 0.0:
+	if dist < 0.65 or _state_timer <= 0.0:
 		current_ai_state = AIState.IDLE
-		_state_timer = randf_range(2.0, 5.0)
+		_state_timer = randf_range(1.2, 2.8)
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if anim_player:
@@ -257,8 +310,9 @@ func _process_wander(delta: float) -> void:
 				play_anim("Idle", 0.2, 1.0)
 	else:
 		var dir = to_target.normalized()
-		velocity.x = dir.x * (move_speed * 0.45) # Walk speed
-		velocity.z = dir.z * (move_speed * 0.45)
+		var walk_spd = move_speed * 0.52
+		velocity.x = dir.x * walk_spd
+		velocity.z = dir.z * walk_spd
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), delta * 6.0)
 
 func _process_flee(delta: float) -> void:

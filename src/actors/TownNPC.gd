@@ -57,17 +57,44 @@ func _process(delta: float) -> void:
 		_model.rotation_degrees.y = lerp_angle(deg_to_rad(_model.rotation_degrees.y), deg_to_rad(target_rot), delta * 4.5)
 		_model.rotation_degrees.y = rad_to_deg(_model.rotation_degrees.y)
 		
-	# Role-specific timed animations
-	if npc_id == "blacksmith":
+	# Role-specific timed animations & spatial audio
+	if npc_id in ["blacksmith", "runesmith_torvald"]:
 		_spark_timer += delta
 		if _spark_timer >= 3.4:
 			_spark_timer = 0.0
 			AmbientFX.create_forge_sparks(self, Vector3(0.6, 0.9, 0.4))
-			if _target_player and global_position.distance_to(_target_player.global_position) < 18.0:
-				AudioManager.play_sfx("anvil_strike", 0.08, -10.0)
+			AudioManager.play_sfx_at_position("anvil_strike", global_position, 22.0, 0.08, -8.0)
+	elif "archer" in npc_id:
+		_spark_timer += delta
+		if _spark_timer >= 4.2:
+			_spark_timer = 0.0
+			_play_work_gesture(["shoot", "attack", "ranged", "interact"])
+			AudioManager.play_sfx_at_position("crossbow_shoot", global_position, 24.0, 0.08, -6.0)
+	elif npc_id == "woodcutter_hal":
+		_spark_timer += delta
+		if _spark_timer >= 3.8:
+			_spark_timer = 0.0
+			_play_work_gesture(["attack", "chop", "interact"])
+			AmbientFX.create_forge_sparks(self, Vector3(0.4, 0.7, 0.5))
+			AudioManager.play_sfx_at_position("wood_chop", global_position, 22.0, 0.08, -5.0)
+	elif npc_id in ["bog_witch", "herbalist"]:
+		_spark_timer += delta
+		if _spark_timer >= 5.0:
+			_spark_timer = 0.0
+			_play_work_gesture(["spellcast", "interact", "cheer"])
+
+func _play_work_gesture(candidates: Array) -> void:
+	if not _anim_player:
+		return
+	var anims = _anim_player.get_animation_list()
+	for c in candidates:
+		for a in anims:
+			if c in a.to_lower():
+				_anim_player.play(a, 0.15, 1.1)
+				return
 
 func _build_role_effects() -> void:
-	if npc_id == "priestess" or npc_id == "queen_seraphina":
+	if npc_id in ["priestess", "queen_seraphina", "bog_witch", "herbalist"]:
 		AmbientFX.create_sacred_aura(self, Vector3(0, 0.2, 0))
 	if not _model:
 		return
@@ -104,11 +131,23 @@ func _build_role_effects() -> void:
 		var xbow = AssetLoader.load_or_generate_model("res://assets/weapons/crossbow_2handed.gltf", "weapon", "crossbow")
 		AssetLoader.attach_weapon_socket(_model, xbow, "handslot.r")
 
-	elif npc_id in ["guard", "commander", "siege_captain"]:
+	elif npc_id in ["guard", "commander", "siege_captain", "harbormaster"]:
 		var sword = AssetLoader.load_or_generate_model("res://assets/weapons/sword_1handed.gltf", "weapon", "sword")
 		AssetLoader.attach_weapon_socket(_model, sword, "handslot.r")
 		var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square_color.gltf", "weapon", "shield")
 		AssetLoader.attach_weapon_socket(_model, shield, "handslot.l")
+
+	elif npc_id == "woodcutter_hal":
+		var axe = AssetLoader.load_or_generate_model("res://assets/weapons/axe_2handed.gltf", "weapon", "axe")
+		AssetLoader.attach_weapon_socket(_model, axe, "handslot.r")
+
+	elif npc_id in ["fishmonger_greta", "captain_marlo", "ranger_elora"]:
+		var blade = AssetLoader.load_or_generate_model("res://assets/weapons/dagger.gltf", "weapon", "dagger")
+		AssetLoader.attach_weapon_socket(_model, blade, "handslot.r")
+
+	elif npc_id in ["bog_witch", "herbalist", "druid_thorne", "hermit"]:
+		var staff = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/wand.gltf", "weapon", "wand")
+		AssetLoader.attach_weapon_socket(_model, staff, "handslot.r")
 
 func _build_visuals() -> void:
 	_model = AssetLoader.load_or_generate_model(model_path, "character", npc_name)
@@ -276,15 +315,56 @@ func interact(player: Node3D) -> void:
 		"guard":
 			actions.append({"id": "gate_info", "label": "🛡️ Catacomb Advice", "color": Color(0.24, 0.32, 0.48), "closes": false})
 
-		"commander", "king_aldric", "siege_captain":
-			actions.append({"id": "open_missions", "label": "👑 Royal War Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
+		"commander":
+			actions.append({"id": "open_missions", "label": "🛡️ Citadel Bounties", "color": Color(0.55, 0.22, 0.22), "closes": true})
+
+		"king_aldric":
+			AudioManager.play_sfx_at_position("sfx_victory_fanfare", global_position, 28.0, 0.05, -5.0)
+			actions.append({"id": "royal_stipend", "label": "👑 Claim Royal War Stipend (+50 Gold)", "color": Color(0.85, 0.65, 0.15), "closes": false})
+			actions.append({"id": "open_missions", "label": "📜 Royal War Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
 
 		"queen_seraphina":
-			actions.append({"id": "druid_blessing", "label": "👑 Queen's Grace (+Full Heal)", "color": Color(0.85, 0.65, 0.20), "closes": false})
+			AudioManager.play_sfx_at_position("soul_pickup", global_position, 28.0, 0.05, -4.0)
+			actions.append({"id": "queen_blessing", "label": "👑 Queen's Sovereign Grace (Full Heal + +10 Max HP)", "color": Color(0.85, 0.65, 0.20), "closes": false})
 			actions.append({"id": "open_missions", "label": "📜 Royal Chronicles", "color": Color(0.35, 0.25, 0.65), "closes": true})
 
-		"hermit", "bog_witch":
+		"siege_captain":
+			AudioManager.play_sfx_at_position("horn_rally", global_position, 32.0, 0.05, -2.0)
+			actions.append({"id": "order_trebuchet_barrage", "label": "☄️ Order Coordinated Trebuchet Barrage!", "color": Color(0.88, 0.32, 0.15), "closes": false})
+			actions.append({"id": "open_missions", "label": "📜 Siege Frontline Bounties", "color": Color(0.55, 0.22, 0.22), "closes": true})
+
+		"bog_witch":
+			if GameManager.materials.get("fen_seal_relic", 0) > 0:
+				actions.append({"id": "turn_in_fen_seal", "label": "🐸 Turn in Ancient Fen Seal (+150 Gold & Boon)", "color": Color(0.28, 0.82, 0.38), "closes": false})
+			actions.append({"id": "buy_swamp_elixir", "label": "🧪 Brew Swamp Elixir (+60 HP - 12 Gold)", "color": Color(0.25, 0.65, 0.35), "closes": false})
 			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
+
+		"hermit":
+			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
+
+		"fishmonger_greta":
+			actions.append({"id": "buy_smoked_fish", "label": "🐟 Buy Smoked Silver-Herring (+35 HP - 8 Gold)", "color": Color(0.22, 0.55, 0.72), "closes": false})
+			actions.append({"id": "seal_lore", "label": "🦭 Ask About Harbor Seals", "color": Color(0.35, 0.48, 0.62), "closes": false})
+
+		"woodcutter_hal":
+			actions.append({"id": "buy_lumber", "label": "🪵 Buy Seasoned Oak Timber (+1 Lumber - 25 Gold)", "color": Color(0.62, 0.40, 0.18), "closes": false})
+			actions.append({"id": "woodcutter_sharpen", "label": "🪓 Hone Weapon Haft (+2 Attack - 40 Gold)", "color": Color(0.75, 0.35, 0.15), "closes": false})
+
+		"merchant":
+			actions.append({"id": "buy_lumber", "label": "🪵 Buy Timber Bundle (+1 Lumber - 25 Gold)", "color": Color(0.62, 0.40, 0.18), "closes": false})
+			actions.append({"id": "buy_iron_ore", "label": "⛏️ Buy Highland Iron Ore (+1 Iron - 30 Gold)", "color": Color(0.42, 0.48, 0.58), "closes": false})
+			actions.append({"id": "buy_arcane_crystal", "label": "💎 Buy Arcane Crystal (+1 Crystal - 40 Gold)", "color": Color(0.22, 0.62, 0.85), "closes": false})
+
+		"herbalist":
+			actions.append({"id": "buy_herbal_draught", "label": "🌿 Buy Moon-Sage Draught (+50 HP - 10 Gold)", "color": Color(0.25, 0.68, 0.35), "closes": false})
+			actions.append({"id": "buy_vitality_tonic", "label": "🧪 Brew Vitality Tonic (+10 Max HP - 45 Gold)", "color": Color(0.65, 0.25, 0.55), "closes": false})
+
+		"miller":
+			actions.append({"id": "buy_mill_bread", "label": "🥖 Buy Fresh Millstone Bread (+25 HP - 5 Gold)", "color": Color(0.72, 0.52, 0.20), "closes": false})
+
+		"archer_apprentice", "archer_battlement_0", "archer_battlement_1":
+			actions.append({"id": "archer_training", "label": "🏹 Marksman Drill (+3 Attack Power - 35 Gold)", "color": Color(0.28, 0.58, 0.32), "closes": false})
+			actions.append({"id": "gate_info", "label": "🛡️ Rampart Recon Report", "color": Color(0.24, 0.32, 0.48), "closes": false})
 
 		"captain_marlo":
 			if not GameManager.world_repairs.get("port_crane", false):

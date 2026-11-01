@@ -39,7 +39,19 @@ const SFX_PATHS: Dictionary = {
 	"hoofbeat": "res://assets/audio/sfx_hoofbeat.ogg",
 	"crossbow_shoot": "res://assets/audio/sfx_crossbow_shoot.ogg",
 	"parry_ring": "res://assets/audio/sfx_parry_ring.ogg",
-	"weapon_swap": "res://assets/audio/sfx_weapon_swap.ogg"
+	"weapon_swap": "res://assets/audio/sfx_weapon_swap.ogg",
+	"trebuchet_winch": "res://assets/audio/sfx_trebuchet_winch.wav",
+	"trebuchet_launch": "res://assets/audio/sfx_trebuchet_launch.wav",
+	"boulder_explosion": "res://assets/audio/sfx_boulder_explosion.wav",
+	"army_march": "res://assets/audio/sfx_army_march.wav",
+	"horn_rally": "res://assets/audio/sfx_horn_rally.wav",
+	"ship_creak": "res://assets/audio/sfx_ship_creak.wav",
+	"wagon_rattle": "res://assets/audio/sfx_wagon_rattle.wav",
+	"wood_chop": "res://assets/audio/sfx_wood_chop.wav",
+	"seal_bark": "res://assets/audio/sfx_seal_bark.wav",
+	"horse_neigh": "res://assets/audio/sfx_horse_neigh.wav",
+	"cow_moo": "res://assets/audio/sfx_cow_moo.wav",
+	"wolf_howl": "res://assets/audio/sfx_wolf_howl.wav"
 }
 
 # Synth buffer fallbacks
@@ -93,6 +105,20 @@ func play_sfx(sfx_key: String, pitch_range: float = 0.08, volume_db: float = 0.0
 		player.pitch_scale = randf_range(1.0 - pitch_range, 1.0 + pitch_range)
 		player.volume_db = volume_db
 		player.play()
+
+func play_sfx_at_position(sfx_key: String, world_pos: Vector3, max_distance: float = 32.0, pitch_range: float = 0.08, base_volume_db: float = 0.0) -> void:
+	if not _audio_cache.has(sfx_key):
+		return
+	var p_node = get_tree().get_first_node_in_group("player") as Node3D
+	if p_node and is_instance_valid(p_node):
+		var dist = p_node.global_position.distance_to(world_pos)
+		if dist > max_distance:
+			return
+		var atten = clamp(1.0 - (dist / max(max_distance, 1.0)), 0.0, 1.0)
+		var vol = base_volume_db + linear_to_db(max(0.05, atten * atten))
+		play_sfx(sfx_key, pitch_range, vol)
+	else:
+		play_sfx(sfx_key, pitch_range, base_volume_db)
 
 func play_bgm(bgm_key: String = "bgm_overworld", volume_db: float = -12.0) -> void:
 	crossfade_to_bgm(bgm_key, 0.85, volume_db)
@@ -501,6 +527,175 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var freq = notes[note_idx]
 				var brass = (sin(2.0 * PI * freq * t) * 0.65 + sin(3.0 * PI * freq * t) * 0.25 + sin(4.0 * PI * freq * t) * 0.15) * env
 				var val = brass * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"trebuchet_winch":
+			# Ratcheting wooden windlass clicks and rope tension creak
+			var duration: float = 0.28
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var click_t = fmod(t, 0.07)
+				var click_env = exp(-click_t * 65.0)
+				var wood_click = sin(2.0 * PI * 280.0 * t) * click_env * 0.7
+				var creak = sin(2.0 * PI * lerp(140.0, 195.0, t / duration) * t) * 0.3
+				var val = (wood_click + creak) * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"trebuchet_launch":
+			# Heavy counterweight drop thud + whip-crack sling whoosh
+			var duration: float = 0.48
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var thud = sin(2.0 * PI * lerp(110.0, 40.0, min(1.0, t / 0.18)) * t) * exp(-t * 14.0) * 0.8
+				var whip_env = sin(PI * clamp((t - 0.08) / 0.35, 0.0, 1.0))
+				var whoosh = (sin(2.0 * PI * lerp(220.0, 680.0, t / duration) * t) * 0.4 + randf_range(-0.6, 0.6) * 0.6) * whip_env
+				var val = clamp((thud + whoosh) * 0.85, -1.0, 1.0)
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"boulder_explosion":
+			# Seismic fiery boulder impact boom
+			var duration: float = 0.65
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 6.5)
+				var sub = sin(2.0 * PI * lerp(95.0, 32.0, t / duration) * t) * 0.75
+				var rumble = randf_range(-0.7, 0.7) * exp(-t * 8.0) * 0.55
+				var val = clamp((sub + rumble) * env * 0.9, -1.0, 1.0)
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"army_march":
+			# Cadenced marching boot thud + metallic mail clink
+			var duration: float = 0.16
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 32.0)
+				var boot = sin(2.0 * PI * 85.0 * t) * 0.65
+				var armor_clink = sin(2.0 * PI * 2450.0 * t) * exp(-t * 55.0) * 0.35
+				var val = (boot + armor_clink + randf_range(-0.2, 0.2) * env) * env * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"horn_rally":
+			# Resonant medieval brass war-horn fifth (D3 -> A3)
+			var duration: float = 0.85
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var f = 146.83 if t < 0.32 else 220.0
+				var horn = (sin(2.0 * PI * f * t) * 0.6 + sin(4.0 * PI * f * t) * 0.3 + sin(6.0 * PI * f * t) * 0.15) * env
+				var val = horn * 0.8
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"ship_creak":
+			# Maritime timber hull groan & gentle ocean wave wash
+			var duration: float = 0.55
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var wood_groan = sin(2.0 * PI * (115.0 + sin(t * 28.0) * 18.0) * t) * 0.5
+				var wave = randf_range(-0.35, 0.35) * 0.45
+				var val = (wood_groan + wave) * env * 0.65
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"wagon_rattle":
+			# Wooden wagon wheel clatter & harness jingle
+			var duration: float = 0.24
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 22.0)
+				var wheel = sin(2.0 * PI * 130.0 * t) * 0.55
+				var jingle = sin(2.0 * PI * 3100.0 * t) * exp(-t * 45.0) * 0.3
+				var val = (wheel + jingle + randf_range(-0.2, 0.2)) * env * 0.7
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"wood_chop":
+			# Crisp axe-into-timber thwack
+			var duration: float = 0.16
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 36.0)
+				var thwack = sin(2.0 * PI * lerp(240.0, 90.0, t / duration) * t) * 0.75
+				var crack = randf_range(-0.5, 0.5) * exp(-t * 60.0) * 0.45
+				var val = (thwack + crack) * env * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"seal_bark":
+			# Playful two-syllable coastal harbor seal bark ("Arf! Arf!")
+			var duration: float = 0.36
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var sub_t = fmod(t, 0.18)
+				var env = sin(PI * clamp(sub_t / 0.14, 0.0, 1.0))
+				var pitch = lerp(380.0, 540.0, sub_t / 0.14)
+				var bark = (sin(2.0 * PI * pitch * t) * 0.65 + sin(4.0 * PI * pitch * t) * 0.25) * env
+				var val = bark * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"horse_neigh":
+			# Equine whinny with vibrato pitch descent
+			var duration: float = 0.48
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var freq = lerp(980.0, 520.0, t / duration) + sin(2.0 * PI * 18.0 * t) * 55.0
+				var val = (sin(2.0 * PI * freq * t) * 0.6 + sin(4.0 * PI * freq * t) * 0.25) * env * 0.7
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"cow_moo":
+			# Warm pastoral low-mid cattle moo (135 Hz -> 112 Hz)
+			var duration: float = 0.58
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var freq = lerp(138.0, 112.0, t / duration)
+				var moo = (sin(2.0 * PI * freq * t) * 0.55 + sin(4.0 * PI * freq * t) * 0.3 + sin(6.0 * PI * freq * t) * 0.15) * env
+				var val = moo * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"wolf_howl":
+			# Haunting forest wolf howl / growl sweep
+			var duration: float = 0.52
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var freq = lerp(240.0, 440.0, sin(PI * t / duration))
+				var growl = randf_range(-0.25, 0.25) * 0.35
+				var val = (sin(2.0 * PI * freq * t) * 0.65 + growl) * env * 0.75
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 

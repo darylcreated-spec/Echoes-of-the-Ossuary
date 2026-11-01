@@ -7,7 +7,10 @@ class_name CaravanWagon3D
 
 var _horse_anim: AnimationPlayer = null
 var _driver_anim: AnimationPlayer = null
+var _wagon_node: Node3D = null
 var _current_wp_idx: int = 0
+var _roll_time: float = 0.0
+var _sfx_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("caravan_wagon")
@@ -46,10 +49,10 @@ func _build_caravan_assembly() -> void:
 		add_child(shaft)
 
 	# 3. Loaded Medieval Cargo Wagon (Z = -0.5m)
-	var wagon = AssetLoader.load_or_generate_model("res://assets/village/Prop_Wagon.gltf", "dungeon", "prop")
-	wagon.scale = Vector3.ONE * 1.65
-	wagon.position = Vector3(0.0, 0.0, -0.5)
-	add_child(wagon)
+	_wagon_node = AssetLoader.load_or_generate_model("res://assets/village/Prop_Wagon.gltf", "dungeon", "prop")
+	_wagon_node.scale = Vector3.ONE * 1.65
+	_wagon_node.position = Vector3(0.0, 0.0, -0.5)
+	add_child(_wagon_node)
 
 	# Cargo Barrels, Crates & Grain Sacks inside Wagon Bed
 	var barrel = AssetLoader.load_or_generate_model("res://assets/overworld/barrel.gltf", "dungeon", "prop")
@@ -102,11 +105,34 @@ func get_prompt_text() -> String:
 	return "[E] Hail " + caravan_name
 
 func interact(_player: Node = null) -> void:
+	AudioManager.play_sfx_at_position("horse_neigh", global_position, 28.0, 0.08, -2.0)
 	var hud = get_tree().get_first_node_in_group("hud")
-	if hud and hud.has_method("show_mission_notification"):
+	if hud and hud.has_method("open_dialogue"):
+		var actions: Array[Dictionary] = [
+			{"id": "buy_mill_bread", "label": "🥖 Buy Trail Loaf (+25 HP - 5 Gold)", "color": Color(0.70, 0.48, 0.18), "closes": false},
+			{"id": "buy_lumber", "label": "🪵 Buy Caravan Timber (+1 Lumber - 25 Gold)", "color": Color(0.55, 0.36, 0.16), "closes": false},
+			{"id": "buy_iron_ore", "label": "⛏️ Buy Highland Iron (+1 Iron Ore - 30 Gold)", "color": Color(0.38, 0.45, 0.55), "closes": false}
+		]
+		hud.open_dialogue(
+			caravan_name + " (Highway Supply Quartermaster)",
+			"🐎",
+			"Whoa there, steady boy! Hail, traveler! Our guild wagon hauls fresh provisions, seasoned timber, and highland iron ore between Oakhaven, Greenhollow, and Port Blackwater. Care to trade on the road?",
+			actions
+		)
+	elif hud and hud.has_method("show_mission_notification"):
 		hud.show_mission_notification("📦 " + caravan_name + ": 'Safe roads, traveler! Carrying grain, iron, and spiced ale across the kingdom!'")
 
 func _process(delta: float) -> void:
+	_roll_time += delta * 9.0
+	_sfx_timer += delta
+	if _sfx_timer >= 1.1:
+		_sfx_timer = 0.0
+		AudioManager.play_sfx_at_position("wagon_rattle", global_position, 24.0, 0.1, -7.0)
+
+	if _wagon_node and is_instance_valid(_wagon_node):
+		_wagon_node.position.y = abs(sin(_roll_time)) * 0.035
+		_wagon_node.rotation_degrees.z = sin(_roll_time * 0.7) * 1.4
+
 	if _horse_anim and is_instance_valid(_horse_anim) and not _horse_anim.is_playing():
 		_play_loop_anim(_horse_anim, "Walk")
 	if _driver_anim and is_instance_valid(_driver_anim) and not _driver_anim.is_playing():
