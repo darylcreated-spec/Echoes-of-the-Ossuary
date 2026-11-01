@@ -9,6 +9,11 @@ const AnimalAIScript = preload("res://src/actors/AnimalAI.gd")
 const EnemyAIScript = preload("res://src/actors/EnemyAI.gd")
 const WorldRepairStationScript = preload("res://src/world/WorldRepairStation.gd")
 const PatrolNPCScript = preload("res://src/actors/PatrolNPC.gd")
+const SiegeTrebuchet3DScript = preload("res://src/world/SiegeTrebuchet3D.gd")
+const ArmyFormation3DScript = preload("res://src/actors/ArmyFormation3D.gd")
+const MedievalShip3DScript = preload("res://src/world/MedievalShip3D.gd")
+const HarborSeal3DScript = preload("res://src/actors/HarborSeal3D.gd")
+const CaravanWagon3DScript = preload("res://src/actors/CaravanWagon3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -551,6 +556,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_build_port_blackwater_region(parent)
 	_build_whisperwood_forest_region(parent)
 	_build_khar_drakken_crags_region(parent)
+	_build_weeping_fen_swamp_region(parent)
+	_build_siege_encampment_and_battlefield(parent)
+	_build_greenhollow_village_and_caravans(parent)
 	_build_crossroads_and_highroads(parent)
 
 	# 8. SUBTERRANEAN INTERIOR CHAMBERS & ENTERABLE DOORWAYS
@@ -1153,6 +1161,46 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	drake.position = Vector3(-3.2, 0.0, 35.5)
 	parent.add_child(drake)
 
+	# Royal Courtyard Pavilion: King Aldric IV & Queen Seraphina Reviewing the Realm
+	_place_prop(parent, "res://assets/furniture/rug_rectangle_A.gltf", Vector3(3.2, 0.03, 35.5), Vector3(2.8, 1.0, 2.8))
+	var king_overworld = TownNPCScript.new()
+	king_overworld.npc_id = "king_aldric"
+	king_overworld.npc_name = "King Aldric IV"
+	king_overworld.npc_title = "Sovereign of the Realm"
+	king_overworld.icon = "👑"
+	king_overworld.model_path = "res://assets/characters/adventurers/Knight.glb"
+	king_overworld.model_scale = Vector3(0.60, 0.60, 0.60)
+	king_overworld.model_rotation_y = -150.0
+	king_overworld.dialogue_text = "Hail, champion of Oakhaven! Look to the south where our siege trebuchets hurl fire against the encroaching warlords, and to the east where the Weeping Fen festers. Unite the Seals of our kingdom and victory shall be ours!"
+	king_overworld.position = Vector3(2.4, 0.0, 35.5)
+	parent.add_child(king_overworld)
+
+	var queen_overworld = TownNPCScript.new()
+	queen_overworld.npc_id = "queen_seraphina"
+	queen_overworld.npc_name = "Queen Seraphina"
+	queen_overworld.npc_title = "Queen Consort"
+	queen_overworld.icon = "👑"
+	queen_overworld.model_path = "res://assets/characters/adventurers/Mage.glb"
+	queen_overworld.model_scale = Vector3(0.56, 0.56, 0.56)
+	queen_overworld.model_rotation_y = -150.0
+	queen_overworld.dialogue_text = "Blessings of the Silvervein upon you, noble knight. Speak with me whenever your wounds weigh heavy, and the Crown's grace shall restore your strength."
+	queen_overworld.position = Vector3(4.0, 0.0, 35.5)
+	parent.add_child(queen_overworld)
+
+	# Citadel Battlement Archers (Stationed atop the Curtain Walls & Ramparts with Crossbows)
+	for archer_idx in range(2):
+		var wall_archer = TownNPCScript.new()
+		wall_archer.npc_id = "archer_battlement_%d" % archer_idx
+		wall_archer.npc_name = "Citadel Longbowman" if archer_idx == 0 else "Royal Crossbowman"
+		wall_archer.npc_title = "Rampart Marksman"
+		wall_archer.icon = "🏹"
+		wall_archer.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+		wall_archer.model_scale = Vector3(0.54, 0.54, 0.54)
+		wall_archer.model_rotation_y = 180.0
+		wall_archer.dialogue_text = "Eyes on the horizon! Not a single goblin, corsair, or siege raider breaches these ramparts while our quivers are full!"
+		wall_archer.position = Vector3(-6.8 if archer_idx == 0 else 6.8, 4.3, 37.8)
+		parent.add_child(wall_archer)
+
 	# Castle Props
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-4.5, 0.0, 36.0), Vector3.ONE * 2.0, 25.0)
 	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-12.0, 15.0, 38.0), Vector3.ONE * 3.0)
@@ -1511,6 +1559,62 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-70.0, -0.1, 70.0), Vector3.ONE * 2.0)
 	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(-80.0, -0.1, 85.0), Vector3.ONE * 2.2)
 
+	# 4B. Naval Harbor Fleet: Medieval Cogs, Galleons & Rowboats
+	var flagship = MedievalShip3DScript.new()
+	flagship.ship_name = "The Sea Sovereign"
+	flagship.has_gangplank = true
+	flagship.position = Vector3(-88.0, -0.15, 65.0)
+	parent.add_child(flagship)
+
+	var corsair_cog = MedievalShip3DScript.new()
+	corsair_cog.ship_name = "The Crimson Kraken"
+	corsair_cog.has_gangplank = true
+	corsair_cog.position = Vector3(-82.0, -0.15, 80.0)
+	parent.add_child(corsair_cog)
+
+	var rowboat_1 = MedievalShip3DScript.new()
+	rowboat_1.ship_name = "Harbor Skiff"
+	rowboat_1.is_rowboat = true
+	rowboat_1.has_gangplank = false
+	rowboat_1.position = Vector3(-64.0, -0.10, 56.0)
+	rowboat_1.rotation_degrees.y = 35.0
+	parent.add_child(rowboat_1)
+
+	var rowboat_2 = MedievalShip3DScript.new()
+	rowboat_2.ship_name = "Fisherman's Dory"
+	rowboat_2.is_rowboat = true
+	rowboat_2.has_gangplank = false
+	rowboat_2.position = Vector3(-66.0, -0.10, 74.0)
+	rowboat_2.rotation_degrees.y = -25.0
+	parent.add_child(rowboat_2)
+
+	# 4C. Colony of Coastal Harbor Seals basking on reefs & beach
+	var seal_locs = [
+		{"pos": Vector3(-66.5, 0.2, 49.5), "rot": 60.0, "name": "Basking Harbor Seal"},
+		{"pos": Vector3(-68.2, 0.25, 47.0), "rot": 110.0, "name": "Spotted Reef Seal"},
+		{"pos": Vector3(-72.5, 0.2, 57.5), "rot": 85.0, "name": "Silvervein Harbor Seal"},
+		{"pos": Vector3(-61.5, 0.05, 53.5), "rot": 45.0, "name": "Shoreline Seal Pup"}
+	]
+	for sl in seal_locs:
+		var seal = HarborSeal3DScript.new()
+		seal.seal_name = sl["name"]
+		seal.position = sl["pos"]
+		seal.rotation_degrees.y = sl["rot"]
+		parent.add_child(seal)
+
+	# Port Village Fishmonger & Shipwright NPCs
+	var fishmonger = TownNPCScript.new()
+	fishmonger.npc_id = "fishmonger_greta"
+	fishmonger.npc_name = "Greta"
+	fishmonger.npc_title = "Harbor Fishmonger"
+	fishmonger.icon = "🐟"
+	fishmonger.model_path = "res://assets/characters/adventurers/Mage.glb"
+	fishmonger.model_scale = Vector3(0.52, 0.52, 0.52)
+	fishmonger.model_rotation_y = 90.0
+	fishmonger.dialogue_text = "Fresh silver-herring, salted cod, and smoked eels straight from the morning nets! Watch the harbor seals out on the rocks—they always bark before a storm rolls in!"
+	fishmonger.position = Vector3(-50.5, 0.0, 59.5)
+	parent.add_child(fishmonger)
+
 	# 5. NPCs
 	# Captain Marlo (Corsair Captain)
 	var marlo = TownNPCScript.new()
@@ -1859,3 +1963,198 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 		var rx = lerp(34.0, 60.0, alpha)
 		var rz = lerp(-22.0, -46.0, alpha)
 		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", Vector3(rx, 0.02, rz), Vector3(2.2, 1.0, 2.2))
+
+	# South-East Swamp Causeway (winds from Sunnydale X = 38, Z = 42 toward Weeping Fen X = 62, Z = 68)
+	for step in range(1, 12):
+		var alpha = float(step) / 12.0
+		var rx = lerp(38.0, 62.0, alpha)
+		var rz = lerp(42.0, 68.0, alpha)
+		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", Vector3(rx, 0.02, rz), Vector3(2.2, 1.0, 2.2))
+
+# =========================================================================
+# REGION 4: THE WEEPING FEN SWAMP & MURKY WETLANDS (X in [50, 120], Z in [58, 120])
+# =========================================================================
+func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
+	# 1. Murky Olive-Brown Wetland Water Basin (Y = 0.03m shallow bog water)
+	var swamp_basin = MeshInstance3D.new()
+	swamp_basin.name = "SwampWaterSurface"
+	var sw_mesh = PlaneMesh.new()
+	sw_mesh.size = Vector2(68.0, 62.0)
+	swamp_basin.mesh = sw_mesh
+	var sw_mat = StandardMaterial3D.new()
+	sw_mat.albedo_color = Color(0.14, 0.22, 0.11, 0.90) # Fetid peat-green bog water
+	sw_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	sw_mat.roughness = 0.18
+	sw_mat.metallic = 0.25
+	swamp_basin.material_override = sw_mat
+	swamp_basin.position = Vector3(84.0, 0.03, 88.0)
+	parent.add_child(swamp_basin)
+
+	# 2. Raised Rotting Wooden Boardwalks spanning the Bog (X from 56 to 92 at Z = 76)
+	for bx in range(56, 96, 4):
+		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(bx), 0.02, 76.0), Vector3(2.4, 1.8, 4.0), 90.0)
+	for bz in range(76, 104, 4):
+		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(84.0, 0.02, float(bz)), Vector3(2.4, 1.8, 4.0), 0.0)
+
+	# 3. Dead Twisted Swamp Trees, Mossy Boulders, Cattail Reeds & Water Lilies
+	var dead_trees = [
+		Vector3(60.0, 0.0, 64.0), Vector3(68.0, 0.0, 62.0), Vector3(78.0, 0.0, 66.0),
+		Vector3(92.0, 0.0, 64.0), Vector3(104.0, 0.0, 70.0), Vector3(62.0, 0.0, 86.0),
+		Vector3(72.0, 0.0, 92.0), Vector3(96.0, 0.0, 84.0), Vector3(108.0, 0.0, 92.0),
+		Vector3(66.0, 0.0, 104.0), Vector3(78.0, 0.0, 108.0), Vector3(94.0, 0.0, 106.0),
+		Vector3(106.0, 0.0, 104.0), Vector3(88.0, 0.0, 70.0), Vector3(74.0, 0.0, 82.0)
+	]
+	for i in range(dead_trees.size()):
+		var dt_pos = dead_trees[i]
+		var dt_model = "res://assets/overworld/tree_dead_large_decorated.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_dead_large.gltf"
+		_place_prop(parent, dt_model, dt_pos, Vector3.ONE * 3.2, float((i * 67) % 360))
+		_add_static_cyl(parent, dt_pos, 0.9, 7.0)
+
+	# Lily pads, cattail reeds & sunken skeletal ribcages
+	for r_pos in [Vector3(65.0, 0.04, 72.0), Vector3(75.0, 0.04, 79.0), Vector3(88.0, 0.04, 82.0), Vector3(92.0, 0.04, 95.0), Vector3(79.0, 0.04, 98.0)]:
+		_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", r_pos, Vector3.ONE * 2.0)
+		_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", r_pos + Vector3(2.2, 0.0, 1.5), Vector3.ONE * 2.4)
+	_place_prop(parent, "res://assets/overworld/ribcage.gltf", Vector3(70.0, 0.0, 84.0), Vector3.ONE * 2.2, 35.0)
+	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(82.0, 0.4, 74.5), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/coffin_decorated.gltf", Vector3(89.0, 0.0, 98.0), Vector3.ONE * 1.8, -25.0)
+
+	# Eerie Swamp Mist & Will-o'-the-Wisp Spores
+	AmbientFX.create_forest_fireflies(parent, Vector3(76.0, 1.5, 80.0), 16.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(88.0, 1.5, 96.0), 16.0)
+
+	# 4. Bog Witch Morrigan's Stilted Hut & Alchemical Shrine (X = 88.0, Z = 104.0)
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(88.0, 0.2, 105.0), Vector3.ONE * 6.5, 180.0)
+	_add_static_box(parent, Vector3(88.0, 3.5, 105.0), Vector3(6.2, 6.5, 6.2))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(81.5, 0.1, 102.0), Vector3.ONE * 2.6, 45.0)
+
+	var morrigan = TownNPCScript.new()
+	morrigan.npc_id = "bog_witch"
+	morrigan.npc_name = "Seeress Morrigan"
+	morrigan.npc_title = "Keeper of the Weeping Fen"
+	morrigan.icon = "🐸"
+	morrigan.model_path = "res://assets/characters/adventurers/Mage.glb"
+	morrigan.model_scale = Vector3(0.54, 0.54, 0.54)
+	morrigan.model_rotation_y = -135.0
+	morrigan.dialogue_text = "Step not off the rotting planks, wanderer... The Weeping Fen swallows the careless whole. Bog Creeps and hollow dead guard the Sunken Fen Seal in the mire. Reclaim it and channel the ancient echoes!"
+	morrigan.position = Vector3(84.0, 0.2, 100.0)
+	parent.add_child(morrigan)
+
+	# 5. Swamp Monsters (Bog Creeps & Mire Skeletons) & Sunken Fen Relic
+	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(72.0, 0.0, 70.0), 45.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(95.0, 0.0, 88.0), -90.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.MINION, Vector3(78.0, 0.0, 94.0), 15.0)
+	_spawn_material_node(parent, "fen_seal_relic", "Ancient Seal of the Weeping Fen", "🐸", "res://assets/items/quest_materials/Crystal3.glb", Vector3(92.0, 0.1, 96.0), Color(0.35, 0.95, 0.45), 90, 65, Vector3(2.2, 2.2, 2.2))
+
+# =========================================================================
+# REGION 5: CRIMSON SIEGE ENCAMPMENT, TREBUCHETS & MARCHING ARMIES (Z in [56, 105])
+# =========================================================================
+func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
+	# 1. Counterweight Trebuchet Battery (Articulated & Actively Hurling Boulders)
+	var treb_west = SiegeTrebuchet3DScript.new()
+	treb_west.trebuchet_name = "Goliath Counterweight Trebuchet"
+	treb_west.position = Vector3(-14.0, 0.0, 74.0)
+	parent.add_child(treb_west)
+
+	var treb_east = SiegeTrebuchet3DScript.new()
+	treb_east.trebuchet_name = "Dreadhammer Siege Trebuchet"
+	treb_east.position = Vector3(14.0, 0.0, 74.0)
+	parent.add_child(treb_east)
+
+	# 2. Siege Towers, Red War Tents, Stake Barricades & Ammunition Wagons
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-24.0, 0.0, 78.0), Vector3.ONE * 8.5, 180.0)
+	_add_static_box(parent, Vector3(-24.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(24.0, 0.0, 78.0), Vector3.ONE * 8.5, 180.0)
+	_add_static_box(parent, Vector3(24.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
+
+	for tent_pos in [Vector3(-18.0, 0.0, 84.0), Vector3(-8.0, 0.0, 86.0), Vector3(8.0, 0.0, 86.0), Vector3(18.0, 0.0, 84.0)]:
+		_place_prop(parent, "res://assets/overworld/tent.gltf", tent_pos, Vector3.ONE * 3.8, 180.0)
+		_place_prop(parent, "res://assets/overworld/flag_red.gltf", tent_pos + Vector3(2.2, 0.0, -1.5), Vector3.ONE * 2.2)
+
+	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 64)
+	for bar_x in [-15.0, -10.0, -5.0, 5.0, 10.0, 15.0]:
+		_place_prop(parent, "res://assets/dungeon/barrier.gltf.glb", Vector3(bar_x, 0.0, 64.0), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-6.0, 0.0, 78.0), Vector3.ONE * 1.7, 40.0)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 78.0), Vector3.ONE * 2.0)
+
+	# NPC: Siege Master Vargos
+	var vargos = TownNPCScript.new()
+	vargos.npc_id = "siege_captain"
+	vargos.npc_name = "Siege Marshal Vargos"
+	vargos.npc_title = "Royal Artillery Commander"
+	vargos.icon = "☄️"
+	vargos.model_path = "res://assets/characters/adventurers/Knight.glb"
+	vargos.model_scale = Vector3(0.58, 0.58, 0.58)
+	vargos.model_rotation_y = 0.0
+	vargos.dialogue_text = "Behold our counterweight trebuchets! We captured this siege battery from the Crimson Warlords and turned their own artillery against their southern vanguard. Interact with either trebuchet to loose a flaming boulder volley!"
+	vargos.position = Vector3(0.0, 0.0, 70.0)
+	parent.add_child(vargos)
+
+	# 3. Marching Army Formations (Royal Blue Legion vs. Frontier Patrols)
+	var royal_army = ArmyFormation3DScript.new()
+	royal_army.regiment_name = "King's 1st Heavy Vanguard"
+	royal_army.faction_color = "blue"
+	royal_army.position = Vector3(0.0, 0.0, 54.0)
+	royal_army.waypoints = [
+		Vector3(0.0, 0.0, 50.0),
+		Vector3(0.0, 0.0, 66.0),
+		Vector3(-12.0, 0.0, 60.0),
+		Vector3(12.0, 0.0, 60.0)
+	]
+	parent.add_child(royal_army)
+
+	var crimson_army = ArmyFormation3DScript.new()
+	crimson_army.regiment_name = "Redcrest Iron Company"
+	crimson_army.faction_color = "red"
+	crimson_army.position = Vector3(-28.0, 0.0, 52.0)
+	crimson_army.waypoints = [
+		Vector3(-28.0, 0.0, 48.0),
+		Vector3(-44.0, 0.0, 56.0),
+		Vector3(-28.0, 0.0, 64.0)
+	]
+	parent.add_child(crimson_army)
+
+# =========================================================================
+# REGION 6: GREENHOLLOW WOODLAND VILLAGE & MOVING CARAVAN WAGONS
+# =========================================================================
+func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
+	# 1. Greenhollow Woodland Village (X in [-60, -38], Z in [-32, -14])
+	_place_prop(parent, "res://assets/overworld/building_church_green.gltf", Vector3(-52.0, 0.0, -24.0), Vector3.ONE * 5.8, 35.0)
+	_add_static_box(parent, Vector3(-52.0, 4.5, -24.0), Vector3(7.5, 9.0, 8.5))
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-44.0, 0.0, -18.0), Vector3.ONE * 6.5, -30.0)
+	_add_static_box(parent, Vector3(-44.0, 3.5, -18.0), Vector3(6.0, 6.5, 6.0))
+	_place_prop(parent, "res://assets/overworld/building_home_B_green.gltf", Vector3(-58.0, 0.0, -16.0), Vector3.ONE * 6.5, 60.0)
+	_add_static_box(parent, Vector3(-58.0, 3.5, -16.0), Vector3(6.0, 6.5, 6.5))
+	_place_prop(parent, "res://assets/overworld/building_well_green.gltf", Vector3(-49.0, 0.0, -17.0), Vector3.ONE * 2.6)
+	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(-42.0, 0.0, -25.0), Vector3.ONE * 2.5)
+	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(-45.0, 0.0, -26.0), Vector3.ONE * 2.2)
+
+	var woodcutter = TownNPCScript.new()
+	woodcutter.npc_id = "woodcutter_hal"
+	woodcutter.npc_name = "Forester Hal"
+	woodcutter.npc_title = "Greenhollow Elder"
+	woodcutter.icon = "🪓"
+	woodcutter.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	woodcutter.model_scale = Vector3(0.55, 0.55, 0.55)
+	woodcutter.model_rotation_y = 140.0
+	woodcutter.dialogue_text = "Welcome to Greenhollow Village! Our timberwrights fell the stoutest oaks for Port Blackwater's ships and the King's siege engines."
+	woodcutter.position = Vector3(-48.0, 0.0, -19.5)
+	parent.add_child(woodcutter)
+
+	# 2. Moving Horse-Drawn Trade Caravan Wagons on the Realm Highways
+	var caravan_east = CaravanWagon3DScript.new()
+	caravan_east.caravan_name = "Sunnydale Grain Caravan"
+	caravan_east.position = Vector3(8.0, 0.0, 14.5)
+	caravan_east.waypoints = [
+		Vector3(4.0, 0.0, 14.5),
+		Vector3(24.0, 0.0, 14.5)
+	]
+	parent.add_child(caravan_east)
+
+	var caravan_west = CaravanWagon3DScript.new()
+	caravan_west.caravan_name = "Blackwater Spice Caravan"
+	caravan_west.position = Vector3(-24.0, 0.0, 26.0)
+	caravan_west.waypoints = [
+		Vector3(-20.0, 0.0, 18.0),
+		Vector3(-46.0, 0.0, 50.0)
+	]
+	parent.add_child(caravan_west)

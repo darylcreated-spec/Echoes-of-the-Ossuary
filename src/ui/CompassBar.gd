@@ -9,7 +9,10 @@ const LANDMARKS = [
 	{"name": "⚓ Port Blackwater", "pos": Vector3(-58.0, 0.0, 66.0), "color": Color(0.4, 0.8, 0.95)},
 	{"name": "🌲 Whisperwood Grove", "pos": Vector3(-78.0, 0.0, -62.0), "color": Color(0.4, 0.9, 0.5)},
 	{"name": "⛰️ Khar-Drakken Mines", "pos": Vector3(70.0, 0.0, -55.0), "color": Color(0.95, 0.75, 0.45)},
-	{"name": "🌾 Sunnydale Windmill", "pos": Vector3(34.0, 0.0, 38.0), "color": Color(0.95, 0.88, 0.4)}
+	{"name": "🌾 Sunnydale Windmill", "pos": Vector3(34.0, 0.0, 38.0), "color": Color(0.95, 0.88, 0.4)},
+	{"name": "☄️ Siege Camp & Trebuchets", "pos": Vector3(0.0, 0.0, 68.0), "color": Color(1.0, 0.45, 0.35)},
+	{"name": "🐸 Weeping Fen Swamp", "pos": Vector3(84.0, 0.0, 76.0), "color": Color(0.45, 0.85, 0.38)},
+	{"name": "🏡 Greenhollow Village", "pos": Vector3(-48.0, 0.0, -20.0), "color": Color(0.75, 0.88, 0.55)}
 ]
 
 var container: HBoxContainer = null

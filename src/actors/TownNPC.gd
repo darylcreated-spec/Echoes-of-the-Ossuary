@@ -67,8 +67,48 @@ func _process(delta: float) -> void:
 				AudioManager.play_sfx("anvil_strike", 0.08, -10.0)
 
 func _build_role_effects() -> void:
-	if npc_id == "priestess":
+	if npc_id == "priestess" or npc_id == "queen_seraphina":
 		AmbientFX.create_sacred_aura(self, Vector3(0, 0.2, 0))
+	if not _model:
+		return
+
+	# Attach authentic medieval royal regalia or weapons based on NPC role
+	if "king" in npc_id or "queen" in npc_id:
+		add_to_group("royal_monarch")
+		var gold_mat = StandardMaterial3D.new()
+		gold_mat.albedo_color = Color(1.0, 0.82, 0.18)
+		gold_mat.metallic = 0.85
+		gold_mat.roughness = 0.22
+		gold_mat.emission_enabled = true
+		gold_mat.emission = Color(0.45, 0.35, 0.05)
+
+		var crown = MeshInstance3D.new()
+		var c_mesh = CylinderMesh.new()
+		c_mesh.top_radius = 0.24
+		c_mesh.bottom_radius = 0.20
+		c_mesh.height = 0.16
+		c_mesh.material = gold_mat
+		crown.mesh = c_mesh
+		crown.position = Vector3(0.0, 1.92, 0.0)
+		add_child(crown)
+
+		if "king" in npc_id:
+			var royal_sword = AssetLoader.load_or_generate_model("res://assets/weapons/sword_2handed_color.gltf", "weapon", "sword")
+			AssetLoader.attach_weapon_socket(_model, royal_sword, "handslot.r")
+		else:
+			var scepter = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/wand.gltf", "weapon", "wand")
+			AssetLoader.attach_weapon_socket(_model, scepter, "handslot.r")
+
+	elif "archer" in npc_id:
+		add_to_group("archer_sentry")
+		var xbow = AssetLoader.load_or_generate_model("res://assets/weapons/crossbow_2handed.gltf", "weapon", "crossbow")
+		AssetLoader.attach_weapon_socket(_model, xbow, "handslot.r")
+
+	elif npc_id in ["guard", "commander", "siege_captain"]:
+		var sword = AssetLoader.load_or_generate_model("res://assets/weapons/sword_1handed.gltf", "weapon", "sword")
+		AssetLoader.attach_weapon_socket(_model, sword, "handslot.r")
+		var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square_color.gltf", "weapon", "shield")
+		AssetLoader.attach_weapon_socket(_model, shield, "handslot.l")
 
 func _build_visuals() -> void:
 	_model = AssetLoader.load_or_generate_model(model_path, "character", npc_name)
@@ -236,10 +276,14 @@ func interact(player: Node3D) -> void:
 		"guard":
 			actions.append({"id": "gate_info", "label": "🛡️ Catacomb Advice", "color": Color(0.24, 0.32, 0.48), "closes": false})
 
-		"commander":
-			actions.append({"id": "open_missions", "label": "🛡️ Royal Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
+		"commander", "king_aldric", "siege_captain":
+			actions.append({"id": "open_missions", "label": "👑 Royal War Decrees", "color": Color(0.55, 0.22, 0.22), "closes": true})
 
-		"hermit":
+		"queen_seraphina":
+			actions.append({"id": "druid_blessing", "label": "👑 Queen's Grace (+Full Heal)", "color": Color(0.85, 0.65, 0.20), "closes": false})
+			actions.append({"id": "open_missions", "label": "📜 Royal Chronicles", "color": Color(0.35, 0.25, 0.65), "closes": true})
+
+		"hermit", "bog_witch":
 			actions.append({"id": "open_upgrades", "label": "✨ Channel Soul Echoes", "color": Color(0.35, 0.20, 0.58), "closes": true})
 
 		"captain_marlo":

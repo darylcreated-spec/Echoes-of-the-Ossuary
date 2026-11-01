@@ -39,10 +39,31 @@ const REGIONS = [
 	},
 	{
 		"id": "farms",
-		"name": "🌾 Farmlands & Grazing Pasture",
+		"name": "🌾 Sunnydale Farmlands & Grazing Pasture",
 		"coords": Vector3(28.0, 0.5, 34.0),
 		"zone": "South-East Pastoral Plains",
 		"desc": "Rolling wheat meadows, thatched farmer cottages, pumpkin patches, and a towering windmill overlooking fully enclosed pastures filled with horses and cattle."
+	},
+	{
+		"id": "siege",
+		"name": "☄️ Crimson Siege Camp & Trebuchets",
+		"coords": Vector3(0.0, 0.5, 68.0),
+		"zone": "South Citadel Battlefield",
+		"desc": "An active warzone beyond the Royal Citadel. Counterweight trebuchets hurl flaming boulders while marching royal army columns clash against invading Vanguard warhosts."
+	},
+	{
+		"id": "swamp",
+		"name": "🐸 The Weeping Fen Swamp",
+		"coords": Vector3(84.0, 0.5, 76.0),
+		"zone": "Far South-East Mire",
+		"desc": "A murky, mist-shrouded bog of rotting boardwalks, sunken ruins, and dead trees. Home to Bog Witch Morrigan's cauldron and lurking Swamp Creep aberrations."
+	},
+	{
+		"id": "greenhollow",
+		"name": "🏡 Greenhollow Woodland Village",
+		"coords": Vector3(-48.0, 0.5, -20.0),
+		"zone": "West Timberland Crossroads",
+		"desc": "A rustic lumberjack and forester settlement along the Western Trade Highway where horse-drawn supply caravans haul timber and provisions."
 	}
 ]
 

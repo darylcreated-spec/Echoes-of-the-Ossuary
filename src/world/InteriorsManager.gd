@@ -48,9 +48,36 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 		_add_warm_light(room, Vector3(-5.5, 3.5, z), Color(1.0, 0.80, 0.45), 1.3, 7.0)
 		_add_warm_light(room, Vector3(5.5, 3.5, z), Color(1.0, 0.80, 0.45), 1.3, 7.0)
 	
-	# Grand Dais & Throne
-	var dais = _add_box(room, Vector3(0, 0.3, -9.5), Vector3(7.0, 0.6, 5.0), Color(0.38, 0.32, 0.28))
-	_place_model(room, "res://assets/furniture/chair_A_wood.gltf", Vector3(0, 0.6, -10.5), Vector3.ONE * 2.4, 180.0)
+	# Grand Dais & Twin Royal Thrones (King & Queen)
+	var dais = _add_box(room, Vector3(0, 0.3, -9.5), Vector3(7.5, 0.6, 5.2), Color(0.38, 0.32, 0.28))
+	_place_model(room, "res://assets/furniture/chair_A_wood.gltf", Vector3(-1.1, 0.6, -10.8), Vector3.ONE * 2.5, 180.0)
+	_place_model(room, "res://assets/furniture/chair_A_wood.gltf", Vector3(1.1, 0.6, -10.8), Vector3.ONE * 2.3, 180.0)
+
+	# King Aldric IV (Sovereign of the Realm)
+	var king = TownNPC.new()
+	king.npc_id = "king_aldric"
+	king.npc_name = "King Aldric IV"
+	king.npc_title = "High Sovereign of Oakhaven"
+	king.icon = "👑"
+	king.model_path = "res://assets/characters/adventurers/Knight.glb"
+	king.model_scale = Vector3(0.60, 0.60, 0.60)
+	king.model_rotation_y = 0.0
+	king.dialogue_text = "Hear our royal decree, champion! Besieging warlords press against our southern fields, bog abominations fester in the Weeping Fen, and the Ossuary stirs beneath our very stones. Restore the ancient Seals and lead our armies to victory!"
+	king.position = Vector3(-1.1, 0.6, -9.6)
+	room.add_child(king)
+
+	# Queen Seraphina (Queen Consort & Keeper of the Seals)
+	var queen = TownNPC.new()
+	queen.npc_id = "queen_seraphina"
+	queen.npc_name = "Queen Seraphina"
+	queen.npc_title = "Queen of the Silvervein"
+	queen.icon = "👑"
+	queen.model_path = "res://assets/characters/adventurers/Mage.glb"
+	queen.model_scale = Vector3(0.56, 0.56, 0.56)
+	queen.model_rotation_y = 0.0
+	queen.dialogue_text = "May the light of the Crown shield your heart, brave traveler. The Three Royal Seals of the Realm—Harbor, Forest, and Crag—must be united with the Weeping Fen ward to banish the abyss forever."
+	queen.position = Vector3(1.1, 0.6, -9.6)
+	room.add_child(queen)
 	
 	# Red Carpet Runner
 	_place_model(room, "res://assets/furniture/rug_rectangle_A.gltf", Vector3(0, 0.05, -7.5), Vector3(3.2, 1.0, 3.8), 0.0)

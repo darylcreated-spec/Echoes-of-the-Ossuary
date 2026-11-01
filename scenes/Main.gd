@@ -282,6 +282,40 @@ func _run_gameplay_self_test() -> void:
 	print(" -> Total Actively Looping Animated NPCs verified: ", animated_npc_count)
 	assert(animated_npc_count >= 6)
 
+	# 12. Open-World Medieval Realism Suite (21-Point Checklist Verification)
+	print("\n[TEST 12] Open-World Medieval Realism Suite (Monarchs, Archers, Trebuchets, Armies, Ships, Seals, Caravans, Swamp)...")
+	var monarchs = get_tree().get_nodes_in_group("royal_monarch")
+	print(" -> Royal Monarchs (King Aldric IV & Queen Seraphina) found: ", monarchs.size())
+	assert(monarchs.size() >= 4)
+
+	var archers = get_tree().get_nodes_in_group("archer_sentry")
+	print(" -> Battlement Archer Sentries found: ", archers.size())
+	assert(archers.size() >= 2)
+
+	var trebuchets = get_tree().get_nodes_in_group("siege_trebuchet")
+	print(" -> Articulated Counterweight Trebuchets found: ", trebuchets.size())
+	assert(trebuchets.size() >= 2)
+
+	var armies = get_tree().get_nodes_in_group("army_formation")
+	print(" -> Marching Military Army Formations found: ", armies.size())
+	assert(armies.size() >= 2)
+
+	var ships = get_tree().get_nodes_in_group("medieval_ship")
+	print(" -> Medieval Cog Warships & Harbor Boats found: ", ships.size())
+	assert(ships.size() >= 4)
+
+	var seals = get_tree().get_nodes_in_group("harbor_seal")
+	print(" -> Animated Coastal Harbor Seals found: ", seals.size())
+	assert(seals.size() >= 4)
+
+	var caravans = get_tree().get_nodes_in_group("caravan_wagon")
+	print(" -> Moving Horse-Drawn Trade Caravans found: ", caravans.size())
+	assert(caravans.size() >= 2)
+
+	var swamp_water = find_child("SwampWaterSurface", true, false)
+	assert(swamp_water != null)
+	print(" -> Weeping Fen Swamp Biome water surface verified at: ", swamp_water.global_position)
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
