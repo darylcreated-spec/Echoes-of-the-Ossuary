@@ -117,7 +117,7 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "castle_exit"
 	exit_door.prompt_text = "[E] Exit Castle to Town"
-	exit_door.target_position = Vector3(0.0, 0.2, 38.0) # In front of Overworld Castle Keep
+	exit_door.target_position = Vector3(0.0, 0.2, 41.5) # In front of Overworld Castle Keep
 	exit_door.target_rotation_y = 180.0
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
@@ -206,8 +206,8 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "tavern_exit"
 	exit_door.prompt_text = "[E] Exit Tavern to Town"
-	exit_door.target_position = Vector3(-8.0, 0.2, 17.5) # In front of Overworld Tavern patio
-	exit_door.target_rotation_y = 90.0
+	exit_door.target_position = Vector3(-26.0, 0.2, 13.5) # In front of Overworld Tavern patio
+	exit_door.target_rotation_y = 0.0
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
@@ -263,7 +263,7 @@ static func _build_forge_interior(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "forge_exit"
 	exit_door.prompt_text = "[E] Exit Forge to Town"
-	exit_door.target_position = Vector3(-11.5, 0.2, 0.0) # In front of Overworld Forge
+	exit_door.target_position = Vector3(-13.5, 0.2, -1.0) # In front of Overworld Forge
 	exit_door.target_rotation_y = 90.0
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
@@ -322,8 +322,8 @@ static func _build_cottage_interior(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "cottage_exit"
 	exit_door.prompt_text = "[E] Exit Cottage to Town"
-	exit_door.target_position = Vector3(20.0, 0.2, 14.0) # In front of Overworld Thatched Cottage
-	exit_door.target_rotation_y = -30.0
+	exit_door.target_position = Vector3(30.0, 0.2, 33.5) # In front of Overworld Thatched Cottage
+	exit_door.target_rotation_y = 0.0
 	exit_door.is_interior_exit = true
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 48.0
@@ -479,8 +479,8 @@ static func _build_rusty_anchor_interior(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "rusty_anchor_exit"
 	exit_door.prompt_text = "Return to Port Blackwater Docks"
-	exit_door.target_position = Vector3(-56.0, 0.0, 70.0)
-	exit_door.target_rotation_y = 135.0
+	exit_door.target_position = Vector3(-53.0, 0.2, 72.0)
+	exit_door.target_rotation_y = -90.0
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 45.0
 	exit_door.target_bgm_key = "bgm_market"
@@ -520,7 +520,7 @@ static func _build_stonegate_forge_interior(parent: Node3D) -> void:
 	var exit_door = BuildingDoorway.new()
 	exit_door.door_id = "stonegate_forge_exit"
 	exit_door.prompt_text = "Return to Stonegate Outpost"
-	exit_door.target_position = Vector3(74.0, 0.0, -50.0)
+	exit_door.target_position = Vector3(73.0, 0.2, -52.0)
 	exit_door.target_rotation_y = -90.0
 	exit_door.target_cam_distance = 16.0
 	exit_door.target_cam_pitch = 45.0

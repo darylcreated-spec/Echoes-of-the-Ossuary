@@ -69,15 +69,29 @@ func _build_medieval_cog() -> void:
 	deck.position = Vector3(0.0, 1.75, 0.0)
 	_hull_pivot.add_child(deck)
 
-	# Port & Starboard Gunwale Bulwarks
-	for side_x in [-2.6, 2.6]:
-		var gunwale = MeshInstance3D.new()
-		var gw_mesh = BoxMesh.new()
-		gw_mesh.size = Vector3(0.22, 0.9, 12.6)
-		gw_mesh.material = hull_mat
-		gunwale.mesh = gw_mesh
-		gunwale.position = Vector3(side_x, 2.2, 0.0)
-		_hull_pivot.add_child(gunwale)
+	# Port & Starboard Gunwale Bulwarks (with open boarding gate on starboard when gangplank active)
+	var port_gw = MeshInstance3D.new()
+	var pgw_mesh = BoxMesh.new()
+	pgw_mesh.size = Vector3(0.22, 0.9, 12.6)
+	pgw_mesh.material = hull_mat
+	port_gw.mesh = pgw_mesh
+	port_gw.position = Vector3(-2.6, 2.2, 0.0)
+	_hull_pivot.add_child(port_gw)
+
+	if has_gangplank:
+		for seg_z in [-3.65, 3.65]:
+			var stbd_gw = MeshInstance3D.new()
+			var sgw_mesh = BoxMesh.new()
+			sgw_mesh.size = Vector3(0.22, 0.9, 5.3)
+			sgw_mesh.material = hull_mat
+			stbd_gw.mesh = sgw_mesh
+			stbd_gw.position = Vector3(2.6, 2.2, seg_z)
+			_hull_pivot.add_child(stbd_gw)
+	else:
+		var stbd_gw = MeshInstance3D.new()
+		stbd_gw.mesh = pgw_mesh
+		stbd_gw.position = Vector3(2.6, 2.2, 0.0)
+		_hull_pivot.add_child(stbd_gw)
 
 	# 2. High Sterncastle (Aft Quarterdeck Cabin, Z in [3.5, 6.8])
 	var stern = MeshInstance3D.new()
@@ -134,6 +148,7 @@ func _build_medieval_cog() -> void:
 	if flag_shader:
 		var sm = ShaderMaterial.new()
 		sm.shader = flag_shader
+		sm.set_shader_parameter("flag_color", sail_color)
 		sail_mat = sm
 	else:
 		var std = StandardMaterial3D.new()
@@ -207,19 +222,19 @@ func _build_medieval_cog() -> void:
 	if has_gangplank:
 		var plank = MeshInstance3D.new()
 		var pl_mesh = BoxMesh.new()
-		pl_mesh.size = Vector3(4.5, 0.18, 1.8)
+		pl_mesh.size = Vector3(3.8, 0.18, 1.6)
 		pl_mesh.material = deck_mat
 		plank.mesh = pl_mesh
-		plank.position = Vector3(3.8, 1.1, 0.0)
-		plank.rotation_degrees.z = -16.0
+		plank.position = Vector3(3.6, 1.05, 0.0)
+		plank.rotation_degrees.z = -14.0
 		_hull_pivot.add_child(plank)
 
 		var pl_col = CollisionShape3D.new()
 		var pl_box = BoxShape3D.new()
-		pl_box.size = Vector3(4.8, 0.25, 2.0)
+		pl_box.size = Vector3(4.2, 0.25, 1.8)
 		pl_col.shape = pl_box
-		pl_col.position = Vector3(3.8, 1.1, 0.0)
-		pl_col.rotation_degrees.z = -16.0
+		pl_col.position = Vector3(3.6, 1.05, 0.0)
+		pl_col.rotation_degrees.z = -14.0
 		sb.add_child(pl_col)
 
 	add_child(sb)

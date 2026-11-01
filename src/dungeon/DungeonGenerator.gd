@@ -293,7 +293,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	var ground_size = 260.0
 	var half_s = ground_size * 0.5
 	
-	# 1. Slotted Floor Static Collision & Safety Void Safeguard (River & Canal cutouts)
+	# 1. Slotted Floor Static Collision & Safety Void Safeguard (River & Ocean Harbor Basin cutouts)
 	var floor_body = StaticBody3D.new()
 	floor_body.name = "OverworldFloorColliders"
 	floor_body.collision_layer = 1
@@ -309,8 +309,12 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 
 	# North Bank Floor (X: -137 to 137, Z: -137 to 20.0)
 	add_f_col.call(Vector3(274.0, 1.2, 157.0), Vector3(0.0, -0.6, -58.5))
-	# South Bank Floor (X: -137 to 137, Z: 28.0 to 137.0)
-	add_f_col.call(Vector3(274.0, 1.2, 109.0), Vector3(0.0, -0.6, 82.5))
+	# South-Central & East Landmass Floor (X: -62.0 to 137.0, Z: 28.0 to 137.0)
+	add_f_col.call(Vector3(199.0, 1.2, 109.0), Vector3(37.5, -0.6, 82.5))
+	# South-West Coastal Headland Floor (X: -137.0 to -62.0, Z: 28.0 to 46.0)
+	add_f_col.call(Vector3(75.0, 1.2, 18.0), Vector3(-99.5, -0.6, 37.0))
+	# Sunken Ocean Harbor Seabed Floor (X: -137.0 to -62.0, Z: 46.0 to 137.0 at Y = -1.20m)
+	add_f_col.call(Vector3(75.0, 1.2, 91.0), Vector3(-99.5, -1.80, 91.5))
 	# Sunken Riverbed Floor (X: -137 to 137, Z: 20.0 to 28.0 at Y = -0.50m)
 	add_f_col.call(Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
 
@@ -323,9 +327,15 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	add_f_col.call(Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 28.0))
 	add_f_col.call(Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 28.0))
 
+	# Ocean Quay Shoreline Collision Barriers (along X = -62.0 and Z = 46.0, leaving open gaps at Pier 1 Z=62 and Pier 2 Z=82)
+	add_f_col.call(Vector3(75.0, 3.5, 0.4), Vector3(-99.5, 1.5, 46.0))
+	add_f_col.call(Vector3(0.4, 3.5, 13.6), Vector3(-62.0, 1.5, 52.8)) # Z: 46.0 to 59.6
+	add_f_col.call(Vector3(0.4, 3.5, 15.2), Vector3(-62.0, 1.5, 72.0)) # Z: 64.4 to 79.6
+	add_f_col.call(Vector3(0.4, 3.5, 52.6), Vector3(-62.0, 1.5, 110.7)) # Z: 84.4 to 137.0
+
 	parent.add_child(floor_body)
 	
-	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River channel Z in [20.0, 28.0])
+	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River Z in [20, 28] and Ocean Basin X < -62, Z > 46)
 	var g_mat = StandardMaterial3D.new()
 	g_mat.albedo_color = Color(0.24, 0.44, 0.18) # Lush stylized medieval grass
 	g_mat.roughness = 0.88
@@ -341,7 +351,8 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 		parent.add_child(g_mesh_inst)
 
 	add_grass_plane.call("NorthBank_Grass", Vector2(274.0, 157.0), Vector3(0.0, 0.0, -58.5))
-	add_grass_plane.call("SouthBank_Grass", Vector2(274.0, 109.0), Vector3(0.0, 0.0, 82.5))
+	add_grass_plane.call("SouthBank_Grass", Vector2(199.0, 109.0), Vector3(37.5, 0.0, 82.5))
+	add_grass_plane.call("WestHeadland_Grass", Vector2(75.0, 18.0), Vector3(-99.5, 0.0, 37.0))
 	
 	# Outer world perimeter boundary collision barriers (North, South, East, West at +-130m)
 	var wall_h = 18.0
@@ -351,59 +362,61 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(half_s + thick * 0.5, wall_h * 0.5, 0), Vector3(thick, wall_h, ground_size))
 	_add_static_box(parent, Vector3(-half_s - thick * 0.5, wall_h * 0.5, 0), Vector3(thick, wall_h, ground_size))
 
-	# Encircling Natural Perimeter Mountain Ridges & Trees (prevents open voids)
-	for perim_idx in range(-12, 13):
-		var offset_p = float(perim_idx) * 11.0
+	# Encircling Natural Perimeter Mountain Ridges (Spaced cleanly at 20m intervals, open at SW Ocean Coast)
+	for perim_idx in range(-6, 7):
+		var offset_p = float(perim_idx) * 20.0
 		# North Ridge
-		_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(offset_p, 0.0, -half_s), Vector3.ONE * 9.0)
-		# South Ridge
-		if abs(offset_p) > 20.0:
-			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(offset_p, 0.0, half_s), Vector3.ONE * 9.0)
-		# East Ridge (mountain crags)
-		_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(half_s, 0.0, offset_p), Vector3.ONE * 9.0)
-		# West Ridge (forest & coast)
-		if offset_p < 30.0:
-			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(-half_s, 0.0, offset_p), Vector3.ONE * 9.0)
+		_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(offset_p, 0.0, -half_s), Vector3.ONE * 8.5)
+		# South Ridge (Only on land X > -50, leaving SW Ocean horizon open)
+		if offset_p > -50.0 and abs(offset_p) > 22.0:
+			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(offset_p, 0.0, half_s), Vector3.ONE * 8.5)
+		# East Ridge (mountain crags, skipping river channel Z in [14, 34])
+		if offset_p < 12.0 or offset_p > 36.0:
+			_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(half_s, 0.0, offset_p), Vector3.ONE * 8.5)
+		# West Ridge (only North of the river Z < 14, leaving the Ocean Coast open to the sea)
+		if offset_p < 14.0:
+			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(-half_s, 0.0, offset_p), Vector3.ONE * 8.5)
 
-	# 2. Central Cobblestone Plaza (Courtyard floor for hero pedestals)
-	for px in range(-5, 6):
-		for pz in range(-4, 6):
+	# 2. Central Cobblestone Sanctuary Plaza (Spacious paved courtyard X in [-12, 12], Z in [-10, 12])
+	for px in range(-6, 7):
+		for pz in range(-5, 7):
 			var stone = AssetLoader.load_or_generate_model("res://assets/dungeon/floor_tile_large.glb", "dungeon", "floor_tile_large")
 			stone.scale = Vector3(0.5, 1.0, 0.5)
 			stone.position = Vector3(px * 2.0, 0.02, pz * 2.0)
 			parent.add_child(stone)
 
-	# 3. North: The Ancient Crypt (Grand stone mausoleum entrance to catacombs)
+	# 3. North: The Ancient Crypt (Proportionate mausoleum set back at Z = -16.5 so DescentSigil at Z = -6.5 has a clear forecourt)
 	var crypt = AssetLoader.load_or_generate_model("res://assets/overworld/crypt.gltf", "dungeon", "crypt")
-	crypt.scale = Vector3(2.8, 2.8, 2.8)
-	crypt.position = Vector3(0, 0, -14.0)
+	crypt.scale = Vector3(1.65, 1.65, 1.65)
+	crypt.position = Vector3(0.0, 0.0, -16.5)
 	parent.add_child(crypt)
-	_add_static_box(parent, Vector3(0, 3.2, -14.5), Vector3(8.5, 6.5, 7.5))
+	_add_static_box(parent, Vector3(0.0, 3.2, -16.5), Vector3(9.5, 6.5, 9.5))
 	
-	# Dead cemetery trees and gravestones
-	_place_prop(parent, "res://assets/overworld/tree_dead_large.gltf", Vector3(-6.5, 0, -12.5), Vector3.ONE * 2.2)
-	_place_prop(parent, "res://assets/overworld/tree_dead_large.gltf", Vector3(6.5, 0, -12.5), Vector3.ONE * 2.2, 75.0)
-	_place_prop(parent, "res://assets/overworld/grave_A.gltf", Vector3(-4.5, 0, -10.5), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/gravestone.gltf", Vector3(4.5, 0, -10.5), Vector3.ONE * 1.8, -25.0)
-	_place_prop(parent, "res://assets/overworld/grave_A_destroyed.gltf", Vector3(-6.2, 0, -9.8), Vector3.ONE * 1.6)
-
-	# 4. West: The Blacksmith's Forge (Proportionate 7.1m tall shop)
-	var smith = AssetLoader.load_or_generate_model("res://assets/overworld/building_blacksmith_blue.gltf", "dungeon", "blacksmith")
-	smith.scale = Vector3.ONE * 7.2
-	smith.position = Vector3(-15.0, 0, 0.0)
-	smith.rotation_degrees.y = 90.0
-	parent.add_child(smith)
-	_add_static_box(parent, Vector3(-15.0, 3.5, 0.0), Vector3(9.2, 7.0, 9.0))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-15.0, 7.2, -1.2))
+	# Wrought-iron/stone cemetery flanking the Crypt (Well clear of the plaza)
+	_place_prop(parent, "res://assets/overworld/tree_dead_medium.gltf", Vector3(-9.5, 0.0, -16.0), Vector3.ONE * 2.0)
+	_place_prop(parent, "res://assets/overworld/tree_dead_medium.gltf", Vector3(9.5, 0.0, -16.0), Vector3.ONE * 2.0, 75.0)
+	_place_prop(parent, "res://assets/overworld/grave_A.gltf", Vector3(-6.8, 0.0, -12.5), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/gravestone.gltf", Vector3(6.8, 0.0, -12.5), Vector3.ONE * 1.6, -15.0)
+	_place_prop(parent, "res://assets/overworld/grave_A_destroyed.gltf", Vector3(-8.5, 0.0, -12.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/gravemarker_A.gltf", Vector3(8.5, 0.0, -12.5), Vector3.ONE * 1.6)
 
 	# Circling Crows Flock above North Crypt
 	var flock_crypt = CirclingFlock.new()
-	flock_crypt.position = Vector3(0.0, 16.0, -14.0)
+	flock_crypt.position = Vector3(0.0, 16.0, -16.5)
 	flock_crypt.bird_count = 6
 	flock_crypt.circle_radius = 9.0
 	parent.add_child(flock_crypt)
 
-	# Master Torval - Town Blacksmith NPC (Stout Dwarf proportions ~1.44m tall)
+	# 4. West: Master Torval's Blacksmith Forge (Set cleanly at X = -18.5, Z = -1.0, facing East toward the Plaza)
+	var smith = AssetLoader.load_or_generate_model("res://assets/overworld/building_blacksmith_blue.gltf", "dungeon", "blacksmith")
+	smith.scale = Vector3.ONE * 6.5
+	smith.position = Vector3(-18.5, 0.0, -1.0)
+	smith.rotation_degrees.y = 90.0
+	parent.add_child(smith)
+	_add_static_box(parent, Vector3(-18.5, 3.5, -1.0), Vector3(8.2, 7.0, 8.2))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-18.5, 6.8, -2.0))
+
+	# Master Torval - Town Blacksmith NPC
 	var torval = TownNPCScript.new()
 	torval.npc_id = "blacksmith"
 	torval.npc_name = "Master Torval"
@@ -413,24 +426,23 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	torval.model_scale = Vector3(0.38, 0.38, 0.38)
 	torval.model_rotation_y = 90.0
 	torval.dialogue_text = "Hail, warrior! The forge fires blaze with eternal embers. Deliver unto me the Soul Echoes reaped from the Ossuary depths, and I shall temper your weapons, bolster your armor, and sharpen your dash reflexes!"
-	torval.position = Vector3(-9.5, 0, 0.0)
+	torval.position = Vector3(-12.2, 0.0, -1.0)
 	parent.add_child(torval)
 
-	# Blacksmith forge props
-	_place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(-11.5, 0, -2.8), Vector3.ONE * 2.0, 90.0)
-	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-9.5, 0, -2.5), Vector3.ONE * 1.5, 0.0)
-	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-8.5, 0, -2.5), Vector3.ONE * 1.5)
+	# Blacksmith forge outdoor workbench props (Neatly beside the forge, clear of the plaza)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-14.0, 0.0, -4.8), Vector3.ONE * 1.4, 90.0)
+	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-12.5, 0.0, -4.5), Vector3.ONE * 1.4, 0.0)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-13.8, 0.0, 2.8), Vector3.ONE * 1.6, 90.0)
 
-	# 5. East: The Ruined Cathedral (Towering 15.7m cathedral)
+	# 5. East: The Cathedral of Light (Set cleanly at X = 18.5, Z = -1.0, facing West toward the Plaza)
 	var church = AssetLoader.load_or_generate_model("res://assets/overworld/building_church_blue.gltf", "dungeon", "church")
-	church.scale = Vector3.ONE * 9.5
-	church.position = Vector3(16.0, 0, 0.0)
+	church.scale = Vector3.ONE * 8.2
+	church.position = Vector3(18.5, 0.0, -1.0)
 	church.rotation_degrees.y = -90.0
 	parent.add_child(church)
-	_add_static_box(parent, Vector3(16.0, 6.0, 0.0), Vector3(9.8, 12.0, 11.0))
-	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(8.5, 0, 3.0), Vector3.ONE * 2.0, -45.0)
+	_add_static_box(parent, Vector3(18.5, 6.0, -1.0), Vector3(8.8, 12.0, 9.5))
 
-	# Eldress Alyssa - High Priestess NPC (Proportionate ~1.78m human height)
+	# Eldress Alyssa - High Priestess NPC
 	var alyssa = TownNPCScript.new()
 	alyssa.npc_id = "priestess"
 	alyssa.npc_name = "Eldress Alyssa"
@@ -440,21 +452,22 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	alyssa.model_scale = Vector3(0.53, 0.53, 0.53)
 	alyssa.model_rotation_y = -90.0
 	alyssa.dialogue_text = "May the Sacred Light guide your steps, champion. The dead stir restlessly in the Catacombs below. Inquire upon our Sanctuary Bounties—purge the wicked hordes to claim divine favour and rich reward!"
-	alyssa.position = Vector3(9.5, 0, 0.0)
+	alyssa.position = Vector3(12.2, 0.0, -1.0)
 	parent.add_child(alyssa)
 
-	# Cathedral props
-	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(8.5, 0, -3.0), Vector3.ONE * 2.0, -45.0)
-	_place_prop(parent, "res://assets/furniture/cabinet_small_decorated.gltf", Vector3(11.5, 0, -3.2), Vector3.ONE * 1.8, -90.0)
+	# Cathedral forecourt benches (Symmetrical & aligned facing the Cathedral)
+	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(12.5, 0.0, -4.2), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(12.5, 0.0, 2.2), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(13.5, 0.0, -5.2), Vector3.ONE * 1.8, -90.0)
 
 	# 6. South: Fortified Arch Gateway (Interactive Animated Portcullis Doors with Physics)
 	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
 	var gate = OverworldGateScript.new()
 	gate.name = "SanctuaryArchGate"
-	gate.position = Vector3(0, 0, 14.0)
+	gate.position = Vector3(0.0, 0.0, 14.0)
 	parent.add_child(gate)
 
-	# Captain Vane - Gate Sentinel NPC (Guarding beside the gateway pillar)
+	# Captain Vane - Gate Sentinel NPC
 	var vane = TownNPCScript.new()
 	vane.npc_id = "guard"
 	vane.npc_name = "Captain Vane"
@@ -464,53 +477,47 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	vane.model_scale = Vector3(0.55, 0.55, 0.55)
 	vane.model_rotation_y = 160.0
 	vane.dialogue_text = "Halt, warrior! You stand before the threshold of the Ossuary Catacombs. Beneath the north crypt lies the descent sigil. Step upon the glowing seal to plunge into the underworld. Beware the Bone Titan's wrath on the final floor!"
-	vane.position = Vector3(-2.4, 0.0, 12.2)
+	vane.position = Vector3(-2.8, 0.0, 11.8)
 	parent.add_child(vane)
 
-	# Fortified Town Defensive Curtain Walls (Flanking the South Arch Gateway with zero gaps)
-	# Left Curtain Wall: connects Gate Left Pillar (X = -2.4) continuously to West Corner Bastion (X = -14.0)
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-5.2, 0.0, 14.0), Vector3(3.5, 4.0, 2.5))
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-9.5, 0.0, 14.0), Vector3(3.5, 4.0, 2.5))
-	_place_prop(parent, "res://assets/overworld/fence_stone_straight.gltf", Vector3(-13.0, 0.0, 14.0), Vector3.ONE * 2.2, 90.0)
-	_add_static_box(parent, Vector3(-8.2, 3.0, 14.0), Vector3(11.6, 6.0, 2.5))
+	# Fortified Town Defensive Curtain Walls (Flanking the South Arch Gateway at Z = 14.0)
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-6.0, 0.0, 14.0), Vector3(3.6, 3.8, 2.4))
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-13.0, 0.0, 14.0), Vector3(3.6, 3.8, 2.4))
+	_place_prop(parent, "res://assets/overworld/building_tower_A_blue.gltf", Vector3(-18.5, 0.0, 14.0), Vector3.ONE * 5.0)
+	_add_static_box(parent, Vector3(-10.5, 3.0, 14.0), Vector3(16.0, 6.0, 2.5))
 
-	# Right Curtain Wall: connects Gate Right Pillar (X = +2.4) continuously to East Corner Bastion (X = +14.0)
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(5.2, 0.0, 14.0), Vector3(3.5, 4.0, 2.5))
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(9.5, 0.0, 14.0), Vector3(3.5, 4.0, 2.5))
-	_place_prop(parent, "res://assets/overworld/fence_stone_straight.gltf", Vector3(13.0, 0.0, 14.0), Vector3.ONE * 2.2, 90.0)
-	_add_static_box(parent, Vector3(8.2, 3.0, 14.0), Vector3(11.6, 6.0, 2.5))
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(6.0, 0.0, 14.0), Vector3(3.6, 3.8, 2.4))
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(13.0, 0.0, 14.0), Vector3(3.6, 3.8, 2.4))
+	_place_prop(parent, "res://assets/overworld/building_tower_A_blue.gltf", Vector3(18.5, 0.0, 14.0), Vector3.ONE * 5.0)
+	_add_static_box(parent, Vector3(10.5, 3.0, 14.0), Vector3(16.0, 6.0, 2.5))
 
-	# Courtyard Perimeter Trees (Scaled 2.8x - 3.4x -> 9m - 12m tall trees)
+	# Outer Sanctuary Framing Trees (Placed along the North ridge at Z = -20 so zero canopies clip town buildings)
 	var border_trees = [
-		Vector3(-12.0, 0, -12.0), Vector3(-8.5, 0, -12.5), Vector3(8.5, 0, -12.5), Vector3(12.0, 0, -12.0),
-		Vector3(-14.5, 0, -7.0), Vector3(-14.5, 0, 7.0), Vector3(14.5, 0, -7.0), Vector3(14.5, 0, 7.0)
+		Vector3(-22.0, 0.0, -18.0), Vector3(-14.0, 0.0, -22.0), Vector3(14.0, 0.0, -22.0), Vector3(22.0, 0.0, -18.0)
 	]
 	var tree_paths = [
-		"res://assets/overworld/tree_pine_orange_large.gltf",
 		"res://assets/overworld/tree_single_A.gltf",
-		"res://assets/overworld/trees_A_large.gltf",
-		"res://assets/overworld/tree_pine_yellow_large.gltf"
+		"res://assets/overworld/tree_single_B.gltf",
+		"res://assets/overworld/tree_pine_orange_medium.gltf",
+		"res://assets/overworld/tree_pine_yellow_medium.gltf"
 	]
 	for i in range(border_trees.size()):
 		var t_pos = border_trees[i]
 		var model_p = tree_paths[i % tree_paths.size()]
-		_place_prop(parent, model_p, t_pos, Vector3.ONE * 3.0, float((i * 47) % 360))
-		_add_static_cyl(parent, t_pos, 1.0, 7.0)
+		_place_prop(parent, model_p, t_pos, Vector3.ONE * 2.0, float((i * 47) % 360))
+		_add_static_cyl(parent, t_pos, 0.8, 6.0)
 
-	# Decorative Courtyard Props & Market Stalls
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-2.8, 0, 12.0), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-2.1, 0, 12.5), Vector3.ONE * 1.1)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(2.8, 0, 12.0), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(3.5, 0, 11.5), Vector3.ONE * 1.2)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(3.2, 0, 12.8), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/wheelbarrow.gltf", Vector3(-4.5, 0, 10.5), Vector3.ONE * 1.6, 35.0)
-	_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(-3.8, 0, 11.2), Vector3.ONE * 0.4)
-	_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(-3.5, 0, 11.5), Vector3.ONE * 0.35)
-	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(-5.5, 0, 4.0), Vector3.ONE * 1.8, 90.0)
-	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(5.5, 0, 4.0), Vector3.ONE * 1.8, -90.0)
+	# Neat Courtyard Perimeter Props (Placed along the interior wall edges at Z = 11.5, clear of walkways and pedestals)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-5.5, 0.0, 12.2), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-6.4, 0.0, 12.4), Vector3.ONE * 1.1)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(5.5, 0.0, 12.2), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(6.6, 0.0, 12.0), Vector3.ONE * 1.1)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(6.2, 0.0, 12.7), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(-8.5, 0.0, 5.5), Vector3.ONE * 1.6, 90.0)
+	_place_prop(parent, "res://assets/overworld/bench_decorated.gltf", Vector3(8.5, 0.0, 5.5), Vector3.ONE * 1.6, -90.0)
 
 	# Friendly Town Fox resting in the Courtyard Garden
-	_spawn_animated_fauna(parent, "res://assets/characters/animals/Fox.glb", Vector3(-6.2, 0.0, 5.5), Vector3.ONE * 0.12, 45.0, "AnimalArmature|Idle")
+	_spawn_animated_fauna(parent, "res://assets/characters/animals/Fox.glb", Vector3(-9.2, 0.0, 7.5), Vector3.ONE * 0.12, 45.0, "AnimalArmature|Idle")
 
 	# Oakhaven Town Square Patrolling Guards (Continuous marching walk cycles)
 	var guard_highway = PatrolNPCScript.new()
@@ -518,28 +525,27 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	guard_highway.position = Vector3(1.8, 0.0, 10.0)
 	guard_highway.waypoints = [
 		Vector3(1.8, 0.0, 11.5),
-		Vector3(1.8, 0.0, 1.0),
-		Vector3(-1.8, 0.0, 1.0),
+		Vector3(1.8, 0.0, 4.2),
+		Vector3(-1.8, 0.0, 4.2),
 		Vector3(-1.8, 0.0, 11.5)
 	]
 	parent.add_child(guard_highway)
 
 	var guard_cross = PatrolNPCScript.new()
 	guard_cross.npc_name = "Patrolman Kaelen"
-	guard_cross.position = Vector3(-6.0, 0.0, 2.0)
+	guard_cross.position = Vector3(-6.0, 0.0, -3.5)
 	guard_cross.waypoints = [
-		Vector3(-8.0, 0.0, 2.0),
-		Vector3(8.0, 0.0, 2.0),
-		Vector3(8.0, 0.0, -2.0),
-		Vector3(-8.0, 0.0, -2.0)
+		Vector3(-9.0, 0.0, -3.5),
+		Vector3(9.0, 0.0, -3.5),
+		Vector3(9.0, 0.0, -5.0),
+		Vector3(-9.0, 0.0, -5.0)
 	]
 	parent.add_child(guard_cross)
 
-	# Merchant Supply Wagon & Pallets in Plaza
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-5.0, 0.0, 8.5), Vector3.ONE * 1.6, 25.0)
-	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-6.2, 0.0, 7.5), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-6.2, 0.0, 7.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_long_B.gltf", Vector3(-6.0, 0.0, 9.2), Vector3.ONE * 1.3, 90.0)
+	# Merchant Supply Wagon parked neatly in South-West Courtyard Corner
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-10.5, 0.0, 10.5), Vector3.ONE * 1.5, 15.0)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.2)
 
 	# 7. EXPANDED OPEN WORLD MEDIEVAL REALM
 	_build_road_network(parent)
@@ -566,57 +572,59 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	InteriorsManager.build_all_interiors(parent)
 
 func _build_road_network(parent: Node3D) -> void:
-	# Main Highway: Sanctuary South Gate (Z=14) -> Stone Bridge (Z=24) -> Castle Keep (Z=44)
-	for z_step in range(14, 45, 2):
+	# 1. Main Royal Highway: Sanctuary South Gate (Z=14) -> Central Stone Bridge (Z=24) -> Castle Citadel Gate (Z=36)
+	for z_step in range(14, 46, 2):
 		if z_step >= 20 and z_step <= 27:
-			continue # Handled by the Stone Bridge
+			continue # Handled by the Central Stone Bridge
 		for rx in range(-1, 2):
 			_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(float(rx) * 1.9, 0.02, float(z_step)), Vector3(1.1, 1.0, 1.1))
 		
-	# East Village Road: leaves Main Highway north of the river at Z = 14.5 (clear of Watermill)
-	for step in range(1, 14):
-		var x_pos = float(step) * 1.9
-		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(x_pos, 0.02, 14.5), Vector3(1.1, 1.0, 1.1))
-		
-	# West Town Market Road: leads to Tavern (X = -10) and Market (X = -18)
-	for step in range(1, 11):
+	# 2. West Town Market Street: runs West from Main Highway at Z = 16.5 to X = -48.0 (passing Tavern, Market & Herbalist)
+	for step in range(1, 26):
 		var x_pos = -float(step) * 1.9
 		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(x_pos, 0.02, 16.5), Vector3(1.1, 1.0, 1.1))
+		if x_pos >= -46.0 and x_pos <= -22.0:
+			_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(x_pos, 0.02, 14.6), Vector3(1.1, 1.0, 1.1))
 
-	# South-East Pasture & Windmill Path: leaves Main Highway smoothly at Z = 32.0 towards Pasture Gate (X = 23, Z = 37)
-	for step in range(1, 10):
-		var p_x = float(step) * 2.1
-		var p_z = 32.0 + float(step) * 0.6
-		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(p_x, 0.02, p_z), Vector3(1.1, 1.0, 1.1))
+	# 3. East Mill & Archery Path: runs East north of river to Watermill Yard (X = 24.5, Z = 16.5) and North-East to Archery Green
+	for step in range(1, 13):
+		var x_pos = float(step) * 1.95
+		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(x_pos, 0.02, 16.5), Vector3(1.1, 1.0, 1.1))
 
-	# Mountain Trail: North-East from Cathedral into High Crags
-	var mtn_path = [
-		Vector3(14.0, 0.02, -4.0), Vector3(18.0, 0.02, -8.0), Vector3(22.0, 0.02, -12.0),
-		Vector3(26.0, 0.02, -16.0), Vector3(30.0, 0.02, -20.0), Vector3(34.0, 0.02, -22.0)
-	]
-	for p in mtn_path:
-		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", p, Vector3(2.0, 1.0, 2.0))
+	# 4. South-East Sunnydale Hamlet Road: runs East on the South Bank from Main Highway (X = 2, Z = 33.5) to Sunnydale Green & Windmill (X = 50, Z = 33.5)
+	for step in range(1, 26):
+		var p_x = float(step) * 1.95
+		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(p_x, 0.02, 33.5), Vector3(1.15, 1.0, 1.15))
+		if p_x >= 26.0 and p_x <= 42.0:
+			_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(p_x, 0.02, 35.4), Vector3(1.15, 1.0, 1.15))
 
-	# Ancient Path: North-West from Blacksmith into Forgotten Ruins
-	var ruins_path = [
-		Vector3(-14.0, 0.02, -3.0), Vector3(-18.0, 0.02, -5.0), Vector3(-22.0, 0.02, -6.0),
-		Vector3(-26.0, 0.02, -6.0), Vector3(-30.0, 0.02, -5.0), Vector3(-34.0, 0.02, -4.0)
-	]
-	for p in ruins_path:
-		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", p, Vector3(2.0, 1.0, 2.0))
+	# 5. Mountain Trail: North-East from Cathedral toward Iron Mountains & Khar-Drakken
+	for step in range(0, 14):
+		var t = float(step) / 13.0
+		var p = Vector3(lerp(22.0, 36.0, t), 0.02, lerp(-4.0, -22.0, t))
+		_place_prop(parent, "res://assets/overworld/path_A.gltf", p, Vector3(1.2, 1.0, 1.2), -38.0)
+
+	# 6. Ancient Ruins Trail: North-West from Blacksmith toward Forgotten Ruins & Greenhollow
+	for step in range(0, 12):
+		var t = float(step) / 11.0
+		var p = Vector3(lerp(-22.0, -36.0, t), 0.02, lerp(-3.0, -6.0, t))
+		_place_prop(parent, "res://assets/overworld/path_A.gltf", p, Vector3(1.2, 1.0, 1.2), 15.0)
 
 func _build_town_quarter(parent: Node3D) -> void:
-	# 1. The Boar's Tusk Tavern (West of South Highway: X = -10.0, Z = 17.5)
-	var tavern = _place_prop(parent, "res://assets/overworld/building_tavern_blue.gltf", Vector3(-10.0, 0.0, 17.5), Vector3.ONE * 6.5, 45.0)
-	_add_static_box(parent, Vector3(-10.0, 4.5, 17.5), Vector3(7.5, 9.0, 8.5))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-10.0, 8.5, 16.5))
+	# =========================================================================
+	# WEST TOWN MARKET STREET (North Side of Street at Z = 8.5..9.5, facing South onto Z = 15.5)
+	# =========================================================================
+	# 1. The Boar's Tusk Tavern (X = -26.0, Z = 8.5, facing South 0° onto Beer Garden & Street)
+	_place_prop(parent, "res://assets/overworld/building_tavern_blue.gltf", Vector3(-26.0, 0.0, 8.5), Vector3.ONE * 6.2, 0.0)
+	_add_static_box(parent, Vector3(-26.0, 4.5, 8.5), Vector3(7.4, 9.0, 8.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-26.0, 8.2, 8.0))
 	
-	# Tavern Patio: Outdoor tables, stools, and ale barrels
-	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-6.5, 0.0, 17.5), Vector3.ONE * 1.6, 90.0)
-	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-6.5, 0.0, 16.4), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-6.5, 0.0, 18.6), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-8.2, 0.0, 19.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-7.5, 0.0, 19.8), Vector3.ONE * 1.1)
+	# Tavern Beer Garden Patio (In front of Tavern at Z = 13.0..14.0, clear of river & walls)
+	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-23.0, 0.0, 12.8), Vector3.ONE * 1.5, 0.0)
+	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-22.0, 0.0, 12.8), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-24.0, 0.0, 12.8), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-29.2, 0.0, 12.2), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-28.4, 0.0, 12.5), Vector3.ONE * 1.1)
 
 	# NPC: Barnaby the Barkeep
 	var barkeep = TownNPCScript.new()
@@ -626,17 +634,17 @@ func _build_town_quarter(parent: Node3D) -> void:
 	barkeep.icon = "🍺"
 	barkeep.model_path = "res://assets/characters/adventurers/Barbarian.glb"
 	barkeep.model_scale = Vector3(0.52, 0.52, 0.52)
-	barkeep.model_rotation_y = 120.0
+	barkeep.model_rotation_y = 0.0
 	barkeep.dialogue_text = "Rest your weary bones, adventurer! A tankard of spiced cider cures all curses. Mind the talk of shadows in the Blackwood Forest... folks say the trees have eyes!"
-	barkeep.position = Vector3(-6.2, 0.0, 17.5)
+	barkeep.position = Vector3(-24.2, 0.0, 13.2)
 	parent.add_child(barkeep)
 
-	# 2. Sanctuary Marketplace (West flank: X = -18.0, Z = 16.5)
-	var market = _place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-18.0, 0.0, 16.5), Vector3.ONE * 4.5, -30.0)
-	_add_static_box(parent, Vector3(-18.0, 2.5, 16.5), Vector3(7.5, 5.0, 6.0))
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-14.8, 0.0, 15.5), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-15.2, 0.0, 17.2), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-14.2, 0.0, 16.8), Vector3.ONE * 1.5)
+	# 2. Sanctuary Marketplace (Beside Tavern at X = -36.0, Z = 9.5, facing South 0° onto Street)
+	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-36.0, 0.0, 9.5), Vector3.ONE * 4.4, 0.0)
+	_add_static_box(parent, Vector3(-36.0, 2.5, 9.5), Vector3(7.4, 5.0, 5.8))
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-33.2, 0.0, 12.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-38.8, 0.0, 12.5), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-38.0, 0.0, 13.0), Vector3.ONE * 1.4)
 
 	# NPC: Merchant Corin
 	var merchant = TownNPCScript.new()
@@ -646,16 +654,16 @@ func _build_town_quarter(parent: Node3D) -> void:
 	merchant.icon = "💰"
 	merchant.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	merchant.model_scale = Vector3(0.53, 0.53, 0.53)
-	merchant.model_rotation_y = 60.0
+	merchant.model_rotation_y = 0.0
 	merchant.dialogue_text = "Finest goods from across the realm! Weapons tempered in dwarven fire and draughts brewed by eastern alchemists. Bring me ancient relics from the catacombs and I will pay a handsome fortune!"
-	merchant.position = Vector3(-14.5, 0.0, 16.0)
+	merchant.position = Vector3(-35.5, 0.0, 13.2)
 	parent.add_child(merchant)
 
-	# Herbalist Stall & Elowen
-	_place_prop(parent, "res://assets/overworld/building_market_yellow.gltf", Vector3(-22.0, 0.0, 14.5), Vector3.ONE * 4.2, 15.0)
-	_add_static_box(parent, Vector3(-22.0, 2.5, 14.5), Vector3(6.5, 5.0, 5.5))
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-24.5, 0.0, 13.8), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-24.0, 0.0, 15.2), Vector3.ONE * 1.2)
+	# 3. Apothecary & Herbalist Stall (X = -44.5, Z = 9.5, facing South 0° onto Street)
+	_place_prop(parent, "res://assets/overworld/building_market_yellow.gltf", Vector3(-44.5, 0.0, 9.5), Vector3.ONE * 4.2, 0.0)
+	_add_static_box(parent, Vector3(-44.5, 2.5, 9.5), Vector3(6.8, 5.0, 5.5))
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-47.5, 0.0, 12.2), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-42.0, 0.0, 12.4), Vector3.ONE * 1.2)
 
 	var herbalist = TownNPCScript.new()
 	herbalist.npc_id = "herbalist"
@@ -664,18 +672,18 @@ func _build_town_quarter(parent: Node3D) -> void:
 	herbalist.icon = "🌿"
 	herbalist.model_path = "res://assets/characters/adventurers/Mage.glb"
 	herbalist.model_scale = Vector3(0.52, 0.52, 0.52)
-	herbalist.model_rotation_y = 45.0
+	herbalist.model_rotation_y = 0.0
 	herbalist.dialogue_text = "Greetings, wanderer! Fresh moon-sage, mountain thistle, and soothing draughts to cleanse wounds. Stay vigilant against the foul pestilence rising from the tombs!"
-	herbalist.position = Vector3(-20.5, 0.0, 14.2)
+	herbalist.position = Vector3(-44.5, 0.0, 13.2)
 	parent.add_child(herbalist)
 
-	# 3. Guard Archery Training Yard (East Sanctuary Green: X = 28.0, Z = 3.0 — clear of Riverside Watermill)
-	var range_bldg = _place_prop(parent, "res://assets/overworld/building_archeryrange_blue.gltf", Vector3(28.0, 0.0, 3.0), Vector3.ONE * 4.5, -45.0)
-	_add_static_box(parent, Vector3(28.0, 3.5, 3.0), Vector3(7.0, 7.5, 7.0))
-	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(22.5, 0.0, 2.0), Vector3.ONE * 3.5, 90.0)
-	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(22.5, 0.0, 4.2), Vector3.ONE * 3.5, 90.0)
-	_place_prop(parent, "res://assets/overworld/bucket_arrows.gltf", Vector3(24.5, 0.0, 2.0), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(24.5, 0.0, 4.5), Vector3.ONE * 1.8, 90.0)
+	# 4. Guard Archery Training Yard (Dedicated East Sanctuary Green: X = 32.0, Z = 2.0, facing West -90° toward targets)
+	_place_prop(parent, "res://assets/overworld/building_archeryrange_blue.gltf", Vector3(34.0, 0.0, 2.0), Vector3.ONE * 4.5, -90.0)
+	_add_static_box(parent, Vector3(34.0, 3.5, 2.0), Vector3(7.0, 7.5, 7.0))
+	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(26.5, 0.0, 0.5), Vector3.ONE * 3.2, 90.0)
+	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(26.5, 0.0, 3.5), Vector3.ONE * 3.2, 90.0)
+	_place_prop(parent, "res://assets/overworld/bucket_arrows.gltf", Vector3(29.5, 0.0, 0.8), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(29.5, 0.0, 4.2), Vector3.ONE * 1.6, 0.0)
 
 	# NPC: Cadet Ronin - Sanctuary Marksman practicing at the target
 	var archer = TownNPCScript.new()
@@ -685,20 +693,21 @@ func _build_town_quarter(parent: Node3D) -> void:
 	archer.icon = "🎯"
 	archer.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	archer.model_scale = Vector3(0.53, 0.53, 0.53)
-	archer.model_rotation_y = 90.0
+	archer.model_rotation_y = -90.0
 	archer.dialogue_text = "Steady breath, steady aim! Captain Vane says the outlaws in Whisperwood won't wait for us to draw. Practice makes lethal!"
-	archer.position = Vector3(26.2, 0.0, 3.1)
+	archer.position = Vector3(30.0, 0.0, 2.0)
 	parent.add_child(archer)
 
-	# 4. Street Lantern Posts along Thoroughfares
-	_place_lantern_post(parent, Vector3(-5.0, 0.0, 15.0), 45.0)
-	_place_lantern_post(parent, Vector3(5.0, 0.0, 15.0), -45.0)
-	_place_lantern_post(parent, Vector3(-2.8, 0.0, 20.5))
-	_place_lantern_post(parent, Vector3(2.8, 0.0, 20.5))
-	_place_lantern_post(parent, Vector3(-2.8, 0.0, 27.5), 180.0)
-	_place_lantern_post(parent, Vector3(2.8, 0.0, 27.5), 180.0)
-	_place_lantern_post(parent, Vector3(-3.5, 0.0, 37.5))
-	_place_lantern_post(parent, Vector3(3.5, 0.0, 37.5))
+	# 5. Street Lantern Posts along Thoroughfares
+	_place_lantern_post(parent, Vector3(-3.2, 0.0, 15.2), 0.0)
+	_place_lantern_post(parent, Vector3(3.2, 0.0, 15.2), 0.0)
+	_place_lantern_post(parent, Vector3(-2.8, 0.0, 19.8))
+	_place_lantern_post(parent, Vector3(2.8, 0.0, 19.8))
+	_place_lantern_post(parent, Vector3(-2.8, 0.0, 28.2), 180.0)
+	_place_lantern_post(parent, Vector3(2.8, 0.0, 28.2), 180.0)
+	_place_lantern_post(parent, Vector3(-21.5, 0.0, 15.0))
+	_place_lantern_post(parent, Vector3(-31.0, 0.0, 15.0))
+	_place_lantern_post(parent, Vector3(-40.5, 0.0, 15.0))
 
 func _place_lantern_post(parent: Node3D, pos: Vector3, rot_y: float = 0.0) -> Node3D:
 	var post = _place_prop(parent, "res://assets/overworld/post_lantern.gltf", pos, Vector3.ONE * 1.1, rot_y)
@@ -729,38 +738,21 @@ func _spawn_animated_fauna(parent: Node3D, model_path: String, pos: Vector3, sc:
 	return inst
 
 func _build_riverside_meadow_and_props(parent: Node3D) -> void:
-	# 1. North-West Riverside Garden & Tavern Green (X in [-7, -2], Z in [15, 20])
-	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(-4.5, 0.0, 16.0), Vector3.ONE * 2.0, 90.0)
-	_place_prop(parent, "res://assets/overworld/fence_broken.gltf", Vector3(-4.5, 0.0, 18.2), Vector3.ONE * 2.0, 90.0)
-	_place_prop(parent, "res://assets/overworld/tree_single_A.gltf", Vector3(-5.2, 0.0, 19.2), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-3.8, 0.0, 19.5), Vector3.ONE * 1.6, 25.0)
-	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(-6.8, 0.0, 19.8), Vector3.ONE * 1.8, -45.0)
+	# 1. North-West Riverside Bank (X in [-14, -4], Z in [17.5, 19.5] — open grassy bank south of Curtain Wall)
+	_place_prop(parent, "res://assets/overworld/tree_single_A.gltf", Vector3(-8.5, 0.0, 18.5), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-5.2, 0.0, 19.2), Vector3.ONE * 1.5, 25.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(-11.8, 0.0, 19.2), Vector3.ONE * 1.6, -45.0)
 
-	# 2. North-East Riverside Grove (X in [3, 9], Z in [15, 20])
-	_place_prop(parent, "res://assets/overworld/tree_pine_orange_small.gltf", Vector3(6.5, 0.0, 16.5), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/trees_A_small.gltf", Vector3(8.5, 0.0, 17.5), Vector3.ONE * 2.4)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(4.2, 0.0, 17.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(4.8, 0.0, 17.2), Vector3.ONE * 1.2)
+	# 2. North-East Riverside Bank (X in [4, 10], Z in [17.5, 19.5])
+	_place_prop(parent, "res://assets/overworld/tree_single_B.gltf", Vector3(7.5, 0.0, 18.5), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(5.2, 0.0, 19.2), Vector3.ONE * 1.4)
 
-	# 3. South River Meadows & Grazing Pasture (Z in [28, 42])
-	# West Meadow - Shaded forest border with grazing deer & noble stag
-	_place_prop(parent, "res://assets/overworld/tree_single_B.gltf", Vector3(-8.5, 0.0, 31.0), Vector3.ONE * 3.0)
-	_place_prop(parent, "res://assets/overworld/tree_pine_yellow_small.gltf", Vector3(-14.0, 0.0, 34.0), Vector3.ONE * 3.2)
-	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-6.5, 0.0, 33.0), Vector3.ONE * 2.4, 40.0)
-	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-11.5, 0.0, 36.0), Vector3.ONE * 2.0, -30.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-9.2, 0.0, 33.5), 60.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-12.5, 0.0, 31.0), -45.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-7.0, 0.0, 36.5), 110.0)
-
-	# East Meadow - Farm approach with wooden fences, birch trees, hay & barrel clutter
-	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(4.8, 0.0, 30.0), Vector3.ONE * 2.0, -25.0)
-	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(6.5, 0.0, 32.0), Vector3.ONE * 2.0, -25.0)
-	_place_prop(parent, "res://assets/overworld/fence_broken.gltf", Vector3(8.2, 0.0, 34.0), Vector3.ONE * 2.0, -25.0)
-	_place_prop(parent, "res://assets/overworld/trees_A_medium.gltf", Vector3(12.0, 0.0, 31.5), Vector3.ONE * 2.8)
-	_place_prop(parent, "res://assets/overworld/tree_pine_orange_small.gltf", Vector3(15.5, 0.0, 34.0), Vector3.ONE * 3.0)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(9.2, 0.0, 35.0), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(9.8, 0.0, 35.5), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(10.5, 0.0, 29.5), Vector3.ONE * 2.2, 70.0)
+	# 3. South-West River Meadow (X in [-15, -5], Z in [29, 34] — open grazing glade north-west of Citadel)
+	_place_prop(parent, "res://assets/overworld/tree_single_B.gltf", Vector3(-10.5, 0.0, 30.5), Vector3.ONE * 2.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-7.5, 0.0, 31.5), Vector3.ONE * 1.8, 40.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-9.2, 0.0, 31.5), 60.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-12.5, 0.0, 30.5), -45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-7.0, 0.0, 32.5), 110.0)
 
 func _build_river_and_bridges(parent: Node3D) -> void:
 	# 1. Sunken Riverbed Silt/Pebble Basin (Y = -0.50m) across the full 274m realm width
@@ -811,30 +803,30 @@ func _build_river_and_bridges(parent: Node3D) -> void:
 	s_bank.position = Vector3(0.0, -0.25, 28.0)
 	parent.add_child(s_bank)
 
-	# 4. Natural Stone Riverbanks: lining North Bank (Z=19.8) and South Bank (Z=28.2)
-	for rx in range(-24, 25, 2):
-		var x_f = float(rx) * 2.2
-		# Skip where bridges cross (X ~ 0 and X ~ -18) and watermill wheel (X ~ 13.5)
-		if abs(x_f) > 3.2 and abs(x_f - (-18.0)) > 3.2 and abs(x_f - 13.5) > 3.8:
-			var r_model = "res://assets/overworld/rock_single_A.gltf" if (rx % 4 == 0) else "res://assets/overworld/rock_single_B.gltf"
-			_place_prop(parent, r_model, Vector3(x_f, 0.0, 19.8), Vector3(2.0, 1.4, 2.0), float((rx * 37) % 360))
-			_place_prop(parent, r_model, Vector3(x_f + 0.8, 0.0, 28.2), Vector3(2.0, 1.4, 2.0), float((rx * 53) % 360))
+	# 4. Natural Stone Riverbanks: spaced rocks lining North Bank (Z=19.7) and South Bank (Z=28.3)
+	for rx in range(-18, 19, 3):
+		var x_f = float(rx) * 2.5
+		# Skip where bridges cross (X ~ 0 and X ~ -18) and watermill wheel (X ~ 24.5)
+		if abs(x_f) > 4.5 and abs(x_f - (-18.0)) > 4.5 and abs(x_f - 24.5) > 5.5:
+			var r_model = "res://assets/overworld/rock_single_A.gltf" if (rx % 2 == 0) else "res://assets/overworld/rock_single_B.gltf"
+			_place_prop(parent, r_model, Vector3(x_f, 0.0, 19.7), Vector3(1.3, 1.0, 1.3), float((rx * 37) % 360))
+			_place_prop(parent, r_model, Vector3(x_f + 1.2, 0.0, 28.3), Vector3(1.3, 1.0, 1.3), float((rx * 53) % 360))
 
 	# Water lilies and river reeds in the water
 	_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", Vector3(-8.0, -0.10, 23.5), Vector3.ONE * 1.5)
 	_place_prop(parent, "res://assets/overworld/waterlily_B.gltf", Vector3(6.0, -0.10, 24.5), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-5.0, -0.12, 21.2), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(14.0, -0.12, 26.8), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", Vector3(-24.0, -0.12, 22.5), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-5.0, -0.12, 21.2), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(10.0, -0.12, 26.8), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", Vector3(-25.0, -0.12, 22.5), Vector3.ONE * 1.6)
 
-	# Main Highway Stone Arch Bridge (Smoothly Walkable Arched Highway)
+	# Main Highway Stone Arch Bridge (Smoothly Walkable Arched Highway at X = 0.0)
 	_build_walkable_stone_bridge(parent, Vector3(0.0, 0.0, 24.0), Vector3(4.0, 3.2, 7.5))
 
-	# Western Wooden Footbridge (Smoothly Walkable Planked Footbridge)
+	# Western Wooden Footbridge (Smoothly Walkable Planked Footbridge at X = -18.0)
 	_build_walkable_wooden_bridge(parent, Vector3(-18.0, 0.0, 24.0), Vector3(3.6, 2.8, 7.0))
 
-	# Riverside Watermill with Rotating Wheel Submerged Directly in the Flowing River Water
-	_build_watermill_and_canal(parent, Vector3(13.5, -0.38, 20.8))
+	# Riverside Watermill with Rotating Wheel Submerged Directly in the Flowing River Water (X = 24.5, clear of East Sanctuary Tower at X = 18.5)
+	_build_watermill_and_canal(parent, Vector3(24.5, -0.38, 20.8))
 
 func _build_walkable_stone_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> void:
 	_place_prop(parent, "res://assets/overworld/building_bridge_A.gltf", pos, sc)
@@ -975,13 +967,10 @@ func _build_watermill_and_canal(parent: Node3D, pos: Vector3) -> void:
 	splashes.mesh = drop_mesh
 	parent.add_child(splashes)
 
-	# 3. Riverside Mill Embankment Rocks & Flour Sack Storage on the North Bank
-	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(pos.x - 3.4, 0.0, 19.6), Vector3(1.6, 1.2, 1.6), 40.0)
-	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(pos.x + 3.4, 0.0, 19.6), Vector3(1.8, 1.3, 1.8), -65.0)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(pos.x - 3.4, 0.0, 17.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(pos.x - 3.4, 0.0, 16.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(pos.x - 2.6, 0.0, 15.8), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(pos.x - 2.5, 0.0, 18.0), Vector3.ONE * 1.3)
+	# 3. Riverside Mill Flour Sack Storage on the North Bank (cleanly outside building footprint)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(pos.x - 5.2, 0.0, 17.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(pos.x - 5.2, 0.0, 16.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(pos.x - 3.8, 0.0, 15.8), Vector3.ONE * 1.4)
 
 	# NPC: Miller Bronn
 	var bronn = TownNPCScript.new()
@@ -991,38 +980,34 @@ func _build_watermill_and_canal(parent: Node3D, pos: Vector3) -> void:
 	bronn.icon = "⚙️"
 	bronn.model_path = "res://assets/characters/adventurers/Barbarian.glb"
 	bronn.model_scale = Vector3(0.54, 0.54, 0.54)
-	bronn.model_rotation_y = 150.0
+	bronn.model_rotation_y = 0.0
 	bronn.dialogue_text = "Hear the rumble of the wheel! The river current powers the millstones day and night, grinding Giles's wheat into fine golden flour for the capital."
-	bronn.position = Vector3(pos.x - 3.2, 0.0, 18.2)
+	bronn.position = Vector3(pos.x - 5.0, 0.0, 14.2)
 	parent.add_child(bronn)
 
 func _build_farmlands_hamlet(parent: Node3D) -> void:
-	# Grand Windmill (Towering 14.3m high landmark with rotating blades)
-	var windmill = _place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(34.0, 0.0, 38.0), Vector3.ONE * 12.0)
-	_add_static_cyl(parent, Vector3(34.0, 0.0, 38.0), 4.0, 13.0)
-	var fan_rot = RotatingProp.new()
-	fan_rot.target_node_name = "building_windmill_top_fan_blue"
-	fan_rot.rotation_axis = Vector3(0, 0, 1)
-	fan_rot.rpm = 7.5
-	windmill.add_child(fan_rot)
-	
-	# Rolling Hill behind windmill
-	_place_prop(parent, "res://assets/overworld/hill_single_A.gltf", Vector3(42.0, 0.0, 42.0), Vector3.ONE * 9.0)
-	
-	# Thatched Cottages (North of river: Z in [13, 16], X in [22, 38])
-	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(22.0, 0.0, 14.0), Vector3.ONE * 7.5, 45.0)
-	_add_static_box(parent, Vector3(22.0, 3.5, 14.0), Vector3(6.2, 6.5, 6.5))
-	AmbientFX.create_chimney_smoke(parent, Vector3(22.0, 7.2, 14.0))
-	
-	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(38.0, 0.0, 15.0), Vector3.ONE * 7.0, -30.0)
-	_add_static_box(parent, Vector3(38.0, 4.0, 15.0), Vector3(6.5, 7.5, 7.8))
-	AmbientFX.create_chimney_smoke(parent, Vector3(38.0, 8.8, 15.0))
-	
-	# Village Stone Well (3.5m tall well)
-	_place_prop(parent, "res://assets/overworld/building_well_blue.gltf", Vector3(28.0, 0.0, 17.5), Vector3.ONE * 2.8)
-	_add_static_cyl(parent, Vector3(28.0, 0.0, 17.5), 1.4, 3.2)
-	
-	# NPC: Farmer Giles
+	# =========================================================================
+	# SUNNYDALE FARMING HAMLET (South-East Bank: X in [26, 56], Z in [29, 53])
+	# Organized logically along the Sunnydale Farm Lane (Z = 35.0):
+	#  - North side of lane (Z = 29.5): Giles's Cottage, Farmhouse & Wheat/Pumpkin Garden
+	#  - Village Green (Z = 34.5): Stone Well & Farmer Giles
+	#  - East Knoll (X = 52.0, Z = 40.0): Grand Windmill overlooking the fields (OUTSIDE the pasture!)
+	#  - South of lane (X in [26, 44], Z in [39, 53]): Fenced Livestock Pasture & Stable Master Barnaby
+	# =========================================================================
+	# 1. Giles's Thatched Cottage (Faces South 0° onto the Farm Lane)
+	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(30.0, 0.0, 29.5), Vector3.ONE * 6.8, 0.0)
+	_add_static_box(parent, Vector3(30.0, 3.5, 29.5), Vector3(6.0, 6.5, 6.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(30.0, 6.8, 29.5))
+
+	# 2. Second Sunnydale Farmhouse (Faces South 0° onto the Farm Lane)
+	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(40.0, 0.0, 29.5), Vector3.ONE * 6.5, 0.0)
+	_add_static_box(parent, Vector3(40.0, 4.0, 29.5), Vector3(6.2, 7.0, 7.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(40.0, 8.2, 29.5))
+
+	# 3. Village Stone Well & Farmer Giles on the Village Green
+	_place_prop(parent, "res://assets/overworld/building_well_blue.gltf", Vector3(35.0, 0.0, 33.2), Vector3.ONE * 2.5)
+	_add_static_cyl(parent, Vector3(35.0, 0.0, 33.2), 1.3, 3.2)
+
 	var giles = TownNPCScript.new()
 	giles.npc_id = "farmer"
 	giles.npc_name = "Farmer Giles"
@@ -1030,82 +1015,79 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	giles.icon = "🌾"
 	giles.model_path = "res://assets/characters/adventurers/Barbarian.glb"
 	giles.model_scale = Vector3(0.56, 0.56, 0.56)
-	giles.model_rotation_y = -45.0
-	giles.dialogue_text = "Good day, traveler! Welcome to our modest hamlet. The wheat is ripe, but hungry beasts stalk our pastures. Deliver raw meat or fine hides from the wild beasts, and we shall reward you richly in coin!"
-	giles.position = Vector3(25.0, 0.0, 17.0)
+	giles.model_rotation_y = -20.0
+	giles.dialogue_text = "Good day, traveler! Welcome to Sunnydale Hamlet. Our windmill grinds the harvest on the eastern knoll while our cattle graze safely in the fenced southern pasture. Deliver raw meat or fine hides from the wild beasts, and we shall reward you richly in coin!"
+	giles.position = Vector3(31.8, 0.0, 33.5)
 	parent.add_child(giles)
 
-	# Tilled Pumpkin Patch (North of river: X in [31, 35], Z in [10, 13])
-	for px in range(31, 36):
-		for pz in range(10, 13):
-			_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(float(px) + 0.3, 0.0, float(pz) + 0.3), Vector3.ONE * 0.4)
+	# 4. Cultivated Wheat & Pumpkin Patch (East of Farmhouse: X in [46, 52], Z in [29, 33])
+	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(47.5, 0.0, 30.0), Vector3.ONE * 3.2)
+	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(51.0, 0.0, 30.0), Vector3.ONE * 3.2)
+	for px in [46.5, 48.0, 49.5, 51.0]:
+		for pz in [32.2, 33.4]:
+			_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(px, 0.0, pz), Vector3.ONE * 0.42)
 
-	# Farm Tools & Storage Props
-	_place_prop(parent, "res://assets/overworld/wheelbarrow.gltf", Vector3(23.0, 0.0, 18.5), Vector3.ONE * 1.6, 35.0)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(21.5, 0.0, 16.0), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(20.5, 0.0, 15.5), Vector3.ONE * 1.3)
+	# 5. Grand Windmill on the Eastern Knoll (Cleanly OUTSIDE the fenced animal pasture!)
+	var windmill = _place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(52.0, 0.0, 40.0), Vector3.ONE * 9.5, -35.0)
+	_add_static_cyl(parent, Vector3(52.0, 0.0, 40.0), 3.4, 11.5)
+	var fan_rot = RotatingProp.new()
+	fan_rot.target_node_name = "building_windmill_top_fan_blue"
+	fan_rot.rotation_axis = Vector3(0, 0, 1)
+	fan_rot.rpm = 7.5
+	windmill.add_child(fan_rot)
+
+	# Farm Storage beside the Windmill
+	_place_prop(parent, "res://assets/overworld/wheelbarrow.gltf", Vector3(47.0, 0.0, 38.0), Vector3.ONE * 1.5, 35.0)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(47.0, 0.0, 41.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(47.0, 0.0, 43.2), Vector3.ONE * 1.3)
+
+	# Distant Rolling Hill east of the Windmill
+	_place_prop(parent, "res://assets/overworld/hill_single_A.gltf", Vector3(66.0, 0.0, 36.0), Vector3.ONE * 7.0)
 
 	# =========================================================================
-	# COMPLETELY DRY, FULLY ENCLOSED ANIMAL PASTURE (South of river at Z in [31, 43], X in [23, 41])
+	# 6. ENCLOSED LIVESTOCK PASTURE (South of Farm Lane: X in [26, 44], Z in [39, 53])
 	# =========================================================================
-	var p_x1 = 23.0
-	var p_x2 = 41.0
-	var p_z1 = 31.0
-	var p_z2 = 43.0
-	var f_step = 2.5
-	
-	# North fence line (Z = 31.0, dry land 3m south of river)
-	var x_cursor = p_x1
-	while x_cursor <= p_x2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z1), Vector3.ONE * 2.2, 90.0)
-		x_cursor += f_step
-		
-	# South fence line (Z = 43.0)
-	x_cursor = p_x1
-	while x_cursor <= p_x2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(x_cursor, 0.0, p_z2), Vector3.ONE * 2.2, 90.0)
-		x_cursor += f_step
-		
-	# East fence line (X = 41.0)
-	var z_cursor = p_z1
-	while z_cursor <= p_z2:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x2, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
-		z_cursor += f_step
-		
-	# West fence line (X = 23.0 with entrance gate at Z = 37.0)
-	z_cursor = p_z1
-	while z_cursor <= p_z2:
-		if abs(z_cursor - 37.0) < 1.3:
-			_place_prop(parent, "res://assets/overworld/fence_wood_straight_gate.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
+	var p_x1 = 26.0
+	var p_x2 = 44.0
+	var p_z1 = 39.0
+	var p_z2 = 53.0
+
+	# North fence line (Z = 39.0, with entrance gate at X = 35.0)
+	for fx in [27.5, 31.0, 35.0, 39.0, 42.5]:
+		if abs(fx - 35.0) < 0.5:
+			_place_prop(parent, "res://assets/overworld/fence_wood_straight_gate.gltf", Vector3(fx, 0.0, p_z1), Vector3.ONE * 1.8, 90.0)
 		else:
-			_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x1, 0.0, z_cursor), Vector3.ONE * 2.2, 0.0)
-		z_cursor += f_step
+			_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, p_z1), Vector3.ONE * 1.8, 90.0)
+
+	# South fence line (Z = 53.0)
+	for fx in [27.5, 31.0, 35.0, 39.0, 42.5]:
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, p_z2), Vector3.ONE * 1.8, 90.0)
+
+	# West fence line (X = 26.0) & East fence line (X = 44.0)
+	for fz in [40.8, 44.2, 47.8, 51.2]:
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x1, 0.0, fz), Vector3.ONE * 1.8, 0.0)
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(p_x2, 0.0, fz), Vector3.ONE * 1.8, 0.0)
 
 	# Pasture Perimeter Collision (Keeps livestock inside the corral)
-	_add_static_box(parent, Vector3((p_x1 + p_x2) * 0.5, 0.8, p_z1), Vector3(p_x2 - p_x1 + 1.0, 1.6, 0.4))
-	_add_static_box(parent, Vector3((p_x1 + p_x2) * 0.5, 0.8, p_z2), Vector3(p_x2 - p_x1 + 1.0, 1.6, 0.4))
-	_add_static_box(parent, Vector3(p_x2, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1 + 1.0))
-	_add_static_box(parent, Vector3(p_x1, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1 + 1.0))
+	_add_static_box(parent, Vector3((p_x1 + p_x2) * 0.5, 0.8, p_z1), Vector3(p_x2 - p_x1, 1.6, 0.4))
+	_add_static_box(parent, Vector3((p_x1 + p_x2) * 0.5, 0.8, p_z2), Vector3(p_x2 - p_x1, 1.6, 0.4))
+	_add_static_box(parent, Vector3(p_x2, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1))
+	_add_static_box(parent, Vector3(p_x1, 0.8, (p_z1 + p_z2) * 0.5), Vector3(0.4, 1.6, p_z2 - p_z1))
 
-	# Farm Supply Wagon & Pallets near Pasture Gate
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(25.5, 0.0, 39.5), Vector3.ONE * 1.5, -20.0)
-	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(24.0, 0.0, 39.0), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(24.0, 0.0, 39.0), Vector3.ONE * 1.2)
+	# Pasture Livestock Water Troughs & Hay Sacks (Cleanly spaced inside the fence)
+	_place_prop(parent, "res://assets/overworld/bucket_water.gltf", Vector3(28.0, 0.0, 41.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(28.0, 0.0, 43.0), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(50.0, 0.0, 49.0), Vector3.ONE * 1.5, -20.0)
 
-	# Pasture Livestock Dressing (Water troughs, feed buckets)
-	_place_prop(parent, "res://assets/overworld/bucket_water.gltf", Vector3(25.5, 0.0, 33.0), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(24.5, 0.0, 32.5), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(24.0, 0.0, 33.5), Vector3.ONE * 1.4)
+	# Grazing Animals inside the open, unobstructed fenced pasture
+	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(30.0, 0.0, 44.0), 45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(38.0, 0.0, 46.0), -60.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(33.0, 0.0, 50.0), 15.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.BULL, Vector3(36.0, 0.0, 43.0), 120.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(29.5, 0.0, 49.0), 15.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(41.0, 0.0, 49.0), -85.0)
 
-	# Grazing Animals inside the dry fenced pasture
-	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(28.0, 0.0, 35.0), 45.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(36.0, 0.0, 39.0), -60.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(31.0, 0.0, 41.0), 15.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.BULL, Vector3(32.0, 0.0, 36.0), 120.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(27.0, 0.0, 40.0), 15.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(38.0, 0.0, 34.0), -85.0)
-
-	# NPC: Barnaby the Stable Master (Outside the Pasture Gate)
+	# NPC: Barnaby the Stable Master (Stationed outside the North Pasture Gate)
 	var stablemaster = TownNPCScript.new()
 	stablemaster.npc_id = "stablemaster"
 	stablemaster.npc_name = "Barnaby"
@@ -1113,42 +1095,47 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	stablemaster.icon = "🐎"
 	stablemaster.model_path = "res://assets/characters/adventurers/Knight.glb"
 	stablemaster.model_scale = Vector3(0.55, 0.55, 0.55)
-	stablemaster.model_rotation_y = 90.0
-	stablemaster.position = Vector3(20.8, 0.0, 37.0)
+	stablemaster.model_rotation_y = 180.0
+	stablemaster.position = Vector3(37.5, 0.0, 37.2)
 	parent.add_child(stablemaster)
-	
-	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(20.5, 0.0, 39.0), Vector3.ONE * 1.8, 90.0)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(20.5, 0.0, 35.0), Vector3.ONE * 1.4)
 
 func _build_castle_citadel(parent: Node3D) -> void:
-	# Royal Castle Keep (Imposing 25.8m tall imperial fortress)
-	_place_prop(parent, "res://assets/overworld/building_castle_blue.gltf", Vector3(0.0, 0.0, 44.0), Vector3.ONE * 6.5)
-	_add_static_box(parent, Vector3(0.0, 8.0, 44.0), Vector3(13.0, 16.0, 14.5))
+	# =========================================================================
+	# IMPERIAL CITADEL COURTYARD & FORTRESS (X in [-20, 20], Z in [35, 56])
+	# Designed with a true fortified outer gatehouse at Z = 36.0, a spacious Royal
+	# Courtyard from Z = 37.0 to Z = 43.0, flanking Barracks & Quartermaster on the
+	# east/west walls, and the towering Castle Keep anchoring the south at Z = 49.0.
+	# =========================================================================
+	# 1. Grand Citadel Arched Gateway (Aligned with the Royal Highway at X = 0.0, Z = 36.0)
+	var citadel_arch = _place_prop(parent, "res://assets/overworld/arch.gltf", Vector3(0.0, 0.0, 36.0), Vector3(2.5, 3.8, 2.5))
+	_place_prop(citadel_arch, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.0, 0.0), Vector3.ONE * 2.0)
 
-	# Left & Right Citadel Watchtowers (15.4m tall catapult towers)
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(-12.0, 0.0, 38.0), Vector3.ONE * 9.5)
-	_add_static_box(parent, Vector3(-12.0, 7.0, 38.0), Vector3(4.5, 14.0, 4.5))
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(12.0, 0.0, 38.0), Vector3.ONE * 9.5)
-	_add_static_box(parent, Vector3(12.0, 7.0, 38.0), Vector3(4.5, 14.0, 4.5))
+	# 2. Stone Curtain Walls flanking the Arch (Z = 36.0)
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-7.0, 0.0, 36.0), Vector3(3.4, 4.5, 2.8))
+	_add_static_box(parent, Vector3(-7.0, 3.5, 36.0), Vector3(6.2, 7.5, 2.5))
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(7.0, 0.0, 36.0), Vector3(3.4, 4.5, 2.8))
+	_add_static_box(parent, Vector3(7.0, 3.5, 36.0), Vector3(6.2, 7.5, 2.5))
 
-	# Grand Citadel Arched Gateway (Aligned with the Royal Highway at X = 0.0, Z = 38.0)
-	var citadel_arch = _place_prop(parent, "res://assets/overworld/arch.gltf", Vector3(0.0, 0.0, 38.0), Vector3(2.5, 3.8, 2.5))
-	_place_prop(citadel_arch, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.0, 0.0), Vector3.ONE * 2.2)
+	# 3. Left & Right Citadel Catapult Watchtowers (Anchoring the corners at X = ±14.5, Z = 36.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(-14.5, 0.0, 36.0), Vector3.ONE * 9.0)
+	_add_static_box(parent, Vector3(-14.5, 7.0, 36.0), Vector3(4.5, 14.0, 4.5))
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(14.5, 0.0, 36.0), Vector3.ONE * 9.0)
+	_add_static_box(parent, Vector3(14.5, 7.0, 36.0), Vector3(4.5, 14.0, 4.5))
 
-	# Stone curtain walls connecting keep to towers (7.5m tall battlements flanking the arch)
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-6.8, 0.0, 38.0), Vector3(3.6, 4.5, 3.0))
-	_add_static_box(parent, Vector3(-6.8, 3.5, 38.0), Vector3(6.5, 7.5, 2.5))
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(6.8, 0.0, 38.0), Vector3(3.6, 4.5, 3.0))
-	_add_static_box(parent, Vector3(6.8, 3.5, 38.0), Vector3(6.5, 7.5, 2.5))
+	# 4. Royal Castle Keep (Set back at Z = 49.0 so its front entrance opens onto Z = 42.5)
+	_place_prop(parent, "res://assets/overworld/building_castle_blue.gltf", Vector3(0.0, 0.0, 49.0), Vector3.ONE * 6.2)
+	_add_static_box(parent, Vector3(0.0, 8.0, 49.0), Vector3(12.4, 16.0, 13.5))
 
-	# Garrison Barracks (9.0m tall)
-	_place_prop(parent, "res://assets/overworld/building_barracks_blue.gltf", Vector3(18.0, 0.0, 34.0), Vector3.ONE * 5.5, -45.0)
-	_add_static_box(parent, Vector3(18.0, 4.5, 34.0), Vector3(8.0, 7.0, 8.5))
+	# 5. Garrison Barracks (West Courtyard Wing at X = -15.5, Z = 46.0, facing East 90°)
+	_place_prop(parent, "res://assets/overworld/building_barracks_blue.gltf", Vector3(-15.5, 0.0, 46.0), Vector3.ONE * 5.2, 90.0)
+	_add_static_box(parent, Vector3(-15.5, 4.5, 46.0), Vector3(7.5, 7.0, 8.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-15.5, 8.5, 46.0))
 
-	# Military Market Outpost
-	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-18.0, 0.0, 34.0), Vector3.ONE * 3.6, 45.0)
+	# 6. Military Quartermaster Outpost (East Courtyard Wing at X = 15.5, Z = 46.0, facing West -90°)
+	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(15.5, 0.0, 46.0), Vector3.ONE * 3.6, -90.0)
+	_add_static_box(parent, Vector3(15.5, 2.5, 46.0), Vector3(5.5, 5.0, 6.0))
 
-	# NPC: Commander Drake (Proportionate ~1.92m knight commander guarding the Citadel Gateway)
+	# 7. NPC: Commander Drake (Guarding the Royal Courtyard)
 	var drake = TownNPCScript.new()
 	drake.npc_id = "commander"
 	drake.npc_name = "Commander Drake"
@@ -1156,13 +1143,12 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	drake.icon = "🛡️"
 	drake.model_path = "res://assets/characters/adventurers/Knight.glb"
 	drake.model_scale = Vector3(0.58, 0.58, 0.58)
-	drake.model_rotation_y = 150.0
+	drake.model_rotation_y = 155.0
 	drake.dialogue_text = "Stand firm, warrior! The Imperial Citadel stands vigil against the abyss. Our scouts report arcane crystals gleaming in the north-eastern crags, and sacred relics lost in the western ruins. Check your royal bounties and bring glory to the realm!"
-	drake.position = Vector3(-3.2, 0.0, 35.5)
+	drake.position = Vector3(-3.5, 0.0, 39.5)
 	parent.add_child(drake)
 
-	# Royal Courtyard Pavilion: King Aldric IV & Queen Seraphina Reviewing the Realm
-	_place_prop(parent, "res://assets/furniture/rug_rectangle_A.gltf", Vector3(3.2, 0.03, 35.5), Vector3(2.8, 1.0, 2.8))
+	# 8. Royal Courtyard Pavilion: King Aldric IV & Queen Seraphina Reviewing the Realm
 	var king_overworld = TownNPCScript.new()
 	king_overworld.npc_id = "king_aldric"
 	king_overworld.npc_name = "King Aldric IV"
@@ -1170,9 +1156,9 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	king_overworld.icon = "👑"
 	king_overworld.model_path = "res://assets/characters/adventurers/Knight.glb"
 	king_overworld.model_scale = Vector3(0.60, 0.60, 0.60)
-	king_overworld.model_rotation_y = -150.0
+	king_overworld.model_rotation_y = -155.0
 	king_overworld.dialogue_text = "Hail, champion of Oakhaven! Look to the south where our siege trebuchets hurl fire against the encroaching warlords, and to the east where the Weeping Fen festers. Unite the Seals of our kingdom and victory shall be ours!"
-	king_overworld.position = Vector3(2.4, 0.0, 35.5)
+	king_overworld.position = Vector3(2.4, 0.0, 39.5)
 	parent.add_child(king_overworld)
 
 	var queen_overworld = TownNPCScript.new()
@@ -1182,12 +1168,12 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	queen_overworld.icon = "👑"
 	queen_overworld.model_path = "res://assets/characters/adventurers/Mage.glb"
 	queen_overworld.model_scale = Vector3(0.56, 0.56, 0.56)
-	queen_overworld.model_rotation_y = -150.0
+	queen_overworld.model_rotation_y = -155.0
 	queen_overworld.dialogue_text = "Blessings of the Silvervein upon you, noble knight. Speak with me whenever your wounds weigh heavy, and the Crown's grace shall restore your strength."
-	queen_overworld.position = Vector3(4.0, 0.0, 35.5)
+	queen_overworld.position = Vector3(4.2, 0.0, 39.5)
 	parent.add_child(queen_overworld)
 
-	# Citadel Battlement Archers (Stationed atop the Curtain Walls & Ramparts with Crossbows)
+	# 9. Citadel Battlement Archers (Stationed atop the Curtain Walls & Ramparts)
 	for archer_idx in range(2):
 		var wall_archer = TownNPCScript.new()
 		wall_archer.npc_id = "archer_battlement_%d" % archer_idx
@@ -1198,110 +1184,102 @@ func _build_castle_citadel(parent: Node3D) -> void:
 		wall_archer.model_scale = Vector3(0.54, 0.54, 0.54)
 		wall_archer.model_rotation_y = 180.0
 		wall_archer.dialogue_text = "Eyes on the horizon! Not a single goblin, corsair, or siege raider breaches these ramparts while our quivers are full!"
-		wall_archer.position = Vector3(-6.8 if archer_idx == 0 else 6.8, 4.3, 37.8)
+		wall_archer.position = Vector3(-7.0 if archer_idx == 0 else 7.0, 4.3, 35.8)
 		parent.add_child(wall_archer)
 
-	# Castle Props
-	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-4.5, 0.0, 36.0), Vector3.ONE * 2.0, 25.0)
-	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-12.0, 15.0, 38.0), Vector3.ONE * 3.0)
-	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(12.0, 15.0, 38.0), Vector3.ONE * 3.0)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(4.5, 0.0, 36.0), Vector3.ONE * 1.5)
-	AmbientFX.create_chimney_smoke(parent, Vector3(18.0, 8.8, 34.0))
+	# Courtyard Armories & Props
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-9.5, 0.0, 41.0), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(9.5, 0.0, 41.0), Vector3.ONE * 1.5)
 
 	# Circling Hawks Flock high above Castle Keep in the upper sky
 	var flock_castle = CirclingFlock.new()
-	flock_castle.position = Vector3(0.0, 34.0, 42.0)
+	flock_castle.position = Vector3(0.0, 34.0, 49.0)
 	flock_castle.bird_count = 5
 	flock_castle.circle_radius = 16.0
 	flock_castle.flight_height = 34.0
 	parent.add_child(flock_castle)
 
 func _build_blackwood_forest(parent: Node3D) -> void:
-	# Lumbermill (9.5m tall building)
-	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-24.0, 0.0, 32.0), Vector3.ONE * 6.0, 90.0)
-	_add_static_box(parent, Vector3(-24.0, 4.5, 32.0), Vector3(8.0, 7.0, 8.0))
+	# South-West Timber Yard & Lumbermill (Cleanly west of the Castle Citadel on the South-West Bank: X = -32.0, Z = 35.0)
+	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-32.0, 0.0, 35.0), Vector3.ONE * 5.8, 90.0)
+	_add_static_box(parent, Vector3(-32.0, 4.5, 35.0), Vector3(7.5, 7.0, 7.5))
 
 	# Glowing Forest Fireflies
-	AmbientFX.create_forest_fireflies(parent, Vector3(-28.0, 1.8, 22.0), 9.0)
-	AmbientFX.create_forest_fireflies(parent, Vector3(-34.0, 1.8, 32.0), 9.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-38.0, 1.8, 34.0), 9.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-44.0, 1.8, 40.0), 9.0)
 
-	# Dense Forest Trees (Scaled 3.0x - 3.6x -> 10m to 14m tall realistic pines and birches)
+	# Well-spaced Woodland Trees on the South-West Bank (Zero trees on the North Bank Town Street!)
 	var forest_locs = [
-		Vector3(-18.0, 0.0, 8.0), Vector3(-22.0, 0.0, 10.0), Vector3(-26.0, 0.0, 7.0),
-		Vector3(-22.0, 0.0, 15.0), Vector3(-28.0, 0.0, 16.0), Vector3(-32.0, 0.0, 14.0),
-		Vector3(-25.0, 0.0, 28.0), Vector3(-30.0, 0.0, 26.0), Vector3(-36.0, 0.0, 25.0),
-		Vector3(-22.0, 0.0, 38.0), Vector3(-28.0, 0.0, 40.0), Vector3(-34.0, 0.0, 38.0),
-		Vector3(-38.0, 0.0, 12.0), Vector3(-42.0, 0.0, 20.0), Vector3(-42.0, 0.0, 28.0),
-		Vector3(-44.0, 0.0, 36.0), Vector3(-36.0, 0.0, 42.0), Vector3(-24.0, 0.0, 42.0)
+		Vector3(-26.0, 0.0, 44.0), Vector3(-38.0, 0.0, 45.0),
+		Vector3(-44.0, 0.0, 36.0), Vector3(-44.0, 0.0, 29.5),
+		Vector3(-54.0, 0.0, 33.0), Vector3(-56.0, 0.0, 42.0)
 	]
 	var f_trees = [
-		"res://assets/overworld/tree_pine_orange_large.gltf",
-		"res://assets/overworld/trees_A_large.gltf",
-		"res://assets/overworld/trees_B_large.gltf",
-		"res://assets/overworld/tree_pine_yellow_large.gltf"
+		"res://assets/overworld/tree_pine_orange_medium.gltf",
+		"res://assets/overworld/tree_single_A.gltf",
+		"res://assets/overworld/tree_single_B.gltf",
+		"res://assets/overworld/tree_pine_yellow_medium.gltf"
 	]
 	for i in range(forest_locs.size()):
 		var lp = forest_locs[i]
 		var tm = f_trees[i % f_trees.size()]
-		_place_prop(parent, tm, lp, Vector3.ONE * 3.2, float((i * 53) % 360))
-		_add_static_cyl(parent, lp, 1.0, 8.0)
+		_place_prop(parent, tm, lp, Vector3.ONE * 2.2, float((i * 53) % 360))
+		_add_static_cyl(parent, lp, 0.9, 6.5)
 
 	# Boulders
-	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-27.0, 0.0, 18.0), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/rock_single_D.gltf", Vector3(-35.0, 0.0, 20.0), Vector3.ONE * 2.8)
+	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-28.0, 0.0, 30.0), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/rock_single_D.gltf", Vector3(-40.0, 0.0, 32.0), Vector3.ONE * 2.0)
 
-	# Forest Wildlife (Proper animal scales: Stags 32x, Deer 28x, Wolves 17x, Foxes 9x)
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-26.0, 0.0, 14.0), 30.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-34.0, 0.0, 26.0), -45.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-22.0, 0.0, 18.0), 110.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-30.0, 0.0, 12.0), -120.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-28.0, 0.0, 32.0), 75.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-38.0, 0.0, 18.0), 160.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-36.0, 0.0, 30.0), -30.0)
+	# Forest Wildlife (Grazing in the South-West Timber Glade)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-36.0, 0.0, 40.0), 30.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-48.0, 0.0, 38.0), -45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-30.0, 0.0, 41.0), 110.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-42.0, 0.0, 41.0), -120.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-34.0, 0.0, 42.0), 75.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-50.0, 0.0, 32.0), 160.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-50.0, 0.0, 42.0), -30.0)
 
 	# Special Quest Timber Nodes
-	_spawn_material_node(parent, "heartwood_timber", "Heartwood Timber", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-24.0, 0.0, 12.0), Color(0.8, 0.5, 0.2), 20, 15, Vector3(2.5, 2.5, 2.5))
-	_spawn_material_node(parent, "ironwood_logs", "Ironwood Logs", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-32.0, 0.0, 26.0), Color(0.7, 0.4, 0.2), 25, 20, Vector3(2.5, 2.5, 2.5))
+	_spawn_material_node(parent, "heartwood_timber", "Heartwood Timber", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-35.0, 0.0, 29.5), Color(0.8, 0.5, 0.2), 20, 15, Vector3(2.2, 2.2, 2.2))
+	_spawn_material_node(parent, "ironwood_logs", "Ironwood Logs", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-25.5, 0.0, 35.0), Color(0.7, 0.4, 0.2), 25, 20, Vector3(2.2, 2.2, 2.2))
 
 func _build_iron_mountains(parent: Node3D) -> void:
-	# Giant Mountain Peaks (15m - 25m tall mountain crags)
+	# North-East Foothill Peaks (Spaced around the Mine Amphitheater so peaks don't collide)
 	var mtns = [
-		{"pos": Vector3(28.0, 0.0, -36.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 9.0},
-		{"pos": Vector3(38.0, 0.0, -32.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 9.5},
-		{"pos": Vector3(44.0, 0.0, -22.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 9.0},
-		{"pos": Vector3(40.0, 0.0, -12.0), "path": "res://assets/overworld/mountain_A_grass.gltf", "scale": 8.5},
-		{"pos": Vector3(22.0, 0.0, -38.0), "path": "res://assets/overworld/hills_A.gltf", "scale": 7.0},
-		{"pos": Vector3(20.0, 0.0, -24.0), "path": "res://assets/overworld/hills_B_trees.gltf", "scale": 7.0}
+		{"pos": Vector3(28.0, 0.0, -38.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 8.0},
+		{"pos": Vector3(46.0, 0.0, -34.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 8.0},
+		{"pos": Vector3(48.0, 0.0, -14.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 7.5},
+		{"pos": Vector3(16.0, 0.0, -32.0), "path": "res://assets/overworld/hills_A.gltf", "scale": 6.0}
 	]
 	for m in mtns:
 		_place_prop(parent, m["path"], m["pos"], Vector3.ONE * m["scale"])
-		_add_static_box(parent, m["pos"] + Vector3(0, 6.0, 0), Vector3(m["scale"] * 2.0, 12.0, m["scale"] * 2.0))
+		_add_static_box(parent, m["pos"] + Vector3(0, 6.0, 0), Vector3(m["scale"] * 1.8, 12.0, m["scale"] * 1.8))
 
-	# Mountain Mine Entrance (6.2m tall mine)
+	# Foothill Mine Entrance (Faces South-West toward the trail)
 	_place_prop(parent, "res://assets/overworld/building_mine_blue.gltf", Vector3(34.0, 0.0, -22.0), Vector3.ONE * 5.5, -90.0)
-	_add_static_box(parent, Vector3(34.0, 3.5, -22.0), Vector3(7.5, 6.0, 7.5))
+	_add_static_box(parent, Vector3(34.0, 3.5, -22.0), Vector3(7.0, 6.0, 7.0))
 
-	# Mountain Wolf Guard (Fierce predator)
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(30.0, 0.0, -24.0), 45.0)
+	# Mountain Wolf Guard
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(28.0, 0.0, -24.0), 45.0)
 
-	# Special Quest Mineral Nodes (Mineable crystals and gold ingots)
-	_spawn_material_node(parent, "arcane_crystal", "Arcane Cyan Crystal", "💎", "res://assets/items/quest_materials/Crystal1.glb", Vector3(28.0, 0.0, -20.0), Color(0.2, 0.8, 1.0), 30, 25, Vector3(1.8, 1.8, 1.8))
-	_spawn_material_node(parent, "emerald_crystal", "Emerald Geo-Crystal", "💎", "res://assets/items/quest_materials/Crystal2.glb", Vector3(36.0, 0.0, -26.0), Color(0.2, 1.0, 0.4), 35, 30, Vector3(1.8, 1.8, 1.8))
-	_spawn_material_node(parent, "gold_vein", "Mountain Gold Vein", "🪙", "res://assets/items/quest_materials/Gold_Ingots.glb", Vector3(26.0, 0.0, -30.0), Color(1.0, 0.85, 0.2), 40, 35, Vector3(1.5, 1.5, 1.5))
-	_spawn_material_node(parent, "iron_ore", "Highland Iron Ore", "⛏️", "res://assets/overworld/resource_stone.gltf", Vector3(32.0, 0.0, -16.0), Color(0.6, 0.65, 0.7), 25, 20, Vector3(2.5, 2.5, 2.5))
+	# Special Quest Mineral Nodes (Mineable crystals and gold ingots in the quarry yard)
+	_spawn_material_node(parent, "arcane_crystal", "Arcane Cyan Crystal", "💎", "res://assets/items/quest_materials/Crystal1.glb", Vector3(26.0, 0.0, -18.0), Color(0.2, 0.8, 1.0), 30, 25, Vector3(1.8, 1.8, 1.8))
+	_spawn_material_node(parent, "emerald_crystal", "Emerald Geo-Crystal", "💎", "res://assets/items/quest_materials/Crystal2.glb", Vector3(36.0, 0.0, -30.0), Color(0.2, 1.0, 0.4), 35, 30, Vector3(1.8, 1.8, 1.8))
+	_spawn_material_node(parent, "gold_vein", "Mountain Gold Vein", "🪙", "res://assets/items/quest_materials/Gold_Ingots.glb", Vector3(24.0, 0.0, -28.0), Color(1.0, 0.85, 0.2), 40, 35, Vector3(1.5, 1.5, 1.5))
+	_spawn_material_node(parent, "iron_ore", "Highland Iron Ore", "⛏️", "res://assets/overworld/resource_stone.gltf", Vector3(30.0, 0.0, -14.0), Color(0.6, 0.65, 0.7), 25, 20, Vector3(2.2, 2.2, 2.2))
 
 func _build_forgotten_ruins(parent: Node3D) -> void:
-	# Shrines & Ancient Stone Pillars (8.7m tall columns)
-	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-34.0, 0.0, -4.0), Vector3.ONE * 2.8)
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-30.0, 0.0, -8.0), Vector3(1.6, 2.5, 1.6))
-	_add_static_cyl(parent, Vector3(-30.0, 0.0, -8.0), 0.9, 7.5)
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-38.0, 0.0, -8.0), Vector3(1.6, 2.5, 1.6))
-	_add_static_cyl(parent, Vector3(-38.0, 0.0, -8.0), 0.9, 7.5)
-	_place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-32.0, 0.0, 2.0), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(-33.0, 0.0, -2.0), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/bone_A.gltf", Vector3(-31.0, 0.0, -5.0), Vector3.ONE * 1.8)
+	# Ancient Stone Sanctuary Ruins (West of the Cathedral at X in [-38, -28], Z in [-10, 2])
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-34.0, 0.0, -6.0), Vector3.ONE * 2.6)
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-30.0, 0.0, -9.0), Vector3(1.5, 2.4, 1.5))
+	_add_static_cyl(parent, Vector3(-30.0, 0.0, -9.0), 0.9, 7.5)
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-38.0, 0.0, -9.0), Vector3(1.5, 2.4, 1.5))
+	_add_static_cyl(parent, Vector3(-38.0, 0.0, -9.0), 0.9, 7.5)
+	_place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-38.0, 0.0, -1.0), Vector3.ONE * 2.4, 90.0)
+	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(-31.5, 0.0, -6.0), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/bone_A.gltf", Vector3(-35.5, 0.0, -2.5), Vector3.ONE * 1.6)
 
-	# NPC: Hermit Morvath (Proportionate ~1.78m mage)
+	# NPC: Hermit Morvath
 	var hermit = TownNPCScript.new()
 	hermit.npc_id = "hermit"
 	hermit.npc_name = "Hermit Morvath"
@@ -1309,14 +1287,14 @@ func _build_forgotten_ruins(parent: Node3D) -> void:
 	hermit.icon = "🔮"
 	hermit.model_path = "res://assets/characters/adventurers/Mage.glb"
 	hermit.model_scale = Vector3(0.53, 0.53, 0.53)
-	hermit.model_rotation_y = 65.0
+	hermit.model_rotation_y = 25.0
 	hermit.dialogue_text = "Tread lightly, warrior. The stones here remember an empire older than memory. The Sacred Chalice and the Ancient Codex are scattered among these cracked pedestals. Channel the Soul Echoes you reap to unlock arcane boons!"
-	hermit.position = Vector3(-32.0, 0.0, -3.0)
+	hermit.position = Vector3(-33.5, 0.0, -2.0)
 	parent.add_child(hermit)
 
 	# Sacred Relic Material Nodes
-	_spawn_material_node(parent, "sacred_chalice", "Sacred Chalice of the First Kings", "🏆", "res://assets/items/quest_materials/Chalice.glb", Vector3(-36.0, 0.0, -6.0), Color(1.0, 0.8, 0.2), 50, 50, Vector3(2.0, 2.0, 2.0))
-	_spawn_material_node(parent, "ossuary_codex", "Forgotten Ossuary Codex", "📜", "res://assets/items/quest_materials/Scroll.glb", Vector3(-30.0, 0.0, 2.0), Color(0.9, 0.85, 0.6), 40, 40, Vector3(2.0, 2.0, 2.0))
+	_spawn_material_node(parent, "sacred_chalice", "Sacred Chalice of the First Kings", "🏆", "res://assets/items/quest_materials/Chalice.glb", Vector3(-36.5, 0.0, -5.5), Color(1.0, 0.8, 0.2), 50, 50, Vector3(2.0, 2.0, 2.0))
+	_spawn_material_node(parent, "ossuary_codex", "Forgotten Ossuary Codex", "📜", "res://assets/items/quest_materials/Scroll.glb", Vector3(-30.0, 0.0, -1.5), Color(0.9, 0.85, 0.6), 40, 40, Vector3(2.0, 2.0, 2.0))
 	_spawn_material_node(parent, "smugglers_chest", "Sunken Smuggler's Chest", "📦", "res://assets/items/quest_materials/Chest_Ingots.glb", Vector3(-26.0, 0.0, -12.0), Color(0.95, 0.75, 0.2), 60, 45, Vector3(1.5, 1.5, 1.5))
 
 func _spawn_animal(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -> Node3D:
@@ -1351,15 +1329,23 @@ func _place_prop(parent: Node3D, path: String, pos: Vector3, sc: Vector3 = Vecto
 	parent.add_child(prop)
 	
 	if "flag" in path:
-		_apply_flag_shader(prop)
+		_apply_flag_shader(prop, path)
 		
 	return prop
 
-func _apply_flag_shader(node: Node3D) -> void:
+func _apply_flag_shader(node: Node3D, path: String = "") -> void:
 	var flag_shader = load("res://shaders/waving_flag.gdshader")
 	if flag_shader:
 		var flag_mat = ShaderMaterial.new()
 		flag_mat.shader = flag_shader
+		var f_col = Color(0.18, 0.42, 0.82)
+		if "red" in path:
+			f_col = Color(0.82, 0.18, 0.18)
+		elif "green" in path:
+			f_col = Color(0.20, 0.68, 0.30)
+		elif "yellow" in path:
+			f_col = Color(0.88, 0.72, 0.18)
+		flag_mat.set_shader_parameter("flag_color", f_col)
 		for child in node.find_children("*", "MeshInstance3D", true, false):
 			var mi = child as MeshInstance3D
 			if mi:
@@ -1391,7 +1377,7 @@ func _add_static_cyl(parent: Node3D, pos: Vector3, radius: float, height: float)
 	return body
 
 func _build_enterable_building_doorways(parent: Node3D) -> void:
-	# 1. Castle Grand Throne Room Doorway
+	# 1. Castle Grand Throne Room Doorway (Front entrance of Castle Keep at Z = 43.0)
 	var castle_door = BuildingDoorway.new()
 	castle_door.door_id = "castle_entrance"
 	castle_door.prompt_text = "Enter Castle Grand Hall"
@@ -1400,10 +1386,10 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	castle_door.target_cam_distance = 12.0
 	castle_door.target_cam_pitch = 40.0
 	castle_door.target_bgm_key = "bgm_castle"
-	castle_door.position = Vector3(0.0, 0.0, 39.0)
+	castle_door.position = Vector3(0.0, 0.0, 43.0)
 	parent.add_child(castle_door)
 
-	# 2. The Boar's Tusk Tavern Doorway
+	# 2. The Boar's Tusk Tavern Doorway (Front entrance on West Town Street at X = -26.0, Z = 12.2)
 	var tavern_door = BuildingDoorway.new()
 	tavern_door.door_id = "tavern_entrance"
 	tavern_door.prompt_text = "Enter The Boar's Tusk Tavern"
@@ -1412,10 +1398,10 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	tavern_door.target_cam_distance = 11.0
 	tavern_door.target_cam_pitch = 40.0
 	tavern_door.target_bgm_key = "bgm_tavern"
-	tavern_door.position = Vector3(-7.5, 0.0, 17.5)
+	tavern_door.position = Vector3(-26.0, 0.0, 12.2)
 	parent.add_child(tavern_door)
 
-	# 3. Master Torval's Forge Doorway
+	# 3. Master Torval's Forge Doorway (Front entrance on Sanctuary West Plaza at X = -14.5, Z = -1.0)
 	var forge_door = BuildingDoorway.new()
 	forge_door.door_id = "forge_entrance"
 	forge_door.prompt_text = "Enter Master Torval's Forge"
@@ -1424,10 +1410,10 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	forge_door.target_cam_distance = 10.0
 	forge_door.target_cam_pitch = 40.0
 	forge_door.target_bgm_key = "bgm_forge"
-	forge_door.position = Vector3(-11.5, 0.0, 0.0)
+	forge_door.position = Vector3(-14.5, 0.0, -1.0)
 	parent.add_child(forge_door)
 
-	# 4. Giles's Thatched Cottage Doorway
+	# 4. Giles's Thatched Cottage Doorway (Front entrance on Sunnydale Farm Lane at X = 30.0, Z = 32.5)
 	var cottage_door = BuildingDoorway.new()
 	cottage_door.door_id = "cottage_entrance"
 	cottage_door.prompt_text = "Enter Giles's Thatched Cottage"
@@ -1436,10 +1422,10 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	cottage_door.target_cam_distance = 10.0
 	cottage_door.target_cam_pitch = 40.0
 	cottage_door.target_bgm_key = "bgm_overworld"
-	cottage_door.position = Vector3(19.5, 0.0, 14.0)
+	cottage_door.position = Vector3(30.0, 0.0, 32.5)
 	parent.add_child(cottage_door)
 
-	# 5. Port Blackwater: The Rusty Anchor Tavern Doorway
+	# 5. Port Blackwater: The Rusty Anchor Tavern Doorway (Front entrance facing Harbor Promenade at X = -51.8, Z = 72.0)
 	var rusty_door = BuildingDoorway.new()
 	rusty_door.door_id = "rusty_anchor_entrance"
 	rusty_door.prompt_text = "Enter The Rusty Anchor Tavern"
@@ -1448,10 +1434,10 @@ func _build_enterable_building_doorways(parent: Node3D) -> void:
 	rusty_door.target_cam_distance = 11.0
 	rusty_door.target_cam_pitch = 40.0
 	rusty_door.target_bgm_key = "bgm_tavern"
-	rusty_door.position = Vector3(-56.0, 0.0, 72.0)
+	rusty_door.position = Vector3(-51.8, 0.0, 72.0)
 	parent.add_child(rusty_door)
 
-	# 6. Khar-Drakken: Stonegate Smelting Foundry Doorway
+	# 6. Khar-Drakken: Stonegate Smelting Foundry Doorway (Front entrance at X = 74.0, Z = -52.0)
 	var stonegate_door = BuildingDoorway.new()
 	stonegate_door.door_id = "stonegate_forge_entrance"
 	stonegate_door.prompt_text = "Enter Stonegate Smelting Hall"
@@ -1476,124 +1462,183 @@ func _spawn_enemy(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -
 # REGION 1: PORT BLACKWATER & THE SOUTH-WEST OCEAN COAST
 # =========================================================================
 func _build_port_blackwater_region(parent: Node3D) -> void:
-	# 1. Open Ocean Water Surface (Y = -0.15m, X in [-130, -50], Z in [35, 130])
+	# 1. Sunken Ocean Harbor Basin & Seabed (X in [-137, -62], Z in [46, 137])
+	#    Uncovered by the SouthBank_Grass cutout so true ocean water is 100% visible!
+	var seabed_inst = MeshInstance3D.new()
+	seabed_inst.name = "OceanSeabedVisual"
+	var sb_mesh = PlaneMesh.new()
+	sb_mesh.size = Vector2(76.0, 92.0)
+	seabed_inst.mesh = sb_mesh
+	var sb_mat = StandardMaterial3D.new()
+	sb_mat.albedo_color = Color(0.08, 0.14, 0.18) # Deep ocean sand & silt
+	sb_mat.roughness = 0.95
+	seabed_inst.material_override = sb_mat
+	seabed_inst.position = Vector3(-99.5, -1.20, 91.5)
+	parent.add_child(seabed_inst)
+
+	# Shallow Seabed Safety Collider so amphibious enemies or players wading off the beach don't fall into the void
+	var seabed_col_body = StaticBody3D.new()
+	seabed_col_body.name = "OceanSeabedCollider"
+	seabed_col_body.collision_layer = 1
+	var seabed_col = CollisionShape3D.new()
+	var seabed_box = BoxShape3D.new()
+	seabed_box.size = Vector3(76.0, 0.5, 92.0)
+	seabed_col.shape = seabed_box
+	seabed_col.position = Vector3(-99.5, -0.60, 91.5)
+	seabed_col_body.add_child(seabed_col)
+	parent.add_child(seabed_col_body)
+
+	# 2. Open Ocean Water Surface (Y = -0.15m, X in [-137, -62], Z in [46, 137])
 	var ocean_basin = MeshInstance3D.new()
 	ocean_basin.name = "OceanWaterSurface"
 	var oc_mesh = PlaneMesh.new()
-	oc_mesh.size = Vector2(85.0, 95.0)
+	oc_mesh.size = Vector2(76.0, 92.0)
 	ocean_basin.mesh = oc_mesh
 	var ocean_mat = ShaderMaterial.new()
 	ocean_mat.shader = load("res://shaders/river_flow.gdshader")
 	ocean_basin.material_override = ocean_mat
-	ocean_basin.position = Vector3(-90.0, -0.15, 82.5)
+	ocean_basin.position = Vector3(-99.5, -0.15, 91.5)
 	parent.add_child(ocean_basin)
 
-	# 2. Golden Sandy Beach Coastline Strip (X in [-75, -45], Z in [25, 90])
+	# 3. Stone Harbor Quay Wall & Paved Waterfront Promenade (X in [-62, -46], Z in [46, 86])
+	var quay_mat = StandardMaterial3D.new()
+	quay_mat.albedo_color = Color(0.32, 0.33, 0.35)
+	quay_mat.roughness = 0.88
+
+	var east_quay = MeshInstance3D.new()
+	east_quay.name = "HarborQuayWallEast"
+	var eq_mesh = BoxMesh.new()
+	eq_mesh.size = Vector3(1.2, 1.35, 42.0)
+	east_quay.mesh = eq_mesh
+	east_quay.material_override = quay_mat
+	east_quay.position = Vector3(-61.8, -0.42, 67.0)
+	parent.add_child(east_quay)
+
+	var north_quay = MeshInstance3D.new()
+	north_quay.name = "HarborQuayWallNorth"
+	var nq_mesh = BoxMesh.new()
+	nq_mesh.size = Vector3(32.0, 1.35, 1.2)
+	north_quay.mesh = nq_mesh
+	north_quay.material_override = quay_mat
+	north_quay.position = Vector3(-77.5, -0.42, 46.2)
+	parent.add_child(north_quay)
+
+	var prom_mat = StandardMaterial3D.new()
+	prom_mat.albedo_color = Color(0.42, 0.40, 0.37) # Weathered harbor flagstones
+	prom_mat.roughness = 0.90
+	var prom_inst = MeshInstance3D.new()
+	prom_inst.name = "HarborPromenadeVisual"
+	var prom_mesh = BoxMesh.new()
+	prom_mesh.size = Vector3(15.5, 0.04, 38.0)
+	prom_inst.mesh = prom_mesh
+	prom_inst.material_override = prom_mat
+	prom_inst.position = Vector3(-53.8, 0.02, 67.0)
+	parent.add_child(prom_inst)
+
+	# Golden Sandy Beach Cove south of the stone quay (X in [-62, -46], Z in [86, 114])
 	var sand_mesh_inst = MeshInstance3D.new()
 	sand_mesh_inst.name = "CoastalSandVisual"
 	var s_mesh = PlaneMesh.new()
-	s_mesh.size = Vector2(30.0, 70.0)
+	s_mesh.size = Vector2(16.0, 28.0)
 	sand_mesh_inst.mesh = s_mesh
 	var sand_mat = StandardMaterial3D.new()
-	sand_mat.albedo_color = Color(0.82, 0.74, 0.52) # Coastal beach sand
+	sand_mat.albedo_color = Color(0.76, 0.68, 0.48)
 	sand_mat.roughness = 0.94
 	sand_mesh_inst.material_override = sand_mat
-	sand_mesh_inst.position = Vector3(-60.0, 0.01, 55.0)
+	sand_mesh_inst.position = Vector3(-54.0, 0.015, 100.0)
 	parent.add_child(sand_mesh_inst)
 
-	# 3. Wooden Docks & Piers (Pier stretching into the sea at Z = 65, X from -52 to -88)
-	for px in range(-52, -88, -4):
-		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(px), 0.0, 65.0), Vector3(2.5, 2.0, 4.0), 90.0)
-		_add_static_box(parent, Vector3(float(px), 0.4, 65.0), Vector3(4.2, 0.8, 3.5))
-	
-	# Harbor Watchman Patrol along the pier
+	# 4. Flat Walkable Timber Harbor Piers extending West over the Ocean Water
+	# North Main Pier at Z = 62.0 (X from -61.5 out to -90.5)
+	_build_wooden_harbor_pier(parent, "NorthMainPier", -61.5, -90.5, 62.0, 4.2)
+	# South Corsair Pier at Z = 82.0 (X from -61.5 out to -86.5)
+	_build_wooden_harbor_pier(parent, "SouthCorsairPier", -61.5, -86.5, 82.0, 4.2)
+
+	# Harbor Watchman Patrol along the North Main Pier
 	var harbor_guard = PatrolNPCScript.new()
 	harbor_guard.npc_name = "Boatswain Finn"
 	harbor_guard.npc_title = "Pier Watchman"
-	harbor_guard.position = Vector3(-54.0, 0.4, 65.0)
+	harbor_guard.position = Vector3(-63.0, 0.25, 62.0)
 	harbor_guard.waypoints = [
-		Vector3(-54.0, 0.4, 65.0),
-		Vector3(-82.0, 0.4, 65.0),
-		Vector3(-82.0, 0.4, 65.0),
-		Vector3(-54.0, 0.4, 65.0)
+		Vector3(-63.0, 0.25, 62.0),
+		Vector3(-86.0, 0.25, 62.0),
+		Vector3(-86.0, 0.25, 62.0),
+		Vector3(-63.0, 0.25, 62.0)
 	]
 	parent.add_child(harbor_guard)
 
-	# Second Jetty at Z = 80, X from -55 to -78
-	for px in range(-55, -79, -4):
-		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(px), 0.0, 80.0), Vector3(2.5, 2.0, 4.0), 90.0)
-		_add_static_box(parent, Vector3(float(px), 0.4, 80.0), Vector3(4.2, 0.8, 3.5))
+	# 5. Port Blackwater Settlement Buildings (Aligned along the Harbor Promenade facing West toward the Sea)
+	# Harbormaster Watchtower (North end of Promenade at X = -52.0, Z = 48.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(-52.0, 0.0, 48.0), Vector3.ONE * 8.0)
+	_add_static_box(parent, Vector3(-52.0, 6.0, 48.0), Vector3(4.5, 12.0, 4.5))
 
-	# 4. Port Blackwater Settlement Buildings
-	# Harbormaster Watchtower (15m tall stone tower overlooking the harbor)
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(-54.0, 0.0, 48.0), Vector3.ONE * 8.5)
-	_add_static_box(parent, Vector3(-54.0, 6.0, 48.0), Vector3(4.5, 12.0, 4.5))
+	# Smuggler's Headland Boathouse (On the dry North Headland overlooking the harbor at X = -70.0, Z = 38.0)
+	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(-70.0, 0.0, 38.0), Vector3.ONE * 6.5, 0.0)
+	_add_static_box(parent, Vector3(-70.0, 3.5, 38.0), Vector3(6.0, 6.5, 6.0))
 
-	# The Rusty Anchor Harbor Tavern
-	_place_prop(parent, "res://assets/overworld/building_tavern_blue.gltf", Vector3(-56.0, 0.0, 72.0), Vector3.ONE * 6.5, -45.0)
-	_add_static_box(parent, Vector3(-56.0, 4.5, 72.0), Vector3(7.5, 9.0, 8.5))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-56.0, 8.5, 71.0))
+	# Harbor Fish Market Stalls (Facing West -90° onto the Promenade at X = -48.0, Z = 60.0)
+	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-48.0, 0.0, 60.0), Vector3.ONE * 4.0, -90.0)
+	_add_static_box(parent, Vector3(-48.0, 2.5, 60.0), Vector3(5.5, 5.0, 6.0))
 
-	# Smuggler's Boathouse & Warehouse
-	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(-66.0, 0.0, 36.0), Vector3.ONE * 7.0, 45.0)
-	_add_static_box(parent, Vector3(-66.0, 3.5, 36.0), Vector3(6.5, 7.0, 6.5))
+	# The Rusty Anchor Harbor Tavern (Facing West -90° onto the Promenade at X = -47.5, Z = 72.0; doorway at X = -51.8, Z = 72.0)
+	_place_prop(parent, "res://assets/overworld/building_tavern_blue.gltf", Vector3(-47.5, 0.0, 72.0), Vector3.ONE * 6.2, -90.0)
+	_add_static_box(parent, Vector3(-47.5, 4.5, 72.0), Vector3(7.5, 9.0, 8.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-47.5, 8.2, 72.0))
 
-	# Harbor Fish Market Stalls
-	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-52.0, 0.0, 60.0), Vector3.ONE * 4.2, 30.0)
-	_add_static_box(parent, Vector3(-52.0, 2.5, 60.0), Vector3(6.5, 5.0, 5.5))
+	# Harbor Cargo Stacks (Spaced neatly along the Quay Wall)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-59.5, 0.04, 57.5), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-59.5, 0.04, 55.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-59.5, 0.04, 75.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-59.5, 0.04, 77.5), Vector3.ONE * 1.4)
 
-	# Harbor Cargo Stacks (Barrels, crates, sacks on the piers)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-60.0, 0.0, 64.0), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-61.2, 0.0, 64.3), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-63.0, 0.0, 66.0), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-72.0, 0.0, 64.0), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-58.0, 0.0, 66.0), Vector3.ONE * 1.5)
-	_place_lantern_post(parent, Vector3(-54.0, 0.0, 65.0), 90.0)
-	_place_lantern_post(parent, Vector3(-76.0, 0.0, 65.0), 90.0)
-	_place_lantern_post(parent, Vector3(-54.0, 0.0, 80.0), 90.0)
+	# Offshore Reef Rocks & Sea Reeds in the Ocean Basin
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-68.0, -0.35, 49.0), Vector3.ONE * 2.8, 35.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(-76.0, -0.35, 52.0), Vector3.ONE * 3.0, -45.0)
+	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-92.0, -0.40, 74.0), Vector3.ONE * 3.5, 60.0)
+	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-65.0, -0.15, 55.0), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(-65.0, -0.15, 76.0), Vector3.ONE * 1.8)
 
-	# Shoreline Coastal Rocks & Reeds
-	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-68.0, 0.0, 48.0), Vector3.ONE * 3.2, 35.0)
-	_place_prop(parent, "res://assets/overworld/rock_single_B.gltf", Vector3(-74.0, 0.0, 58.0), Vector3.ONE * 3.5, -45.0)
-	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-82.0, 0.0, 74.0), Vector3.ONE * 4.0, 60.0)
-	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-70.0, -0.1, 70.0), Vector3.ONE * 2.0)
-	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(-80.0, -0.1, 85.0), Vector3.ONE * 2.2)
-
-	# 4B. Naval Harbor Fleet: Medieval Cogs, Galleons & Rowboats
+	# 6. Naval Harbor Fleet: Moored Medieval Cogs & Rowboats Floating in the Ocean Basin!
+	#    Rotated 90° so their hulls lie parallel to the piers in deep water (X in [-86, -66])
+	#    and their starboard boarding gangplanks rest directly on the pier decks!
 	var flagship = MedievalShip3DScript.new()
 	flagship.ship_name = "The Sea Sovereign"
+	flagship.sail_color = Color(0.90, 0.84, 0.70)
 	flagship.has_gangplank = true
-	flagship.position = Vector3(-88.0, -0.15, 65.0)
+	flagship.position = Vector3(-76.0, -0.22, 67.6)
+	flagship.rotation_degrees.y = 90.0
 	parent.add_child(flagship)
 
 	var corsair_cog = MedievalShip3DScript.new()
 	corsair_cog.ship_name = "The Crimson Kraken"
+	corsair_cog.sail_color = Color(0.78, 0.22, 0.18)
 	corsair_cog.has_gangplank = true
-	corsair_cog.position = Vector3(-82.0, -0.15, 80.0)
+	corsair_cog.position = Vector3(-74.0, -0.22, 87.6)
+	corsair_cog.rotation_degrees.y = 90.0
 	parent.add_child(corsair_cog)
 
 	var rowboat_1 = MedievalShip3DScript.new()
 	rowboat_1.ship_name = "Harbor Skiff"
 	rowboat_1.is_rowboat = true
 	rowboat_1.has_gangplank = false
-	rowboat_1.position = Vector3(-64.0, -0.10, 56.0)
-	rowboat_1.rotation_degrees.y = 35.0
+	rowboat_1.position = Vector3(-68.0, -0.15, 54.0)
+	rowboat_1.rotation_degrees.y = 65.0
 	parent.add_child(rowboat_1)
 
 	var rowboat_2 = MedievalShip3DScript.new()
 	rowboat_2.ship_name = "Fisherman's Dory"
 	rowboat_2.is_rowboat = true
 	rowboat_2.has_gangplank = false
-	rowboat_2.position = Vector3(-66.0, -0.10, 74.0)
-	rowboat_2.rotation_degrees.y = -25.0
+	rowboat_2.position = Vector3(-68.0, -0.15, 74.0)
+	rowboat_2.rotation_degrees.y = -75.0
 	parent.add_child(rowboat_2)
 
-	# 4C. Colony of Coastal Harbor Seals basking on reefs & beach
+	# 7. Colony of Coastal Harbor Seals basking on offshore reef rocks & sandy beach
 	var seal_locs = [
-		{"pos": Vector3(-66.5, 0.2, 49.5), "rot": 60.0, "name": "Basking Harbor Seal"},
-		{"pos": Vector3(-68.2, 0.25, 47.0), "rot": 110.0, "name": "Spotted Reef Seal"},
-		{"pos": Vector3(-72.5, 0.2, 57.5), "rot": 85.0, "name": "Silvervein Harbor Seal"},
-		{"pos": Vector3(-61.5, 0.05, 53.5), "rot": 45.0, "name": "Shoreline Seal Pup"}
+		{"pos": Vector3(-68.0, 0.25, 49.0), "rot": 60.0, "name": "Basking Harbor Seal"},
+		{"pos": Vector3(-76.0, 0.30, 52.0), "rot": 110.0, "name": "Spotted Reef Seal"},
+		{"pos": Vector3(-60.5, 0.05, 92.0), "rot": 85.0, "name": "Silvervein Harbor Seal"},
+		{"pos": Vector3(-58.5, 0.05, 96.0), "rot": 45.0, "name": "Shoreline Seal Pup"}
 	]
 	for sl in seal_locs:
 		var seal = HarborSeal3DScript.new()
@@ -1602,7 +1647,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 		seal.rotation_degrees.y = sl["rot"]
 		parent.add_child(seal)
 
-	# Port Village Fishmonger & Shipwright NPCs
+	# 8. Port Blackwater NPCs
 	var fishmonger = TownNPCScript.new()
 	fishmonger.npc_id = "fishmonger_greta"
 	fishmonger.npc_name = "Greta"
@@ -1610,13 +1655,11 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	fishmonger.icon = "🐟"
 	fishmonger.model_path = "res://assets/characters/adventurers/Mage.glb"
 	fishmonger.model_scale = Vector3(0.52, 0.52, 0.52)
-	fishmonger.model_rotation_y = 90.0
+	fishmonger.model_rotation_y = -90.0
 	fishmonger.dialogue_text = "Fresh silver-herring, salted cod, and smoked eels straight from the morning nets! Watch the harbor seals out on the rocks—they always bark before a storm rolls in!"
-	fishmonger.position = Vector3(-50.5, 0.0, 59.5)
+	fishmonger.position = Vector3(-52.5, 0.04, 60.0)
 	parent.add_child(fishmonger)
 
-	# 5. NPCs
-	# Captain Marlo (Corsair Captain)
 	var marlo = TownNPCScript.new()
 	marlo.npc_id = "captain_marlo"
 	marlo.npc_name = "Captain Marlo"
@@ -1624,12 +1667,11 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	marlo.icon = "⚓"
 	marlo.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
 	marlo.model_scale = Vector3(0.55, 0.55, 0.55)
-	marlo.model_rotation_y = 75.0
-	marlo.dialogue_text = "Ahoy, landlubber! Welcome to Port Blackwater. Smugglers and salty sea dogs rule these tides. The Deep Sea Creeps have infested the southern reef and stolen the Tidecaller's Compass! Slay the lurkers and bring me the Compass to claim the corsair fortune!"
-	marlo.position = Vector3(-60.0, 0.0, 68.0)
+	marlo.model_rotation_y = -90.0
+	marlo.dialogue_text = "Ahoy, landlubber! Welcome to Port Blackwater. Look out at our cogs moored in the harbor basin! The Deep Sea Creeps have infested the southern cove and stolen the Tidecaller's Compass—bring it back to claim the corsair fortune!"
+	marlo.position = Vector3(-56.0, 0.04, 68.5)
 	parent.add_child(marlo)
 
-	# Harbormaster Corin (Port Warden)
 	var corin = TownNPCScript.new()
 	corin.npc_id = "harbormaster"
 	corin.npc_name = "Harbormaster Corin"
@@ -1637,12 +1679,12 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	corin.icon = "🧭"
 	corin.model_path = "res://assets/characters/adventurers/Knight.glb"
 	corin.model_scale = Vector3(0.56, 0.56, 0.56)
-	corin.model_rotation_y = 120.0
-	corin.dialogue_text = "Welcome to Port Blackwater. Keep your weapons ready—corsairs brawl on the docks, and strange abominations crawl from the seabed. Check the harbor bounties to keep our port safe!"
-	corin.position = Vector3(-53.0, 0.0, 52.0)
+	corin.model_rotation_y = 180.0
+	corin.dialogue_text = "Welcome to Port Blackwater. Keep your weapons ready—corsairs brawl on the southern beach, and strange abominations crawl from the seabed. Check the harbor bounties to keep our port safe!"
+	corin.position = Vector3(-55.0, 0.04, 52.0)
 	parent.add_child(corin)
 
-	# Interactive World Restoration Station: Harbor Cargo Crane
+	# 9. Interactive World Restoration Station: Harbor Cargo Crane (On the Quay at X = -59.5, Z = 66.5)
 	var crane_station = WorldRepairStationScript.new()
 	crane_station.repair_id = "port_crane"
 	crane_station.station_name = "Harbor Cargo Crane"
@@ -1650,35 +1692,110 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	crane_station.target_story_act = 2
 	crane_station.gold_reward = 150
 	crane_station.echo_reward = 50
-	crane_station.position = Vector3(-64.0, 0.0, 62.0)
-	var ruined_crane = _place_prop(parent, "res://assets/overworld/building_scaffolding.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(2.5, 3.2, 2.5), 15.0)
-	var restored_crane = _place_prop(parent, "res://assets/overworld/arch.gltf", Vector3(-64.0, 0.0, 62.0), Vector3(3.0, 4.0, 3.0), 0.0)
-	_place_prop(restored_crane, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.2, 0.0), Vector3.ONE * 2.0)
+	crane_station.position = Vector3(-59.5, 0.04, 66.5)
+	var ruined_crane = _place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-59.5, 0.04, 66.5), Vector3.ONE * 1.5, 0.0)
+	var restored_crane = _place_prop(parent, "res://assets/overworld/building_scaffolding.gltf", Vector3(-59.5, 0.04, 66.5), Vector3(1.8, 2.4, 1.8), 0.0)
+	_place_prop(restored_crane, "res://assets/overworld/crate_A_big.gltf", Vector3(0.0, 0.0, 0.0), Vector3.ONE * 0.7)
 	crane_station.ruined_node = ruined_crane
 	crane_station.restored_node = restored_crane
 	parent.add_child(crane_station)
 
-	# 6. Enemies
-	# Coastal Corsairs / Pirates
-	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-78.0, 0.0, 72.0), -60.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-70.0, 0.0, 85.0), 30.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-84.0, 0.0, 62.0), 110.0)
+	# 10. Enemies & Quest Relics (Placed along the South Corsair Pier & Sandy Beach Cove)
+	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-72.0, 0.25, 82.0), 90.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-56.0, 0.02, 92.0), 30.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.PIRATE, Vector3(-52.0, 0.02, 98.0), 110.0)
 
-	# Deep Sea Creeps (Amphibious coastal abominations)
-	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(-88.0, 0.0, 92.0), 45.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(-96.0, 0.0, 78.0), -120.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(-58.0, 0.02, 105.0), 45.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(-52.0, 0.02, 110.0), -120.0)
 
-	# 7. Quest Relic & Treasures
-	# The Tidecaller's Compass (Key Story Quest Relic)
-	_spawn_material_node(parent, "tidecaller_compass", "The Tidecaller's Compass", "🧭", "res://assets/items/quest_materials/Chalice.glb", Vector3(-98.0, 0.0, 84.0), Color(0.18, 0.75, 0.95), 80, 60, Vector3(2.2, 2.2, 2.2))
-	# Sunken Smuggler's Loot
-	_spawn_material_node(parent, "smugglers_chest", "Sunken Corsair Chest", "📦", "res://assets/items/quest_materials/Chest_Ingots.glb", Vector3(-85.0, 0.0, 82.0), Color(0.95, 0.8, 0.2), 60, 45, Vector3(1.6, 1.6, 1.6))
+	# The Tidecaller's Compass & Sunken Corsair Chest
+	_spawn_material_node(parent, "tidecaller_compass", "The Tidecaller's Compass", "🧭", "res://assets/items/quest_materials/Chalice.glb", Vector3(-56.0, 0.05, 108.0), Color(0.18, 0.75, 0.95), 80, 60, Vector3(2.2, 2.2, 2.2))
+	_spawn_material_node(parent, "smugglers_chest", "Sunken Corsair Chest", "📦", "res://assets/items/quest_materials/Chest_Ingots.glb", Vector3(-84.0, 0.25, 82.0), Color(0.95, 0.8, 0.2), 60, 45, Vector3(1.6, 1.6, 1.6))
+
+func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float, x_end: float, z_center: float, width: float) -> void:
+	var pier_root = Node3D.new()
+	pier_root.name = pier_name
+	parent.add_child(pier_root)
+
+	var length = abs(x_start - x_end)
+	var x_mid = (x_start + x_end) * 0.5
+
+	var wood_deck_mat = StandardMaterial3D.new()
+	wood_deck_mat.albedo_color = Color(0.38, 0.25, 0.14)
+	wood_deck_mat.roughness = 0.88
+
+	var wood_beam_mat = StandardMaterial3D.new()
+	wood_beam_mat.albedo_color = Color(0.26, 0.17, 0.09)
+	wood_beam_mat.roughness = 0.92
+
+	# Continuous Timber Stringer Beams
+	for side in [-1.0, 1.0]:
+		var beam = MeshInstance3D.new()
+		var b_mesh = BoxMesh.new()
+		b_mesh.size = Vector3(length, 0.22, 0.26)
+		beam.mesh = b_mesh
+		beam.material_override = wood_beam_mat
+		beam.position = Vector3(x_mid, 0.10, z_center + side * (width * 0.5 - 0.15))
+		pier_root.add_child(beam)
+
+	# Transverse Wooden Deck Planks
+	var plank_step = 0.65
+	var x_cursor = x_end + 0.4
+	while x_cursor <= x_start - 0.2:
+		var plank = MeshInstance3D.new()
+		var p_mesh = BoxMesh.new()
+		p_mesh.size = Vector3(0.55, 0.08, width)
+		plank.mesh = p_mesh
+		plank.material_override = wood_deck_mat
+		plank.position = Vector3(x_cursor, 0.22, z_center)
+		pier_root.add_child(plank)
+		x_cursor += plank_step
+
+	# Heavy Timber Pilings driven deep into the Ocean Seabed (Y = -1.25 to +0.65)
+	var piling_x = x_start - 1.5
+	var piling_idx = 0
+	while piling_x >= x_end + 0.5:
+		for side in [-1.0, 1.0]:
+			var piling = MeshInstance3D.new()
+			var cyl = CylinderMesh.new()
+			cyl.top_radius = 0.20
+			cyl.bottom_radius = 0.22
+			cyl.height = 1.95
+			piling.mesh = cyl
+			piling.material_override = wood_beam_mat
+			piling.position = Vector3(piling_x, -0.30, z_center + side * (width * 0.5 + 0.10))
+			pier_root.add_child(piling)
+		if piling_idx % 2 == 1:
+			_place_lantern_post(pier_root, Vector3(piling_x, 0.24, z_center - width * 0.42), 90.0)
+		piling_x -= 4.5
+		piling_idx += 1
+
+	# Walkable Pier Deck Collider & Smooth Approach Ramp from the Quay
+	var sb = StaticBody3D.new()
+	sb.name = pier_name + "_Collider"
+	sb.collision_layer = 1
+	var deck_col = CollisionShape3D.new()
+	var deck_box = BoxShape3D.new()
+	deck_box.size = Vector3(length + 1.0, 0.26, width)
+	deck_col.shape = deck_box
+	deck_col.position = Vector3(x_mid, 0.13, z_center)
+	sb.add_child(deck_col)
+
+	var ramp_col = CollisionShape3D.new()
+	var ramp_box = BoxShape3D.new()
+	ramp_box.size = Vector3(2.2, 0.20, width)
+	ramp_col.shape = ramp_box
+	ramp_col.position = Vector3(x_start + 0.8, 0.10, z_center)
+	ramp_col.rotation_degrees.z = -7.0
+	sb.add_child(ramp_col)
+	pier_root.add_child(sb)
 
 # =========================================================================
 # REGION 2: WHISPERWOOD FOREST & SYLVA'S REST
 # =========================================================================
 func _build_whisperwood_forest_region(parent: Node3D) -> void:
-	# 1. Ancient Dense Forest Canopy (X in [-120, -45], Z in [-120, -15])
+	# 1. Sylva's Rest Woodland Glade (Centered at X = -76, Z = -64)
+	#    Surrounded by a natural perimeter of tall pines (outside the glade so zero trees clip buildings!)
 	var f_trees = [
 		"res://assets/overworld/tree_pine_orange_large.gltf",
 		"res://assets/overworld/trees_A_large.gltf",
@@ -1686,45 +1803,41 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 		"res://assets/overworld/tree_pine_yellow_large.gltf"
 	]
 	var forest_coords = [
-		Vector3(-55.0, 0.0, -35.0), Vector3(-62.0, 0.0, -42.0), Vector3(-68.0, 0.0, -32.0),
-		Vector3(-58.0, 0.0, -50.0), Vector3(-65.0, 0.0, -58.0), Vector3(-72.0, 0.0, -48.0),
-		Vector3(-80.0, 0.0, -42.0), Vector3(-88.0, 0.0, -52.0), Vector3(-95.0, 0.0, -40.0),
-		Vector3(-78.0, 0.0, -78.0), Vector3(-85.0, 0.0, -85.0), Vector3(-92.0, 0.0, -75.0),
-		Vector3(-100.0, 0.0, -55.0), Vector3(-105.0, 0.0, -68.0), Vector3(-110.0, 0.0, -45.0),
-		Vector3(-102.0, 0.0, -85.0), Vector3(-112.0, 0.0, -78.0), Vector3(-115.0, 0.0, -95.0),
-		Vector3(-60.0, 0.0, -80.0), Vector3(-68.0, 0.0, -90.0), Vector3(-75.0, 0.0, -100.0),
-		Vector3(-88.0, 0.0, -102.0), Vector3(-98.0, 0.0, -108.0), Vector3(-110.0, 0.0, -112.0)
+		Vector3(-42.0, 0.0, -44.0), Vector3(-68.0, 0.0, -38.0), Vector3(-82.0, 0.0, -42.0),
+		Vector3(-94.0, 0.0, -42.0), Vector3(-106.0, 0.0, -48.0), Vector3(-98.0, 0.0, -58.0),
+		Vector3(-108.0, 0.0, -68.0), Vector3(-98.0, 0.0, -76.0), Vector3(-108.0, 0.0, -86.0),
+		Vector3(-92.0, 0.0, -90.0), Vector3(-78.0, 0.0, -92.0), Vector3(-64.0, 0.0, -88.0),
+		Vector3(-54.0, 0.0, -74.0), Vector3(-54.0, 0.0, -58.0), Vector3(-86.0, 0.0, -104.0),
+		Vector3(-102.0, 0.0, -102.0)
 	]
 	for i in range(forest_coords.size()):
 		var f_pos = forest_coords[i]
 		var t_model = f_trees[i % f_trees.size()]
-		_place_prop(parent, t_model, f_pos, Vector3.ONE * 3.5, float((i * 43) % 360))
-		_add_static_cyl(parent, f_pos, 1.2, 9.0)
+		_place_prop(parent, t_model, f_pos, Vector3.ONE * 2.3, float((i * 43) % 360))
+		_add_static_cyl(parent, f_pos, 1.0, 7.5)
 
 	# Forest Fireflies & Atmospheric Spores
-	AmbientFX.create_forest_fireflies(parent, Vector3(-78.0, 2.0, -62.0), 12.0)
-	AmbientFX.create_forest_fireflies(parent, Vector3(-92.0, 2.0, -75.0), 14.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-76.0, 2.0, -64.0), 12.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-90.0, 2.0, -78.0), 14.0)
 
-	# 2. Sylva's Rest Enclave
-	# Elder Druid's Stone Circle Shrine
-	_place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-82.0, 0.0, -65.0), Vector3.ONE * 3.0)
-	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-82.0, 0.0, -61.0), Vector3.ONE * 2.8)
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -65.0), Vector3(1.8, 3.0, 1.8))
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-78.0, 0.0, -65.0), Vector3(1.8, 3.0, 1.8))
-	_add_static_cyl(parent, Vector3(-86.0, 0.0, -65.0), 1.0, 9.0)
-	_add_static_cyl(parent, Vector3(-78.0, 0.0, -65.0), 1.0, 9.0)
+	# 2. Sylva's Rest Enclave Buildings (Arranged around the Open Glade)
+	# Elder Druid's Stone Circle Shrine (West side of Glade at X = -84.0, Z = -64.0)
+	_place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-84.0, 0.0, -64.0), Vector3.ONE * 2.6, 90.0)
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -59.5), Vector3(1.5, 2.5, 1.5))
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -68.5), Vector3(1.5, 2.5, 1.5))
+	_add_static_cyl(parent, Vector3(-86.0, 0.0, -59.5), 0.9, 7.5)
+	_add_static_cyl(parent, Vector3(-86.0, 0.0, -68.5), 0.9, 7.5)
 
-	# Ranger Outpost Cottage
-	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(-72.0, 0.0, -56.0), Vector3.ONE * 6.5, -45.0)
-	_add_static_box(parent, Vector3(-72.0, 3.5, -56.0), Vector3(6.5, 7.0, 7.5))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-72.0, 8.0, -56.0))
+	# Ranger Outpost Cottage (East side of Glade at X = -64.0, Z = -60.0, facing West -90°)
+	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(-64.0, 0.0, -60.0), Vector3.ONE * 6.2, -90.0)
+	_add_static_box(parent, Vector3(-64.0, 3.5, -60.0), Vector3(6.2, 6.8, 7.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-64.0, 7.8, -60.0))
 
-	# Woodland Sawmill
-	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-68.0, 0.0, -72.0), Vector3.ONE * 5.5, 90.0)
-	_add_static_box(parent, Vector3(-68.0, 4.0, -72.0), Vector3(7.5, 6.5, 7.5))
+	# Woodland Sawmill (North side of Glade at X = -74.0, Z = -76.0, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-74.0, 0.0, -76.0), Vector3.ONE * 5.2, 0.0)
+	_add_static_box(parent, Vector3(-74.0, 4.0, -76.0), Vector3(7.0, 6.5, 7.0))
 
 	# 3. NPCs
-	# Elder Thorne (Circle Druid)
 	var thorne = TownNPCScript.new()
 	thorne.npc_id = "druid_thorne"
 	thorne.npc_name = "Elder Thorne"
@@ -1732,12 +1845,11 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	thorne.icon = "🌿"
 	thorne.model_path = "res://assets/characters/adventurers/Mage.glb"
 	thorne.model_scale = Vector3(0.54, 0.54, 0.54)
-	thorne.model_rotation_y = 45.0
+	thorne.model_rotation_y = 90.0
 	thorne.dialogue_text = "Peace be upon your spirit, traveler. Whisperwood Forest suffers under bandit outlaws who felled the sacred grove and severed the Living Heartwood. Drive back the highwaymen, return the Heartwood to the shrine, and receive nature's eternal rejuvenation!"
-	thorne.position = Vector3(-80.0, 0.0, -63.0)
+	thorne.position = Vector3(-80.0, 0.0, -64.0)
 	parent.add_child(thorne)
 
-	# Ranger Elora (Woodland Scout)
 	var elora = TownNPCScript.new()
 	elora.npc_id = "ranger_elora"
 	elora.npc_name = "Ranger Elora"
@@ -1745,9 +1857,9 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	elora.icon = "🏹"
 	elora.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	elora.model_scale = Vector3(0.53, 0.53, 0.53)
-	elora.model_rotation_y = 120.0
+	elora.model_rotation_y = -90.0
 	elora.dialogue_text = "Tread lightly. Bandit outlaws and hungry timber wolves stalk the shadows of the pines. Clear the woods and our scouts will ensure your safe passage across the realm!"
-	elora.position = Vector3(-70.0, 0.0, -54.0)
+	elora.position = Vector3(-68.5, 0.0, -58.5)
 	parent.add_child(elora)
 
 	# Interactive World Restoration Station: Druidic Sun Altar
@@ -1758,9 +1870,9 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	altar_station.target_story_act = 3
 	altar_station.gold_reward = 150
 	altar_station.echo_reward = 50
-	altar_station.position = Vector3(-84.0, 0.0, -68.0)
-	var ruined_altar = _place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-84.0, 0.0, -68.0), Vector3.ONE * 2.2, 45.0)
-	var restored_altar = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-84.0, 0.0, -68.0), Vector3.ONE * 2.6, 45.0)
+	altar_station.position = Vector3(-76.0, 0.0, -68.0)
+	var ruined_altar = _place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-76.0, 0.0, -68.0), Vector3.ONE * 2.0, 0.0)
+	var restored_altar = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-76.0, 0.0, -68.0), Vector3.ONE * 2.4, 0.0)
 	var a_light = OmniLight3D.new()
 	a_light.light_color = Color(0.2, 1.0, 0.4)
 	a_light.light_energy = 2.2
@@ -1771,71 +1883,67 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	altar_station.restored_node = restored_altar
 	parent.add_child(altar_station)
 
-	# 4. Enemies & Wildlife
-	# Forest Bandits
-	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-92.0, 0.0, -48.0), 60.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-102.0, 0.0, -62.0), -30.0)
+	# 4. Enemies, Wildlife & Quest Relics
+	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-90.0, 0.0, -52.0), 60.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-96.0, 0.0, -66.0), -30.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-86.0, 0.0, -82.0), 140.0)
 
-	# Wild Timber Wolf Pack
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-98.0, 0.0, -78.0), 30.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-106.0, 0.0, -84.0), -60.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-75.0, 0.0, -45.0), 90.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-78.0, 0.0, -48.0), -45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-94.0, 0.0, -80.0), 30.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-102.0, 0.0, -88.0), -60.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-74.0, 0.0, -48.0), 90.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-78.0, 0.0, -51.0), -45.0)
 
-	# 5. Quest Relic & Nodes
-	# The Living Heartwood (Key Story Quest Relic)
-	_spawn_material_node(parent, "living_heartwood", "The Living Heartwood", "🌱", "res://assets/overworld/resource_lumber.gltf", Vector3(-89.0, 0.0, -72.0), Color(0.25, 0.88, 0.35), 80, 60, Vector3(3.0, 3.0, 3.0))
-	_spawn_material_node(parent, "heartwood_timber", "Ancient Ironwood", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-95.0, 0.0, -55.0), Color(0.8, 0.5, 0.2), 30, 20, Vector3(2.5, 2.5, 2.5))
+	_spawn_material_node(parent, "living_heartwood", "The Living Heartwood", "🌱", "res://assets/overworld/resource_lumber.gltf", Vector3(-88.0, 0.0, -74.0), Color(0.25, 0.88, 0.35), 80, 60, Vector3(2.6, 2.6, 2.6))
+	_spawn_material_node(parent, "heartwood_timber", "Ancient Ironwood", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-92.0, 0.0, -56.0), Color(0.8, 0.5, 0.2), 30, 20, Vector3(2.2, 2.2, 2.2))
 
 # =========================================================================
 # REGION 3: KHAR-DRAKKEN CRAGS & ORC BASTION
 # =========================================================================
 func _build_khar_drakken_crags_region(parent: Node3D) -> void:
-	# 1. Towering Mountain Massifs (X in [50, 120], Z in [-120, -10])
+	# 1. Horseshoe Mountain Massifs framing Stonegate Valley & the Upper Orc Bastion
+	#    Spaced >= 24m apart so peaks form a dramatic canyon without intersecting each other
 	var crag_peaks = [
-		{"pos": Vector3(58.0, 0.0, -40.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 10.0},
-		{"pos": Vector3(70.0, 0.0, -32.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 11.0},
-		{"pos": Vector3(88.0, 0.0, -42.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 11.5},
-		{"pos": Vector3(65.0, 0.0, -75.0), "path": "res://assets/overworld/mountain_A_grass.gltf", "scale": 10.5},
-		{"pos": Vector3(82.0, 0.0, -85.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 12.0},
-		{"pos": Vector3(100.0, 0.0, -65.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 11.0},
-		{"pos": Vector3(112.0, 0.0, -85.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 12.0},
-		{"pos": Vector3(92.0, 0.0, -112.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 12.5},
-		{"pos": Vector3(110.0, 0.0, -110.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 12.0}
+		{"pos": Vector3(68.0, 0.0, -32.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 9.0},
+		{"pos": Vector3(92.0, 0.0, -42.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 9.5},
+		{"pos": Vector3(54.0, 0.0, -74.0), "path": "res://assets/overworld/mountain_A_grass.gltf", "scale": 9.0},
+		{"pos": Vector3(78.0, 0.0, -82.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 9.5},
+		{"pos": Vector3(106.0, 0.0, -66.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 9.5},
+		{"pos": Vector3(116.0, 0.0, -92.0), "path": "res://assets/overworld/mountain_C.gltf", "scale": 10.0},
+		{"pos": Vector3(88.0, 0.0, -114.0), "path": "res://assets/overworld/mountain_A.gltf", "scale": 10.0},
+		{"pos": Vector3(112.0, 0.0, -114.0), "path": "res://assets/overworld/mountain_B_grass_trees.gltf", "scale": 10.0}
 	]
 	for cp in crag_peaks:
 		_place_prop(parent, cp["path"], cp["pos"], Vector3.ONE * cp["scale"])
-		_add_static_box(parent, cp["pos"] + Vector3(0, 7.0, 0), Vector3(cp["scale"] * 2.2, 14.0, cp["scale"] * 2.2))
+		_add_static_box(parent, cp["pos"] + Vector3(0, 7.0, 0), Vector3(cp["scale"] * 1.9, 14.0, cp["scale"] * 1.9))
 
-	# 2. Stonegate Dwarven Mining Settlement (X = 72, Z = -55)
-	# Ancestral Deep Mine Shaft
-	_place_prop(parent, "res://assets/overworld/building_mine_blue.gltf", Vector3(74.0, 0.0, -52.0), Vector3.ONE * 6.0, -90.0)
-	_add_static_box(parent, Vector3(74.0, 3.5, -52.0), Vector3(8.0, 6.5, 8.0))
+	# 2. Stonegate Dwarven Mining Settlement (Valley Floor: X in [58, 82], Z in [-66, -44])
+	# Ancestral Deep Mine Shaft (East wall of valley at X = 78.0, Z = -52.0, facing West -90°; doorway at X = 74.0, Z = -52.0)
+	_place_prop(parent, "res://assets/overworld/building_mine_blue.gltf", Vector3(78.0, 0.0, -52.0), Vector3.ONE * 5.8, -90.0)
+	_add_static_box(parent, Vector3(78.0, 3.5, -52.0), Vector3(7.5, 6.5, 7.5))
 
-	# Mountain Watchtower
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(62.0, 0.0, -42.0), Vector3.ONE * 8.5)
-	_add_static_box(parent, Vector3(62.0, 6.0, -42.0), Vector3(4.5, 12.0, 4.5))
+	# Dwarven Smelting Foundry Building (North side of valley at X = 66.0, Z = -62.0, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_blacksmith_red.gltf", Vector3(66.0, 0.0, -62.0), Vector3.ONE * 5.5, 0.0)
+	_add_static_box(parent, Vector3(66.0, 3.5, -62.0), Vector3(6.8, 6.5, 6.8))
+	AmbientFX.create_chimney_smoke(parent, Vector3(66.0, 7.2, -62.0))
 
-	# Dwarven Forge Pavilion
-	_place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(70.0, 0.0, -62.0), Vector3.ONE * 2.5, 90.0)
-	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(68.0, 0.0, -60.0), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(72.0, 0.0, -62.0), Vector3.ONE * 2.0)
-	AmbientFX.create_chimney_smoke(parent, Vector3(70.0, 4.0, -62.0))
+	# Mountain Watchtower guarding the Southwest Pass (X = 56.0, Z = -44.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(56.0, 0.0, -44.0), Vector3.ONE * 8.0)
+	_add_static_box(parent, Vector3(56.0, 6.0, -44.0), Vector3(4.5, 12.0, 4.5))
 
-	# 3. The Orc Stronghold & Bastion (Upper Plateau: X in [92, 110], Z in [-85, -110])
+	# Armory Rack beside the Foundry
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(60.5, 0.0, -58.0), Vector3.ONE * 1.8, 45.0)
+
+	# 3. The Orc Stronghold & Bastion (Upper Plateau: X in [92, 110], Z in [-88, -108])
 	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
 	var orc_gate = OverworldGateScript.new()
 	orc_gate.position = Vector3(94.0, 0.0, -88.0)
 	orc_gate.rotation_degrees.y = 45.0
 	parent.add_child(orc_gate)
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(89.0, 0.0, -85.0), Vector3(3.5, 4.0, 2.5), 45.0)
-	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(99.0, 0.0, -91.0), Vector3(3.5, 4.0, 2.5), 45.0)
-	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(93.0, 0.0, -86.0), Vector3.ONE * 2.2)
-	_place_prop(parent, "res://assets/overworld/bone_A.gltf", Vector3(96.0, 0.0, -87.0), Vector3.ONE * 2.0)
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(88.0, 0.0, -84.0), Vector3(3.2, 4.0, 2.5), 45.0)
+	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(100.0, 0.0, -92.0), Vector3(3.2, 4.0, 2.5), 45.0)
+	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(91.5, 0.0, -85.5), Vector3.ONE * 2.0)
 
-	# 4. NPCs
-	# Torvald Ironbreaker (Runesmith)
+	# 4. NPCs & Restoration Station
 	var torv = TownNPCScript.new()
 	torv.npc_id = "runesmith_torvald"
 	torv.npc_name = "Torvald Ironbreaker"
@@ -1843,9 +1951,9 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	torv.icon = "⛏️"
 	torv.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
 	torv.model_scale = Vector3(0.40, 0.40, 0.40)
-	torv.model_rotation_y = 60.0
+	torv.model_rotation_y = 20.0
 	torv.dialogue_text = "By the thunder of stone! The Orc Warlords have seized our upper stronghold and stolen the Runebound Mountain Core! Cleave through their ranks, return the Core, and I shall temper your weapons with ancient dwarven runes!"
-	torv.position = Vector3(69.0, 0.0, -58.0)
+	torv.position = Vector3(66.0, 0.0, -55.5)
 	parent.add_child(torv)
 
 	# Interactive World Restoration Station: Smelter Blast Bellows
@@ -1856,9 +1964,9 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	bellows_station.target_story_act = 4
 	bellows_station.gold_reward = 180
 	bellows_station.echo_reward = 60
-	bellows_station.position = Vector3(73.0, 0.0, -56.0)
-	var ruined_bellows = _place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(73.0, 0.0, -56.0), Vector3.ONE * 2.2, -30.0)
-	var restored_bellows = _place_prop(parent, "res://assets/furniture/fireplace.gltf", Vector3(73.0, 0.0, -56.0), Vector3.ONE * 2.6, -30.0)
+	bellows_station.position = Vector3(71.5, 0.0, -58.0)
+	var ruined_bellows = _place_prop(parent, "res://assets/overworld/building_scaffolding.gltf", Vector3(71.5, 0.0, -58.0), Vector3.ONE * 1.5, -30.0)
+	var restored_bellows = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(71.5, 0.0, -58.0), Vector3.ONE * 2.4, -30.0)
 	var f_light = OmniLight3D.new()
 	f_light.light_color = Color(1.0, 0.5, 0.15)
 	f_light.light_energy = 2.5
@@ -1870,27 +1978,21 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	bellows_station.restored_node = restored_bellows
 	parent.add_child(bellows_station)
 
-	# 5. Enemies
-	# Orc Berserkers
-	_spawn_enemy(parent, EnemyAI.EnemyType.ORC, Vector3(98.0, 0.0, -94.0), -45.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.ORC, Vector3(105.0, 0.0, -104.0), 120.0)
-
-	# Mountain Demons / Cliff Lurkers
-	_spawn_enemy(parent, EnemyAI.EnemyType.DEMON, Vector3(88.0, 0.0, -96.0), 30.0)
+	# 5. Enemies & Quest Relics
+	_spawn_enemy(parent, EnemyAI.EnemyType.ORC, Vector3(98.0, 0.0, -95.0), -45.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.ORC, Vector3(104.0, 0.0, -103.0), 120.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.DEMON, Vector3(90.0, 0.0, -96.0), 30.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.DEMON, Vector3(104.0, 0.0, -88.0), -110.0)
 
-	# 6. Quest Relic & Minerals
-	# The Runebound Mountain Core (Key Story Quest Relic)
-	_spawn_material_node(parent, "runebound_core", "Runebound Mountain Core", "⛰️", "res://assets/items/quest_materials/Crystal1.glb", Vector3(106.0, 0.0, -108.0), Color(1.0, 0.55, 0.15), 100, 75, Vector3(2.2, 2.2, 2.2))
-	# High Mountain Gold & Ore Veins
-	_spawn_material_node(parent, "gold_vein", "High Crag Gold Vein", "🪙", "res://assets/items/quest_materials/Gold_Ingots.glb", Vector3(78.0, 0.0, -68.0), Color(1.0, 0.85, 0.2), 40, 35, Vector3(1.5, 1.5, 1.5))
-	_spawn_material_node(parent, "emerald_crystal", "Mountain Emerald Geo-Crystal", "💎", "res://assets/items/quest_materials/Crystal2.glb", Vector3(84.0, 0.0, -76.0), Color(0.2, 1.0, 0.4), 35, 30, Vector3(1.8, 1.8, 1.8))
+	_spawn_material_node(parent, "runebound_core", "Runebound Mountain Core", "⛰️", "res://assets/items/quest_materials/Crystal1.glb", Vector3(105.0, 0.0, -106.0), Color(1.0, 0.55, 0.15), 100, 75, Vector3(2.2, 2.2, 2.2))
+	_spawn_material_node(parent, "gold_vein", "High Crag Gold Vein", "🪙", "res://assets/items/quest_materials/Gold_Ingots.glb", Vector3(76.0, 0.0, -66.0), Color(1.0, 0.85, 0.2), 40, 35, Vector3(1.5, 1.5, 1.5))
+	_spawn_material_node(parent, "emerald_crystal", "Mountain Emerald Geo-Crystal", "💎", "res://assets/items/quest_materials/Crystal2.glb", Vector3(84.0, 0.0, -72.0), Color(0.2, 1.0, 0.4), 35, 30, Vector3(1.8, 1.8, 1.8))
 
 # =========================================================================
 # CROSSROADS, HIGHROADS & WAYSTONE NETWORK
 # =========================================================================
 func _build_crossroads_and_highroads(parent: Node3D) -> void:
-	# 1. Central Crossroads Waystone Signpost (Near Tavern & West Highway at X = -12.0, Z = 14.0)
+	# 1. Central Crossroads Waystone Signpost (At West Town Street & Bridge Junction: X = -12.0, Z = 12.0)
 	var sign_cross = TownNPCScript.new()
 	sign_cross.npc_id = "signpost_crossroads"
 	sign_cross.npc_name = "Kingdom Crossroads Waystone"
@@ -1899,11 +2001,10 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 	sign_cross.model_path = "res://assets/overworld/post_lantern.gltf"
 	sign_cross.model_scale = Vector3.ONE * 1.2
 	sign_cross.dialogue_text = "Kingdom Crossroad Waystone:\n• South-West: Port Blackwater (Harbor, Ships & Ocean)\n• North-West: Whisperwood Forest (Druidic Enclave)\n• North-East: Khar-Drakken Crags (Dwarven Mines & Orcs)\n• Central: Oakhaven Town (Castle & Catacombs)"
-	sign_cross.position = Vector3(-12.0, 0.0, 14.0)
+	sign_cross.position = Vector3(-12.0, 0.0, 12.0)
 	parent.add_child(sign_cross)
-	_place_lantern_post(parent, Vector3(-12.0, 0.0, 14.0))
 
-	# 2. Port Blackwater Waystone Signpost
+	# 2. Port Blackwater Waystone Signpost (North entrance of Harbor Promenade)
 	var sign_port = TownNPCScript.new()
 	sign_port.npc_id = "signpost_port"
 	sign_port.npc_name = "Port Blackwater Waystone"
@@ -1912,9 +2013,8 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 	sign_port.model_path = "res://assets/overworld/post_lantern.gltf"
 	sign_port.model_scale = Vector3.ONE * 1.2
 	sign_port.dialogue_text = "Port Blackwater Harbor Waystone.\nFast Travel to other unlocked settlements in the realm."
-	sign_port.position = Vector3(-50.0, 0.0, 56.0)
+	sign_port.position = Vector3(-48.5, 0.04, 53.0)
 	parent.add_child(sign_port)
-	_place_lantern_post(parent, Vector3(-50.0, 0.0, 56.0))
 
 	# 3. Whisperwood Waystone Signpost
 	var sign_wood = TownNPCScript.new()
@@ -1927,7 +2027,6 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 	sign_wood.dialogue_text = "Whisperwood Forest Waystone (Sylva's Rest).\nFast Travel to other unlocked settlements in the realm."
 	sign_wood.position = Vector3(-66.0, 0.0, -52.0)
 	parent.add_child(sign_wood)
-	_place_lantern_post(parent, Vector3(-66.0, 0.0, -52.0))
 
 	# 4. Khar-Drakken Waystone Signpost
 	var sign_crag = TownNPCScript.new()
@@ -1938,38 +2037,42 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 	sign_crag.model_path = "res://assets/overworld/post_lantern.gltf"
 	sign_crag.model_scale = Vector3.ONE * 1.2
 	sign_crag.dialogue_text = "Khar-Drakken Mountain Waystone (Stonegate Outpost).\nFast Travel to other unlocked settlements in the realm."
-	sign_crag.position = Vector3(60.0, 0.0, -46.0)
+	sign_crag.position = Vector3(60.0, 0.0, -48.0)
 	parent.add_child(sign_crag)
-	_place_lantern_post(parent, Vector3(60.0, 0.0, -46.0))
 
-	# 5. Cobblestone / Dirt Road Segments linking Regions
-	# South-West Coastal Highroad (winds from X = -18, Z = 16 toward X = -50, Z = 55)
-	for step in range(1, 16):
-		var alpha = float(step) / 16.0
+	# 5. Cobblestone Regional Highroads (Spaced 4.5m apart so stones form a natural trail without overlapping)
+	var p_models = [
+		"res://assets/overworld/path_A.gltf",
+		"res://assets/overworld/path_B.gltf",
+		"res://assets/overworld/path_C.gltf"
+	]
+	# South-West Coastal Highroad (From South end of Western Wooden Bridge at (-18, 29) to Port Blackwater (-50, 52))
+	for step in range(0, 9):
+		var alpha = float(step) / 8.0
 		var rx = lerp(-18.0, -50.0, alpha)
-		var rz = lerp(16.0, 55.0, alpha)
-		_place_prop(parent, "res://assets/overworld/path_A.gltf", Vector3(rx, 0.02, rz), Vector3(1.2, 1.0, 1.2))
+		var rz = lerp(29.5, 52.0, alpha)
+		_place_prop(parent, p_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.15, 1.0, 1.15), -52.0)
 
-	# North-West Pilgrim Trail (winds from X = -34, Z = -4 toward X = -66, Z = -52)
-	for step in range(1, 15):
-		var alpha = float(step) / 15.0
+	# North-West Woodland Trail (From West Town / Ruins (-34, -10) through Greenhollow (-48, -21) to Whisperwood (-66, -50))
+	for step in range(0, 11):
+		var alpha = float(step) / 10.0
 		var rx = lerp(-34.0, -66.0, alpha)
-		var rz = lerp(-4.0, -52.0, alpha)
-		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", Vector3(rx, 0.02, rz), Vector3(2.2, 1.0, 2.2))
+		var rz = lerp(-10.0, -50.0, alpha)
+		_place_prop(parent, p_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.15, 1.0, 1.15), 38.0)
 
-	# North-East Mountain Pass (winds from X = 34, Z = -22 toward X = 60, Z = -46)
-	for step in range(1, 14):
-		var alpha = float(step) / 14.0
-		var rx = lerp(34.0, 60.0, alpha)
-		var rz = lerp(-22.0, -46.0, alpha)
-		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", Vector3(rx, 0.02, rz), Vector3(2.2, 1.0, 2.2))
+	# North-East Mountain Pass (From Foothill Mine (26, -16) to Khar-Drakken Waystone (60, -48))
+	for step in range(0, 10):
+		var alpha = float(step) / 9.0
+		var rx = lerp(26.0, 60.0, alpha)
+		var rz = lerp(-16.0, -48.0, alpha)
+		_place_prop(parent, p_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.15, 1.0, 1.15), -45.0)
 
-	# South-East Swamp Causeway (winds from Sunnydale X = 38, Z = 42 toward Weeping Fen X = 62, Z = 68)
-	for step in range(1, 12):
-		var alpha = float(step) / 12.0
-		var rx = lerp(38.0, 62.0, alpha)
-		var rz = lerp(42.0, 68.0, alpha)
-		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", Vector3(rx, 0.02, rz), Vector3(2.2, 1.0, 2.2))
+	# South-East Swamp Causeway (From Sunnydale Windmill Knoll (48, 46) to Weeping Fen Boardwalk (56, 74))
+	for step in range(0, 7):
+		var alpha = float(step) / 6.0
+		var rx = lerp(48.0, 56.0, alpha)
+		var rz = lerp(46.0, 74.0, alpha)
+		_place_prop(parent, p_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.15, 1.0, 1.15), 18.0)
 
 # =========================================================================
 # REGION 4: THE WEEPING FEN SWAMP & MURKY WETLANDS (X in [50, 120], Z in [58, 120])
@@ -1990,42 +2093,38 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	swamp_basin.position = Vector3(84.0, 0.03, 88.0)
 	parent.add_child(swamp_basin)
 
-	# 2. Raised Rotting Wooden Boardwalks spanning the Bog (X from 56 to 92 at Z = 76)
-	for bx in range(56, 96, 4):
-		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(float(bx), 0.02, 76.0), Vector3(2.4, 1.8, 4.0), 90.0)
-	for bz in range(76, 104, 4):
-		_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", Vector3(84.0, 0.02, float(bz)), Vector3(2.4, 1.8, 4.0), 0.0)
+	# 2. Flat Raised Rotting Wooden Boardwalks spanning the Bog (Replaces sideways arched bridges!)
+	_build_swamp_boardwalk(parent, Vector3(54.0, 0.12, 76.0), Vector3(84.0, 0.12, 76.0), 2.8)
+	_build_swamp_boardwalk(parent, Vector3(84.0, 0.12, 76.0), Vector3(84.0, 0.12, 102.0), 2.8)
 
-	# 3. Dead Twisted Swamp Trees, Mossy Boulders, Cattail Reeds & Water Lilies
+	# 3. Dead Twisted Swamp Trees, Cattail Reeds & Water Lilies (Well-spaced around the bog)
 	var dead_trees = [
-		Vector3(60.0, 0.0, 64.0), Vector3(68.0, 0.0, 62.0), Vector3(78.0, 0.0, 66.0),
-		Vector3(92.0, 0.0, 64.0), Vector3(104.0, 0.0, 70.0), Vector3(62.0, 0.0, 86.0),
-		Vector3(72.0, 0.0, 92.0), Vector3(96.0, 0.0, 84.0), Vector3(108.0, 0.0, 92.0),
-		Vector3(66.0, 0.0, 104.0), Vector3(78.0, 0.0, 108.0), Vector3(94.0, 0.0, 106.0),
-		Vector3(106.0, 0.0, 104.0), Vector3(88.0, 0.0, 70.0), Vector3(74.0, 0.0, 82.0)
+		Vector3(58.0, 0.0, 62.0), Vector3(70.0, 0.0, 62.0), Vector3(82.0, 0.0, 64.0),
+		Vector3(96.0, 0.0, 64.0), Vector3(108.0, 0.0, 70.0), Vector3(60.0, 0.0, 86.0),
+		Vector3(72.0, 0.0, 92.0), Vector3(98.0, 0.0, 84.0), Vector3(110.0, 0.0, 92.0),
+		Vector3(64.0, 0.0, 104.0), Vector3(76.0, 0.0, 110.0), Vector3(102.0, 0.0, 106.0)
 	]
 	for i in range(dead_trees.size()):
 		var dt_pos = dead_trees[i]
 		var dt_model = "res://assets/overworld/tree_dead_large_decorated.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_dead_large.gltf"
-		_place_prop(parent, dt_model, dt_pos, Vector3.ONE * 3.2, float((i * 67) % 360))
+		_place_prop(parent, dt_model, dt_pos, Vector3.ONE * 2.4, float((i * 67) % 360))
 		_add_static_cyl(parent, dt_pos, 0.9, 7.0)
 
-	# Lily pads, cattail reeds & sunken skeletal ribcages
-	for r_pos in [Vector3(65.0, 0.04, 72.0), Vector3(75.0, 0.04, 79.0), Vector3(88.0, 0.04, 82.0), Vector3(92.0, 0.04, 95.0), Vector3(79.0, 0.04, 98.0)]:
-		_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", r_pos, Vector3.ONE * 2.0)
-		_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", r_pos + Vector3(2.2, 0.0, 1.5), Vector3.ONE * 2.4)
-	_place_prop(parent, "res://assets/overworld/ribcage.gltf", Vector3(70.0, 0.0, 84.0), Vector3.ONE * 2.2, 35.0)
-	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(82.0, 0.4, 74.5), Vector3.ONE * 1.8)
-	_place_prop(parent, "res://assets/overworld/coffin_decorated.gltf", Vector3(89.0, 0.0, 98.0), Vector3.ONE * 1.8, -25.0)
+	# Lily pads, cattail reeds & sunken skeletal ribcages (Spaced cleanly)
+	for r_pos in [Vector3(65.0, 0.04, 70.0), Vector3(75.0, 0.04, 81.0), Vector3(90.0, 0.04, 80.0), Vector3(94.0, 0.04, 94.0), Vector3(77.0, 0.04, 98.0)]:
+		_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", r_pos, Vector3.ONE * 1.8)
+		_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", r_pos + Vector3(3.2, 0.0, 2.0), Vector3.ONE * 2.0)
+	_place_prop(parent, "res://assets/overworld/ribcage.gltf", Vector3(68.0, 0.0, 84.0), Vector3.ONE * 2.0, 35.0)
+	_place_prop(parent, "res://assets/overworld/coffin_decorated.gltf", Vector3(94.0, 0.0, 101.0), Vector3.ONE * 1.8, -25.0)
 
 	# Eerie Swamp Mist & Will-o'-the-Wisp Spores
 	AmbientFX.create_forest_fireflies(parent, Vector3(76.0, 1.5, 80.0), 16.0)
 	AmbientFX.create_forest_fireflies(parent, Vector3(88.0, 1.5, 96.0), 16.0)
 
-	# 4. Bog Witch Morrigan's Stilted Hut & Alchemical Shrine (X = 88.0, Z = 104.0)
-	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(88.0, 0.2, 105.0), Vector3.ONE * 6.5, 180.0)
-	_add_static_box(parent, Vector3(88.0, 3.5, 105.0), Vector3(6.2, 6.5, 6.2))
-	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(81.5, 0.1, 102.0), Vector3.ONE * 2.6, 45.0)
+	# 4. Bog Witch Morrigan's Stilted Hut & Alchemical Shrine (At the southern end of the boardwalk: X = 88.0, Z = 106.0)
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(88.0, 0.2, 106.0), Vector3.ONE * 6.2, 180.0)
+	_add_static_box(parent, Vector3(88.0, 3.5, 106.0), Vector3(6.0, 6.5, 6.0))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(80.0, 0.1, 104.0), Vector3.ONE * 2.4, 45.0)
 
 	var morrigan = TownNPCScript.new()
 	morrigan.npc_id = "bog_witch"
@@ -2034,19 +2133,60 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	morrigan.icon = "🐸"
 	morrigan.model_path = "res://assets/characters/adventurers/Mage.glb"
 	morrigan.model_scale = Vector3(0.54, 0.54, 0.54)
-	morrigan.model_rotation_y = -135.0
+	morrigan.model_rotation_y = 180.0
 	morrigan.dialogue_text = "Step not off the rotting planks, wanderer... The Weeping Fen swallows the careless whole. Bog Creeps and hollow dead guard the Sunken Fen Seal in the mire. Reclaim it and channel the ancient echoes!"
-	morrigan.position = Vector3(84.0, 0.2, 100.0)
+	morrigan.position = Vector3(84.0, 0.2, 100.5)
 	parent.add_child(morrigan)
 
-	# 5. Swamp Monsters (Bog Creeps & Mire Skeletons) & Sunken Fen Relic
+	# 5. Swamp Monsters & Sunken Fen Relic
 	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(72.0, 0.0, 70.0), 45.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(95.0, 0.0, 88.0), -90.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.MINION, Vector3(78.0, 0.0, 94.0), 15.0)
-	_spawn_material_node(parent, "fen_seal_relic", "Ancient Seal of the Weeping Fen", "🐸", "res://assets/items/quest_materials/Crystal3.glb", Vector3(92.0, 0.1, 96.0), Color(0.35, 0.95, 0.45), 90, 65, Vector3(2.2, 2.2, 2.2))
+	_spawn_material_node(parent, "fen_seal_relic", "Ancient Seal of the Weeping Fen", "🐸", "res://assets/items/quest_materials/Crystal3.glb", Vector3(92.0, 0.1, 95.0), Color(0.35, 0.95, 0.45), 90, 65, Vector3(2.2, 2.2, 2.2))
+
+func _build_swamp_boardwalk(parent: Node3D, start_pos: Vector3, end_pos: Vector3, width: float) -> void:
+	var bw_root = Node3D.new()
+	bw_root.name = "SwampBoardwalk"
+	parent.add_child(bw_root)
+
+	var plank_mat = StandardMaterial3D.new()
+	plank_mat.albedo_color = Color(0.28, 0.22, 0.15)
+	plank_mat.roughness = 0.94
+
+	var post_mat = StandardMaterial3D.new()
+	post_mat.albedo_color = Color(0.20, 0.15, 0.10)
+	post_mat.roughness = 0.95
+
+	var diff = end_pos - start_pos
+	var total_len = Vector2(diff.x, diff.z).length()
+	var is_x_axis = abs(diff.x) >= abs(diff.z)
+	var steps = int(total_len / 0.70)
+
+	for i in range(steps + 1):
+		var t = float(i) / float(max(1, steps))
+		var p = start_pos.lerp(end_pos, t)
+		var plank = MeshInstance3D.new()
+		var pm = BoxMesh.new()
+		pm.size = Vector3(0.58, 0.07, width) if is_x_axis else Vector3(width, 0.07, 0.58)
+		plank.mesh = pm
+		plank.material_override = plank_mat
+		plank.position = p
+		bw_root.add_child(plank)
+
+		if i % 5 == 0:
+			for side in [-1.0, 1.0]:
+				var post = MeshInstance3D.new()
+				var cyl = CylinderMesh.new()
+				cyl.top_radius = 0.12
+				cyl.bottom_radius = 0.14
+				cyl.height = 0.65
+				post.mesh = cyl
+				post.material_override = post_mat
+				post.position = p + (Vector3(0.0, -0.10, side * width * 0.46) if is_x_axis else Vector3(side * width * 0.46, -0.10, 0.0))
+				bw_root.add_child(post)
 
 # =========================================================================
-# REGION 5: CRIMSON SIEGE ENCAMPMENT, TREBUCHETS & MARCHING ARMIES (Z in [56, 105])
+# REGION 5: CRIMSON SIEGE ENCAMPMENT, TREBUCHETS & MARCHING ARMIES (Z in [58, 105])
 # =========================================================================
 func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	# 1. Counterweight Trebuchet Battery (Articulated & Actively Hurling Boulders)
@@ -2060,21 +2200,24 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	treb_east.position = Vector3(14.0, 0.0, 74.0)
 	parent.add_child(treb_east)
 
-	# 2. Siege Towers, Red War Tents, Stake Barricades & Ammunition Wagons
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-24.0, 0.0, 78.0), Vector3.ONE * 8.5, 180.0)
-	_add_static_box(parent, Vector3(-24.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
-	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(24.0, 0.0, 78.0), Vector3.ONE * 8.5, 180.0)
-	_add_static_box(parent, Vector3(24.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
+	# 2. Siege Towers, Crimson Command Pavilions, Stake Barricades & Ammunition Wagons
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-25.0, 0.0, 78.0), Vector3.ONE * 8.0, 180.0)
+	_add_static_box(parent, Vector3(-25.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(25.0, 0.0, 78.0), Vector3.ONE * 8.0, 180.0)
+	_add_static_box(parent, Vector3(25.0, 6.0, 78.0), Vector3(4.5, 12.0, 4.5))
 
-	for tent_pos in [Vector3(-18.0, 0.0, 84.0), Vector3(-8.0, 0.0, 86.0), Vector3(8.0, 0.0, 86.0), Vector3(18.0, 0.0, 84.0)]:
-		_place_prop(parent, "res://assets/overworld/tent.gltf", tent_pos, Vector3.ONE * 3.8, 180.0)
-		_place_prop(parent, "res://assets/overworld/flag_red.gltf", tent_pos + Vector3(2.2, 0.0, -1.5), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(-16.0, 0.0, 88.0), Vector3.ONE * 4.8, 180.0)
+	_add_static_box(parent, Vector3(-16.0, 4.0, 88.0), Vector3(7.0, 7.0, 7.5))
+	_place_prop(parent, "res://assets/overworld/building_market_red.gltf", Vector3(-5.5, 0.0, 88.0), Vector3.ONE * 3.8, 180.0)
+	_place_prop(parent, "res://assets/overworld/building_market_red.gltf", Vector3(5.5, 0.0, 88.0), Vector3.ONE * 3.8, 180.0)
+	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(16.0, 0.0, 88.0), Vector3.ONE * 4.8, 180.0)
+	_add_static_box(parent, Vector3(16.0, 4.0, 88.0), Vector3(7.0, 7.0, 7.5))
 
-	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 64)
-	for bar_x in [-15.0, -10.0, -5.0, 5.0, 10.0, 15.0]:
-		_place_prop(parent, "res://assets/dungeon/barrier.gltf.glb", Vector3(bar_x, 0.0, 64.0), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-6.0, 0.0, 78.0), Vector3.ONE * 1.7, 40.0)
-	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 78.0), Vector3.ONE * 2.0)
+	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 65)
+	for bar_x in [-16.0, -10.5, -5.0, 5.0, 10.5, 16.0]:
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(bar_x, 0.0, 65.0), Vector3.ONE * 2.0, 90.0)
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.6, 40.0)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 79.0), Vector3.ONE * 1.8)
 
 	# NPC: Siege Master Vargos
 	var vargos = TownNPCScript.new()
@@ -2089,27 +2232,27 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	vargos.position = Vector3(0.0, 0.0, 70.0)
 	parent.add_child(vargos)
 
-	# 3. Marching Army Formations (Royal Blue Legion vs. Frontier Patrols)
+	# 3. Marching Army Formations (Marching across the open battlefield south of the Castle Keep)
 	var royal_army = ArmyFormation3DScript.new()
 	royal_army.regiment_name = "King's 1st Heavy Vanguard"
 	royal_army.faction_color = "blue"
-	royal_army.position = Vector3(0.0, 0.0, 54.0)
+	royal_army.position = Vector3(0.0, 0.0, 58.0)
 	royal_army.waypoints = [
-		Vector3(0.0, 0.0, 50.0),
-		Vector3(0.0, 0.0, 66.0),
-		Vector3(-12.0, 0.0, 60.0),
-		Vector3(12.0, 0.0, 60.0)
+		Vector3(-10.0, 0.0, 58.0),
+		Vector3(10.0, 0.0, 58.0),
+		Vector3(10.0, 0.0, 62.0),
+		Vector3(-10.0, 0.0, 62.0)
 	]
 	parent.add_child(royal_army)
 
 	var crimson_army = ArmyFormation3DScript.new()
 	crimson_army.regiment_name = "Redcrest Iron Company"
 	crimson_army.faction_color = "red"
-	crimson_army.position = Vector3(-28.0, 0.0, 52.0)
+	crimson_army.position = Vector3(-28.0, 0.0, 56.0)
 	crimson_army.waypoints = [
-		Vector3(-28.0, 0.0, 48.0),
-		Vector3(-44.0, 0.0, 56.0),
-		Vector3(-28.0, 0.0, 64.0)
+		Vector3(-26.0, 0.0, 54.0),
+		Vector3(-38.0, 0.0, 60.0),
+		Vector3(-26.0, 0.0, 66.0)
 	]
 	parent.add_child(crimson_army)
 
@@ -2117,16 +2260,23 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 # REGION 6: GREENHOLLOW WOODLAND VILLAGE & MOVING CARAVAN WAGONS
 # =========================================================================
 func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
-	# 1. Greenhollow Woodland Village (X in [-60, -38], Z in [-32, -14])
-	_place_prop(parent, "res://assets/overworld/building_church_green.gltf", Vector3(-52.0, 0.0, -24.0), Vector3.ONE * 5.8, 35.0)
-	_add_static_box(parent, Vector3(-52.0, 4.5, -24.0), Vector3(7.5, 9.0, 8.5))
-	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-44.0, 0.0, -18.0), Vector3.ONE * 6.5, -30.0)
-	_add_static_box(parent, Vector3(-44.0, 3.5, -18.0), Vector3(6.0, 6.5, 6.0))
-	_place_prop(parent, "res://assets/overworld/building_home_B_green.gltf", Vector3(-58.0, 0.0, -16.0), Vector3.ONE * 6.5, 60.0)
-	_add_static_box(parent, Vector3(-58.0, 3.5, -16.0), Vector3(6.0, 6.5, 6.5))
-	_place_prop(parent, "res://assets/overworld/building_well_green.gltf", Vector3(-49.0, 0.0, -17.0), Vector3.ONE * 2.6)
-	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(-42.0, 0.0, -25.0), Vector3.ONE * 2.5)
-	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(-45.0, 0.0, -26.0), Vector3.ONE * 2.2)
+	# 1. Greenhollow Woodland Village (Organized around a Village Green at X = -50.0, Z = -20.0)
+	# Greenhollow Chapel on the North side facing South (0°) onto the Village Green
+	_place_prop(parent, "res://assets/overworld/building_church_green.gltf", Vector3(-50.0, 0.0, -28.5), Vector3.ONE * 5.5, 0.0)
+	_add_static_box(parent, Vector3(-50.0, 4.5, -28.5), Vector3(7.0, 8.5, 8.0))
+
+	# West Greenhollow Cottage facing East (90°) onto the Village Green
+	_place_prop(parent, "res://assets/overworld/building_home_B_green.gltf", Vector3(-59.0, 0.0, -20.0), Vector3.ONE * 6.0, 90.0)
+	_add_static_box(parent, Vector3(-59.0, 3.5, -20.0), Vector3(6.0, 6.5, 6.0))
+
+	# East Greenhollow Cottage facing West (-90°) onto the Village Green
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-41.0, 0.0, -20.0), Vector3.ONE * 6.0, -90.0)
+	_add_static_box(parent, Vector3(-41.0, 3.5, -20.0), Vector3(6.0, 6.5, 6.0))
+
+	# Village Stone Well in the center of the Green & Logging Stack to the North-East
+	_place_prop(parent, "res://assets/overworld/building_well_green.gltf", Vector3(-50.0, 0.0, -19.5), Vector3.ONE * 2.4)
+	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(-40.0, 0.0, -28.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(-36.0, 0.0, -28.0), Vector3.ONE * 2.0)
 
 	var woodcutter = TownNPCScript.new()
 	woodcutter.npc_id = "woodcutter_hal"
@@ -2135,33 +2285,33 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 	woodcutter.icon = "🪓"
 	woodcutter.model_path = "res://assets/characters/adventurers/Barbarian.glb"
 	woodcutter.model_scale = Vector3(0.55, 0.55, 0.55)
-	woodcutter.model_rotation_y = 140.0
+	woodcutter.model_rotation_y = 180.0
 	woodcutter.dialogue_text = "Welcome to Greenhollow Village! Our timberwrights fell the stoutest oaks for Port Blackwater's ships and the King's siege engines."
-	woodcutter.position = Vector3(-48.0, 0.0, -19.5)
+	woodcutter.position = Vector3(-47.0, 0.0, -22.0)
 	parent.add_child(woodcutter)
 
-	# 2. Moving Horse-Drawn Trade Caravan Wagons on the Realm Highways
+	# 2. Moving Horse-Drawn Trade Caravan Wagons on the Dry Realm Highways
 	var caravan_east = CaravanWagon3DScript.new()
 	caravan_east.caravan_name = "Sunnydale Grain Caravan"
 	caravan_east.position = Vector3(8.0, 0.0, 14.5)
 	caravan_east.waypoints = [
-		Vector3(4.0, 0.0, 14.5),
+		Vector3(5.0, 0.0, 14.5),
 		Vector3(24.0, 0.0, 14.5)
 	]
 	parent.add_child(caravan_east)
 
 	var caravan_west = CaravanWagon3DScript.new()
 	caravan_west.caravan_name = "Blackwater Spice Caravan"
-	caravan_west.position = Vector3(-24.0, 0.0, 26.0)
+	caravan_west.position = Vector3(-24.0, 0.0, 34.0)
 	caravan_west.waypoints = [
-		Vector3(-20.0, 0.0, 18.0),
+		Vector3(-20.0, 0.0, 31.0),
 		Vector3(-46.0, 0.0, 50.0)
 	]
 	parent.add_child(caravan_west)
 
 	# 3. Roaming Wildlife in Greenhollow & Weeping Fen Outskirts
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-40.0, 0.0, -14.0), 45.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-52.0, 0.0, -12.0), -30.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-46.0, 0.0, -24.0), 80.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-42.0, 0.0, -12.0), 45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-54.0, 0.0, -12.0), -30.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-56.0, 0.0, -27.0), 80.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(64.0, 0.0, 62.0), 120.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(68.0, 0.0, 82.0), -45.0)

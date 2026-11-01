@@ -1,6 +1,7 @@
 shader_type spatial;
 render_mode cull_disabled, diffuse_toon;
 
+uniform vec4 flag_color : source_color = vec4(0.90, 0.85, 0.74, 1.0);
 uniform vec3 wind_direction = vec3(1.0, 0.0, 0.2);
 uniform float wave_speed : hint_range(1.0, 10.0) = 4.2;
 uniform float wave_frequency : hint_range(1.0, 12.0) = 4.5;
@@ -15,5 +16,6 @@ void vertex() {
 }
 
 void fragment() {
-	ROUGHNESS = 0.8;
+	ALBEDO = flag_color.rgb;
+	ROUGHNESS = 0.82;
 }

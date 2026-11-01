@@ -62,6 +62,12 @@ func _ready() -> void:
 	
 	if "--test-gameplay" in OS.get_cmdline_args() or "--test-gameplay" in OS.get_cmdline_user_args():
 		_run_gameplay_self_test()
+	elif "--capture-world" in OS.get_cmdline_args() or "--capture-world" in OS.get_cmdline_user_args():
+		var audit_script = load("res://tools/world_screenshot_audit.gd")
+		audit_script.run_audit(self, "before")
+	elif "--capture-world-after" in OS.get_cmdline_args() or "--capture-world-after" in OS.get_cmdline_user_args():
+		var audit_script = load("res://tools/world_screenshot_audit.gd")
+		audit_script.run_audit(self, "after")
 
 func _run_gameplay_self_test() -> void:
 	print("==================================================")
@@ -650,19 +656,19 @@ func _update_environment_lighting(floor_num: int) -> void:
 	var world_env: WorldEnvironment = get_node_or_null("WorldEnvironment")
 	
 	if floor_num == 0:
-		# Overworld Surface Hub: Golden-hour open daylight
+		# Overworld Surface Hub: Balanced warm golden-hour daylight without white blowout
 		if dir_light:
-			dir_light.light_energy = 1.35
-			dir_light.light_color = Color(1.0, 0.95, 0.88)
+			dir_light.light_energy = 0.88
+			dir_light.light_color = Color(1.0, 0.95, 0.86)
 		if world_env and world_env.environment:
-			world_env.environment.ambient_light_energy = 1.15
-			world_env.environment.ambient_light_color = Color(0.52, 0.62, 0.76)
+			world_env.environment.ambient_light_energy = 0.65
+			world_env.environment.ambient_light_color = Color(0.55, 0.64, 0.76)
 			if world_env.environment.sky and world_env.environment.sky.sky_material is ProceduralSkyMaterial:
 				var sky_mat: ProceduralSkyMaterial = world_env.environment.sky.sky_material
-				sky_mat.sky_top_color = Color(0.28, 0.52, 0.88)
-				sky_mat.sky_horizon_color = Color(0.68, 0.82, 0.94)
-				sky_mat.ground_bottom_color = Color(0.2, 0.28, 0.2)
-				sky_mat.ground_horizon_color = Color(0.48, 0.62, 0.48)
+				sky_mat.sky_top_color = Color(0.24, 0.48, 0.84)
+				sky_mat.sky_horizon_color = Color(0.62, 0.78, 0.92)
+				sky_mat.ground_bottom_color = Color(0.18, 0.25, 0.18)
+				sky_mat.ground_horizon_color = Color(0.42, 0.56, 0.42)
 	else:
 		# Subterranean Ossuary Delve: Dark moody dungeon
 		if dir_light:
