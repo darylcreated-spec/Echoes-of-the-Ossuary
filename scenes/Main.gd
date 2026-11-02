@@ -118,8 +118,8 @@ func _run_gameplay_self_test() -> void:
 		player.perform_dash()
 		print(" -> Dash maneuver executed successfully!")
 		
-	# 3. Journal Modal [J]
-	print("\n[TEST 3] Story Journal Modal [J]...")
+	# 3. Journal Modal [L]
+	print("\n[TEST 3] Story Journal Modal [L]...")
 	var hud_node = get_tree().get_first_node_in_group("hud")
 	assert(hud_node != null)
 	var j_modal = hud_node.get("journal_modal")

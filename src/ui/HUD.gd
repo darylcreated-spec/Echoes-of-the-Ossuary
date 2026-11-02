@@ -164,7 +164,7 @@ func _build_ui_tree() -> void:
 	btn_box.add_child(missions_btn)
 
 	var journal_btn = Button.new()
-	journal_btn.text = "📖 Journal [J]"
+	journal_btn.text = "📖 Journal [L]"
 	journal_btn.custom_minimum_size = Vector2(105, 26)
 	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
 	btn_box.add_child(journal_btn)
@@ -216,7 +216,7 @@ func _build_ui_tree() -> void:
 	
 	# Bottom Screen Controls Hint
 	var controls_bar = Label.new()
-	controls_bar.text = "[WASD] Move • [LMB] Strike • [Space] Dash • [Q] Swap Crossbow/Melee • [RMB] Parry • [F] Mount • [E] Interact • [N] Realm Map • [J] Journal • [M] Quests"
+	controls_bar.text = "[WASD] Move • [LMB/J] Strike • [Space] Dash • [Q] Swap Crossbow/Melee • [RMB/K] Parry • [F] Mount • [E] Interact • [N] Realm Map • [L] Journal • [M] Quests"
 	controls_bar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	controls_bar.anchor_left = 0.5
 	controls_bar.anchor_right = 0.5
@@ -1032,7 +1032,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if realm_map_modal:
 			realm_map_modal.toggle_map()
 			get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
+	elif event.is_action_pressed("toggle_journal") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_L):
 		if journal_modal:
 			journal_modal.toggle_modal()
 			get_viewport().set_input_as_handled()

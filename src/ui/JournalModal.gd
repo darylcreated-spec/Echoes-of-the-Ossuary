@@ -93,7 +93,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE):
 		close_modal()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
+	elif event.is_action_pressed("toggle_journal") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_L):
 		close_modal()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB:
@@ -153,7 +153,7 @@ func _build_ui() -> void:
 	header_vbox.add_child(title_lbl)
 
 	var sub_lbl = Label.new()
-	sub_lbl.text = "[J] Close Journal  |  [Tab] Switch Page  |  [Esc] Resume Journey"
+	sub_lbl.text = "[L] Close Journal  |  [Tab] Switch Page  |  [Esc] Resume Journey"
 	sub_lbl.add_theme_font_size_override("font_size", 13)
 	sub_lbl.modulate = Color(0.65, 0.72, 0.80)
 	header_vbox.add_child(sub_lbl)
