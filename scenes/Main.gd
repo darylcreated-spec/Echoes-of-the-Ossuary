@@ -1,5 +1,7 @@
 extends Node3D
 
+const WeatherManagerScript = preload("res://src/world/WeatherManager.gd")
+
 @onready var camera: Camera3D = $IsometricCamera
 @onready var dungeon_gen: Node3D = $DungeonGenerator
 @onready var player: Node3D = $Player
@@ -44,6 +46,7 @@ var camera_mode_button: Button = null
 var camera_style_button: Button = null
 
 var current_room: Node3D = null
+var weather_manager = null
 
 func _ready() -> void:
 	add_to_group("main")
@@ -56,6 +59,11 @@ func _ready() -> void:
 	
 	# Initial room build (Sanctuary Hub)
 	load_current_floor_room()
+	
+	# Initialize Living World Day/Night & Weather Atmosphere System (Phase 1)
+	weather_manager = WeatherManagerScript.new()
+	weather_manager.name = "WeatherManager"
+	add_child(weather_manager)
 	
 	if camera and player:
 		camera.make_current()
@@ -371,6 +379,61 @@ func _run_gameplay_self_test() -> void:
 	else:
 		print(" -> Animal movement frames completed successfully!")
 
+	# 14. Living Atmosphere, Day/Night Cycle & Surface Footsteps (Phase 1)
+	print("\n[TEST 14] Dynamic Day/Night Cycle, Weather & Surface Footsteps (Phase 1)...")
+	var wm = get_tree().get_first_node_in_group("weather_manager")
+	assert(wm != null)
+	print(" -> WeatherManager active in tree: ", wm != null)
+	
+	# Test Morning -> Dusk -> Night transitions
+	wm.advance_to_time(8.5)
+	assert(wm.current_period == WeatherManagerScript.TimePeriod.DAY)
+	print(" -> Day Period verified (08:30 AM): ", wm.get_formatted_time(), " | Period: ", wm._get_period_name(wm.current_period))
+	
+	wm.advance_to_time(19.0)
+	assert(wm.current_period == WeatherManagerScript.TimePeriod.DUSK)
+	print(" -> Dusk Period verified (07:00 PM): ", wm.get_formatted_time(), " | Sun Energy: ", wm.sun_light.light_energy)
+	
+	wm.advance_to_time(23.5)
+	assert(wm.current_period == WeatherManagerScript.TimePeriod.NIGHT)
+	print(" -> Night Period verified (11:30 PM): ", wm.get_formatted_time(), " | Lunar Color: ", wm.sun_light.light_color)
+	
+	# Test Weather states
+	wm.force_weather(WeatherManagerScript.WeatherType.RAIN)
+	assert(wm.current_weather == WeatherManagerScript.WeatherType.RAIN)
+	print(" -> Weather transitioned to Rain! Rain Particles Visible: ", wm.rain_particles.visible)
+	assert(wm.rain_particles.visible == true)
+	
+	wm.force_weather(WeatherManagerScript.WeatherType.COASTAL_MIST)
+	assert(wm.current_weather == WeatherManagerScript.WeatherType.COASTAL_MIST)
+	print(" -> Weather transitioned to Coastal Mist! Fog Enabled: ", wm.world_env.environment.fog_enabled)
+	assert(wm.world_env.environment.fog_enabled == true)
+	
+	wm.force_weather(WeatherManagerScript.WeatherType.CLEAR)
+	wm.advance_to_time(10.0)
+	print(" -> Restored to Morning Clear Skies!")
+	
+	# Test Surface Footstep Detection
+	player.global_position = Vector3(0.0, 0.0, 5.0) # Oakhaven Plaza
+	assert(player.get_current_surface_type() == PlayerController.SurfaceType.STONE)
+	print(" -> Surface at Oakhaven Plaza (0, 0, 5): STONE")
+	
+	player.global_position = Vector3(-65.0, 1.2, 60.0) # Port Pier
+	assert(player.get_current_surface_type() == PlayerController.SurfaceType.WOOD)
+	print(" -> Surface at Port Pier (-65, 1.2, 60): WOOD")
+	
+	player.global_position = Vector3(25.0, 0.0, 35.0) # Sunnydale Pasture
+	var surf_type = player.get_current_surface_type()
+	print(" -> Surface at Sunnydale Pasture (25, 0, 35): ", surf_type)
+	assert(surf_type == PlayerController.SurfaceType.GRASS)
+	
+	player.global_position = Vector3(10.0, 0.0, 24.0) # River Shallows
+	assert(player.get_current_surface_type() == PlayerController.SurfaceType.WATER)
+	print(" -> Surface at River Channel (10, 0, 24): WATER")
+	
+	# Restore player to Sanctuary Hub spawn
+	player.global_position = Vector3(0.0, 0.0, 3.8)
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
@@ -513,6 +576,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			reset_camera_view()
 			get_viewport().set_input_as_handled()
 			return
+		elif event.keycode == KEY_T:
+			if weather_manager:
+				weather_manager.cycle_time_preset()
+				var p_name = weather_manager._get_period_name(weather_manager.current_period)
+				CombatJuice.show_popup_text(player.global_position + Vector3(0, 1.8, 0), "⏳ " + weather_manager.get_formatted_time() + " (" + p_name + ")", Color(1.0, 0.9, 0.4))
+			get_viewport().set_input_as_handled()
+			return
 			
 	# Mouse Wheel Zoom (Follow) or Speed (FreeCam)
 	if event is InputEventMouseButton and event.pressed:
@@ -651,6 +721,12 @@ func _setup_camera_ui() -> void:
 	reset_btn.focus_mode = Control.FOCUS_NONE
 	reset_btn.pressed.connect(reset_camera_view)
 	hbox.add_child(reset_btn)
+
+	var time_btn = Button.new()
+	time_btn.text = "🕒 Time [T]"
+	time_btn.focus_mode = Control.FOCUS_NONE
+	time_btn.pressed.connect(func(): if weather_manager: weather_manager.cycle_time_preset())
+	hbox.add_child(time_btn)
 	
 	canvas.add_child(camera_ui_container)
 	camera_ui_container.anchor_left = 0.0
@@ -659,7 +735,7 @@ func _setup_camera_ui() -> void:
 	camera_ui_container.anchor_bottom = 1.0
 	camera_ui_container.offset_left = 16.0
 	camera_ui_container.offset_top = -48.0
-	camera_ui_container.offset_right = 650.0
+	camera_ui_container.offset_right = 720.0
 	camera_ui_container.offset_bottom = -12.0
 	
 	_update_camera_ui()

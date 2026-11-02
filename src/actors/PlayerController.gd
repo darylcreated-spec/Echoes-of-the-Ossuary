@@ -20,8 +20,11 @@ var mount_anim: AnimationPlayer = null
 var mount_breed: String = "Horse" # "Horse", "Horse_White", "Stag"
 var mount_speed: float = 12.8
 var _hoofbeat_timer: float = 0.0
+var _footstep_timer: float = 0.0
 var _trample_cooldown: float = 0.0
 var _mount_cooldown: float = 0.0
+
+enum SurfaceType { STONE, WOOD, GRASS, WATER }
 
 # --- WEAPON STANCE & SHIELD PARRY (PILLAR 2) ---
 enum WeaponStance { MELEE, RANGED }
@@ -274,8 +277,21 @@ func _physics_process(delta: float) -> void:
 			_hoofbeat_timer += delta
 			if _hoofbeat_timer >= 0.28:
 				_hoofbeat_timer = 0.0
-				AudioManager.play_sfx("hoofbeat", 0.08, -5.0)
+				var surf = get_current_surface_type()
+				if surf == SurfaceType.WATER:
+					AudioManager.play_sfx("footstep_water", 0.15, -4.0)
+				else:
+					AudioManager.play_sfx("hoofbeat", 0.08, -5.0)
 		_process_trample(delta)
+	else:
+		# Unmounted surface-aware dynamic footsteps
+		var horiz_vel = Vector2(velocity.x, velocity.z).length()
+		if horiz_vel > 0.5 and not _is_dashing:
+			_footstep_timer += delta
+			var step_interval = 0.38 if not is_blocking else 0.52
+			if _footstep_timer >= step_interval:
+				_footstep_timer = 0.0
+				_play_surface_footstep()
 
 	# Living Heartwood / Tri-Seal Passive Regeneration
 	if GameManager.has_boon("living_heartwood") or GameManager.has_boon("tri_seal_mastery"):
@@ -853,3 +869,73 @@ func die() -> void:
 	CombatJuice.spawn_bone_burst(global_position, 24)
 	AudioManager.play_sfx("skeleton_bones", 0.05, 4.0)
 	GameManager.trigger_game_over(false)
+
+# --- SURFACE DETECTION & FOOTSTEPS ---
+
+func get_current_surface_type() -> SurfaceType:
+	var pos = global_position
+	
+	# 1. Physics raycast down to detect ground collider metadata
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(pos + Vector3(0, 0.6, 0), pos + Vector3(0, -1.8, 0))
+	query.exclude = [self]
+	var result = space_state.intersect_ray(query)
+	if result:
+		var col = result.collider
+		var col_name = col.name.to_lower()
+		var p_name = col.get_parent().name.to_lower() if col.get_parent() else ""
+		
+		# Check specific prop/collider name keywords
+		if "water" in col_name or "swamp" in col_name or "ocean" in col_name or "river" in col_name:
+			return SurfaceType.WATER
+		if "pier" in col_name or "dock" in col_name or "plank" in col_name or "wood" in col_name or "boardwalk" in col_name or "ship" in col_name or "deck" in col_name:
+			return SurfaceType.WOOD
+		if "pier" in p_name or "dock" in p_name or "wood" in p_name or "boardwalk" in p_name or "ship" in p_name or "deck" in p_name:
+			return SurfaceType.WOOD
+		if "stone" in col_name or "quai" in col_name or "cobble" in col_name or "catacomb" in col_name:
+			return SurfaceType.STONE
+
+	# 2. Coordinate / Biome based surface resolution
+	# A. Subterranean Catacombs
+	if GameManager.current_floor > 0:
+		return SurfaceType.STONE
+
+	# B. Water surfaces (river, harbor shallows, swamp)
+	if pos.z >= 19.5 and pos.z <= 28.5 and abs(pos.x) > 4.5:
+		return SurfaceType.WATER
+	if pos.x < -60.0 and pos.z > 46.0 and pos.y <= 0.25:
+		return SurfaceType.WATER
+	if pos.x > 50.0 and pos.z > 45.0 and pos.y <= 0.2:
+		return SurfaceType.WATER
+		
+	# C. Wooden piers, ships, and boardwalks
+	if pos.x < -50.0 and pos.z > 46.0 and pos.y > 0.25:
+		return SurfaceType.WOOD
+	if pos.x > 55.0 and pos.z > 45.0 and pos.y > 0.2:
+		return SurfaceType.WOOD
+	if abs(pos.x) <= 4.0 and pos.z >= 19.0 and pos.z <= 29.0:
+		return SurfaceType.WOOD
+		
+	# D. Stone cobblestone plazas, courtyards, roads, crags
+	if abs(pos.x) <= 24.0 and pos.z >= -25.0 and pos.z <= 18.0:
+		return SurfaceType.STONE
+	if abs(pos.x) <= 18.0 and pos.z >= 38.0 and pos.z <= 85.0:
+		return SurfaceType.STONE
+	if pos.x > 45.0 and pos.z < -20.0:
+		return SurfaceType.STONE
+		
+	# E. Grass/Meadow/Pasture default (Sunnydale farmlands, forest floor, meadows)
+	return SurfaceType.GRASS
+
+func _play_surface_footstep() -> void:
+	var surface = get_current_surface_type()
+	match surface:
+		SurfaceType.STONE:
+			AudioManager.play_sfx("footstep_stone", 0.12, -7.0)
+		SurfaceType.WOOD:
+			AudioManager.play_sfx("footstep_wood", 0.10, -6.5)
+		SurfaceType.GRASS:
+			AudioManager.play_sfx("footstep_grass", 0.14, -7.5)
+		SurfaceType.WATER:
+			AudioManager.play_sfx("footstep_water", 0.12, -5.5)
+			CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.05, 0), Color(0.6, 0.8, 1.0))

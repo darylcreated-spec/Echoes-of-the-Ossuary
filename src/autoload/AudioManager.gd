@@ -51,8 +51,20 @@ const SFX_PATHS: Dictionary = {
 	"seal_bark": "res://assets/audio/sfx_seal_bark.wav",
 	"horse_neigh": "res://assets/audio/sfx_horse_neigh.wav",
 	"cow_moo": "res://assets/audio/sfx_cow_moo.wav",
-	"wolf_howl": "res://assets/audio/sfx_wolf_howl.wav"
+	"wolf_howl": "res://assets/audio/sfx_wolf_howl.wav",
+	"footstep_stone": "res://assets/audio/sfx_footstep_stone.ogg",
+	"footstep_wood": "res://assets/audio/sfx_footstep_wood.ogg",
+	"footstep_grass": "res://assets/audio/sfx_footstep_grass.ogg",
+	"footstep_water": "res://assets/audio/sfx_footstep_water.ogg",
+	"thunder_rumble": "res://assets/audio/sfx_thunder_rumble.ogg",
+	"rain_loop": "res://assets/audio/sfx_rain_loop.ogg",
+	"ocean_swell": "res://assets/audio/sfx_ocean_swell.ogg"
 }
+
+# Weather audio
+var _weather_player: AudioStreamPlayer = null
+var _current_weather_key: String = ""
+var _weather_fade_tween: Tween = null
 
 # Synth buffer fallbacks
 var _synth_samples: Dictionary = {}
@@ -79,6 +91,11 @@ func _setup_audio_players() -> void:
 	_bgm_player_b.name = "BGMPlayer_B"
 	_bgm_player_b.bus = "Master"
 	add_child(_bgm_player_b)
+
+	_weather_player = AudioStreamPlayer.new()
+	_weather_player.name = "WeatherPlayer"
+	_weather_player.bus = "Master"
+	add_child(_weather_player)
 
 func _load_or_generate_audio() -> void:
 	for key in SFX_PATHS.keys():
@@ -158,6 +175,36 @@ func stop_bgm() -> void:
 		_bgm_player_a.stop()
 	if _bgm_player_b:
 		_bgm_player_b.stop()
+
+func play_weather_ambience(weather_key: String, target_vol_db: float = -16.0, fade_duration: float = 1.2) -> void:
+	if _current_weather_key == weather_key and _weather_player and _weather_player.playing:
+		return
+	if not _audio_cache.has(weather_key):
+		return
+	_current_weather_key = weather_key
+	var stream: AudioStream = _audio_cache[weather_key]
+	if "loop" in stream:
+		stream.loop = true
+	if "loop_mode" in stream:
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	_weather_player.stream = stream
+	_weather_player.volume_db = -60.0
+	_weather_player.play()
+	if _weather_fade_tween and _weather_fade_tween.is_valid():
+		_weather_fade_tween.kill()
+	_weather_fade_tween = create_tween()
+	_weather_fade_tween.tween_property(_weather_player, "volume_db", target_vol_db, fade_duration)
+
+func stop_weather_ambience(fade_duration: float = 1.0) -> void:
+	if not _weather_player or not _weather_player.playing:
+		_current_weather_key = ""
+		return
+	_current_weather_key = ""
+	if _weather_fade_tween and _weather_fade_tween.is_valid():
+		_weather_fade_tween.kill()
+	_weather_fade_tween = create_tween()
+	_weather_fade_tween.tween_property(_weather_player, "volume_db", -60.0, fade_duration)
+	_weather_fade_tween.chain().tween_callback(_weather_player.stop)
 
 func _get_available_sfx_player() -> AudioStreamPlayer:
 	for p in _sfx_players:
@@ -696,6 +743,114 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var freq = lerp(240.0, 440.0, sin(PI * t / duration))
 				var growl = randf_range(-0.25, 0.25) * 0.35
 				var val = (sin(2.0 * PI * freq * t) * 0.65 + growl) * env * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"footstep_stone":
+			# Crisp stone boot click (high impact snap + solid stone body)
+			var duration: float = 0.08
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 55.0)
+				var snap = sin(2.0 * PI * 820.0 * t) * exp(-t * 110.0) * 0.5
+				var body = sin(2.0 * PI * 135.0 * t) * 0.6
+				var grit = randf_range(-0.35, 0.35) * exp(-t * 65.0)
+				var val = (snap + body + grit) * env * 0.45
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"footstep_wood":
+			# Hollow acoustic resonance of timber plank (piers / boardwalks)
+			var duration: float = 0.11
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 32.0)
+				var timber1 = sin(2.0 * PI * 210.0 * t) * 0.65
+				var timber2 = sin(2.0 * PI * 340.0 * t) * 0.35
+				var creak = sin(2.0 * PI * 95.0 * t) * 0.4
+				var knock = randf_range(-0.25, 0.25) * exp(-t * 50.0)
+				var val = (timber1 + timber2 + creak + knock) * env * 0.5
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"footstep_grass":
+			# Soft brush, foliage & grass rustle without hard transients
+			var duration: float = 0.10
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 26.0) * sin(PI * clamp(t / 0.02, 0.0, 1.0))
+				var rustle = (randf_range(-0.5, 0.5) + randf_range(-0.5, 0.5)) * 0.5
+				var low_swish = sin(2.0 * PI * 75.0 * t) * 0.25
+				var val = (rustle * 0.65 + low_swish) * env * 0.35
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"footstep_water":
+			# Wet liquid splash and droplet ripple
+			var duration: float = 0.14
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 28.0)
+				var bubble_freq = lerp(680.0, 320.0, clamp(t / 0.14, 0.0, 1.0))
+				var plop = sin(2.0 * PI * bubble_freq * t) * 0.6
+				var splash = randf_range(-0.4, 0.4) * exp(-t * 40.0)
+				var drop = sin(2.0 * PI * 1250.0 * t) * exp(-t * 70.0) * 0.35
+				var val = (plop + splash + drop) * env * 0.45
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"thunder_rumble":
+			# Distant low-frequency rolling thunder
+			var duration: float = 1.8
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * clamp(t / 0.3, 0.0, 1.0)) * exp(-max(0.0, t - 0.3) * 1.8)
+				var rumble = sin(2.0 * PI * 42.0 * t) * 0.5 + sin(2.0 * PI * 58.0 * t) * 0.35 + sin(2.0 * PI * 86.0 * t + sin(2.0 * PI * 4.0 * t)) * 0.25
+				var roll = (randf_range(-0.3, 0.3) + randf_range(-0.3, 0.3)) * 0.4
+				var val = (rumble + roll) * env * 0.65
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"rain_loop":
+			# Gentle falling rain ambient loop
+			var duration: float = 1.5
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var noise1 = randf_range(-0.35, 0.35)
+				var noise2 = randf_range(-0.35, 0.35)
+				var patter = (noise1 + noise2) * 0.5 + sin(2.0 * PI * 180.0 * t) * 0.06
+				var val = patter * 0.3
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"ocean_swell":
+			# Coastal ocean wave surf swell loop
+			var duration: float = 2.4
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var swell_env = 0.5 + 0.5 * sin(2.0 * PI * (t / 2.4))
+				var surf = (randf_range(-0.35, 0.35) + randf_range(-0.35, 0.35)) * 0.4 + sin(2.0 * PI * 65.0 * t) * 0.2
+				var val = surf * swell_env * 0.38
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 

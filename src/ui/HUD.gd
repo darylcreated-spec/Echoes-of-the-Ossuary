@@ -18,6 +18,7 @@ var floor_label: Label = null
 var gold_label: Label = null
 var echoes_label: Label = null
 var region_badge: Label = null
+var time_weather_label: Label = null
 
 # Boons Container
 var boons_container: HBoxContainer = null
@@ -125,6 +126,12 @@ func _build_ui_tree() -> void:
 	floor_label.add_theme_font_size_override("font_size", 18)
 	floor_label.modulate = Color(1.0, 0.85, 0.3)
 	top_right.add_child(floor_label)
+
+	time_weather_label = Label.new()
+	time_weather_label.text = "⏳ 08:30 AM  ☀️ Clear Skies"
+	time_weather_label.add_theme_font_size_override("font_size", 13)
+	time_weather_label.modulate = Color(0.85, 0.92, 1.0)
+	top_right.add_child(time_weather_label)
 	
 	var curr_box = HBoxContainer.new()
 	curr_box.add_theme_constant_override("separation", 16)
@@ -280,6 +287,17 @@ func _build_ui_tree() -> void:
 	add_child(fade_curtain)
 
 func _process(_delta: float) -> void:
+	if time_weather_label:
+		var wm = get_tree().get_first_node_in_group("weather_manager")
+		if wm and GameManager.current_floor == 0:
+			time_weather_label.visible = true
+			time_weather_label.text = "🕒 " + wm.get_formatted_time() + "  " + wm.get_weather_display_string()
+		elif GameManager.current_floor > 0:
+			time_weather_label.visible = true
+			time_weather_label.text = "🕯️ Catacomb Torches · Subterranean"
+		else:
+			time_weather_label.visible = false
+
 	if region_badge:
 		var player = get_tree().get_first_node_in_group("player")
 		if player and GameManager.current_floor == 0:

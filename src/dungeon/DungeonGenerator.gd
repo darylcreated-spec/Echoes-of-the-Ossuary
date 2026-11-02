@@ -266,6 +266,7 @@ func _attach_torch_sconce(parent: Node3D, pos: Vector3) -> void:
 	light.light_color = Color(1.0, 0.55, 0.23) # Warm #ff8c3b
 	light.omni_range = 9.0
 	light.shadow_enabled = true
+	light.add_to_group("nocturnal_lights")
 	
 	# Add flicker script
 	var flicker = Node.new()
@@ -758,10 +759,12 @@ func _build_town_quarter(parent: Node3D) -> void:
 func _place_lantern_post(parent: Node3D, pos: Vector3, rot_y: float = 0.0) -> Node3D:
 	var post = _place_prop(parent, "res://assets/overworld/post_lantern.gltf", pos, Vector3.ONE * 1.1, rot_y)
 	var light = OmniLight3D.new()
+	light.name = "LanternLight"
 	light.light_color = Color(1.0, 0.78, 0.45) # Warm medieval lantern
 	light.light_energy = 1.6
 	light.omni_range = 8.0
 	light.position = Vector3(0.0, 3.2, 0.0)
+	light.add_to_group("nocturnal_lights")
 	post.add_child(light)
 	return post
 
