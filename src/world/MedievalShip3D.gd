@@ -554,6 +554,67 @@ func _build_medieval_cog() -> void:
 		_crew_anims.append(sap)
 		_play_ship_crew_anim(sap, "PickUp")
 
+	# 10. Deck Cannons & Cannonball Ammunition Stacks
+	var cannon_scene = load("res://assets/ships/cannon.glb")
+	if cannon_scene:
+		for c_z in [-3.5, 0.0, 3.5]:
+			# Port battery
+			var c_port = cannon_scene.instantiate()
+			c_port.scale = Vector3.ONE * 1.6
+			c_port.position = Vector3(-2.25, 1.85, c_z)
+			c_port.rotation_degrees.y = -90.0
+			_hull_pivot.add_child(c_port)
+			# Starboard battery
+			var c_star = cannon_scene.instantiate()
+			c_star.scale = Vector3.ONE * 1.6
+			c_star.position = Vector3(2.25, 1.85, c_z)
+			c_star.rotation_degrees.y = 90.0
+			_hull_pivot.add_child(c_star)
+
+	var ball_scene = load("res://assets/ships/cannon-ball.glb")
+	if ball_scene:
+		for b_z in [-2.0, 2.0]:
+			var balls = ball_scene.instantiate()
+			balls.scale = Vector3.ONE * 1.3
+			balls.position = Vector3(0.0, 1.85, b_z)
+			_hull_pivot.add_child(balls)
+
+	# 11. Ocean Hull Wake & White Churn Foam Sprites along Port & Starboard Waterline
+	_build_ocean_wake_vfx(2.6, 13.0)
+
+func _build_ocean_wake_vfx(half_beam: float, length: float) -> void:
+	for side_x in [-half_beam, half_beam]:
+		var wake = CPUParticles3D.new()
+		wake.name = "WaterlineWake_%s" % ("Port" if side_x < 0 else "Starboard")
+		wake.position = Vector3(side_x, 0.05, 0.0)
+		wake.amount = 14
+		wake.lifetime = 1.6
+		wake.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		wake.emission_box_extents = Vector3(0.35, 0.02, length * 0.45)
+		wake.direction = Vector3(side_x * 0.5, 0.0, 0.5).normalized()
+		wake.spread = 28.0
+		wake.gravity = Vector3.ZERO
+		wake.initial_velocity_min = 0.2
+		wake.initial_velocity_max = 0.6
+		wake.scale_amount_min = 0.8
+		wake.scale_amount_max = 2.0
+		wake.color = Color(0.92, 0.96, 1.0, 0.65)
+
+		var wake_mat = StandardMaterial3D.new()
+		wake_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		wake_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		wake_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		var tex = load("res://assets/particles/twirl_01.png")
+		if not tex:
+			tex = load("res://assets/particles/smoke_01.png")
+		if tex:
+			wake_mat.albedo_texture = tex
+		var q_m = QuadMesh.new()
+		q_m.size = Vector2(0.95, 0.95)
+		q_m.material = wake_mat
+		wake.mesh = q_m
+		_hull_pivot.add_child(wake)
+
 func _build_rowboat() -> void:
 	var wood_mat = StandardMaterial3D.new()
 	wood_mat.albedo_color = Color(0.36, 0.24, 0.15)
@@ -640,6 +701,9 @@ func _build_rowboat() -> void:
 	if rap:
 		_crew_anims.append(rap)
 		_play_ship_crew_anim(rap, "Interact")
+
+	# Rowboat Waterline Wake Foam
+	_build_ocean_wake_vfx(0.9, 4.0)
 
 func _build_interaction() -> void:
 	var area = Area3D.new()

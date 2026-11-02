@@ -150,6 +150,31 @@ func _build_trebuchet_assembly() -> void:
 	_loaded_boulder.position = Vector3(0.0, -0.4, 5.8)
 	_arm_pivot.add_child(_loaded_boulder)
 
+	# Dynamic Release Rope Sling & Leather Pouch at Long Arm Tip
+	var sling_rope = MeshInstance3D.new()
+	var rope_mesh = CylinderMesh.new()
+	rope_mesh.top_radius = 0.03
+	rope_mesh.bottom_radius = 0.03
+	rope_mesh.height = 2.2
+	var rope_mat = StandardMaterial3D.new()
+	rope_mat.albedo_color = Color(0.55, 0.48, 0.38)
+	rope_mat.roughness = 0.9
+	rope_mesh.material = rope_mat
+	sling_rope.mesh = rope_mesh
+	sling_rope.position = Vector3(0.0, -0.2, 5.1)
+	sling_rope.rotation_degrees.x = 80.0
+	_arm_pivot.add_child(sling_rope)
+
+	var pouch = MeshInstance3D.new()
+	var pouch_mesh = BoxMesh.new()
+	pouch_mesh.size = Vector3(0.7, 0.1, 0.9)
+	var pouch_mat = StandardMaterial3D.new()
+	pouch_mat.albedo_color = Color(0.28, 0.18, 0.12)
+	pouch_mesh.material = pouch_mat
+	pouch.mesh = pouch_mesh
+	pouch.position = Vector3(0.0, -0.45, 5.8)
+	_arm_pivot.add_child(pouch)
+
 	# Ammunition Pile beside the Trebuchet
 	if boulder_scene:
 		for b_offset in [Vector3(2.8, 0.3, 1.5), Vector3(3.3, 0.3, 2.1), Vector3(2.6, 0.3, 2.4), Vector3(3.0, 0.8, 1.9)]:
@@ -303,6 +328,7 @@ func _launch_boulder() -> void:
 	for ap in _crew_anims:
 		_play_crew_anim(ap, "Cheer")
 	AudioManager.play_sfx_at_position("trebuchet_launch", global_position, 42.0, 0.06, 0.0)
+	_spawn_launch_dust_puff()
 
 	if _active_projectile and is_instance_valid(_active_projectile):
 		_active_projectile.queue_free()
@@ -324,12 +350,106 @@ func _launch_boulder() -> void:
 	fire_light.omni_range = 7.0
 	_active_projectile.add_child(fire_light)
 
+	# 1. Flame Particle Trail using Kenney CC0 flame_02.png
+	var flame_trail = CPUParticles3D.new()
+	flame_trail.name = "FlameTrail"
+	flame_trail.amount = 28
+	flame_trail.lifetime = 0.45
+	flame_trail.local_coords = false
+	flame_trail.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	flame_trail.emission_sphere_radius = 0.35
+	flame_trail.direction = Vector3.UP
+	flame_trail.spread = 24.0
+	flame_trail.gravity = Vector3(0.0, 3.2, 0.0)
+	flame_trail.initial_velocity_min = 0.6
+	flame_trail.initial_velocity_max = 2.2
+	flame_trail.scale_amount_min = 0.8
+	flame_trail.scale_amount_max = 1.8
+	flame_trail.color = Color(1.0, 0.72, 0.22, 0.95)
+
+	var flame_mat = StandardMaterial3D.new()
+	flame_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	flame_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	flame_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	flame_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var flame_tex = load("res://assets/particles/flame_02.png")
+	if flame_tex:
+		flame_mat.albedo_texture = flame_tex
+	var f_mesh = QuadMesh.new()
+	f_mesh.size = Vector2(0.9, 0.9)
+	f_mesh.material = flame_mat
+	flame_trail.mesh = f_mesh
+	_active_projectile.add_child(flame_trail)
+
+	# 2. Dark Billowing Smoke Trail using Kenney CC0 smoke_04.png
+	var smoke_trail = CPUParticles3D.new()
+	smoke_trail.name = "SmokeTrail"
+	smoke_trail.amount = 24
+	smoke_trail.lifetime = 0.95
+	smoke_trail.local_coords = false
+	smoke_trail.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	smoke_trail.emission_sphere_radius = 0.4
+	smoke_trail.direction = Vector3.UP
+	smoke_trail.spread = 45.0
+	smoke_trail.gravity = Vector3(0.0, 3.5, 0.0)
+	smoke_trail.initial_velocity_min = 0.4
+	smoke_trail.initial_velocity_max = 1.4
+	smoke_trail.scale_amount_min = 1.0
+	smoke_trail.scale_amount_max = 2.6
+	smoke_trail.color = Color(0.25, 0.22, 0.20, 0.55)
+
+	var smoke_mat = StandardMaterial3D.new()
+	smoke_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smoke_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smoke_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var smoke_tex = load("res://assets/particles/smoke_04.png")
+	if smoke_tex:
+		smoke_mat.albedo_texture = smoke_tex
+	var s_mesh = QuadMesh.new()
+	s_mesh.size = Vector2(1.2, 1.2)
+	s_mesh.material = smoke_mat
+	smoke_trail.mesh = s_mesh
+	_active_projectile.add_child(smoke_trail)
+
 	get_parent().add_child(_active_projectile)
 	_proj_start = global_position + Vector3(0.0, 8.2, 0.0)
 	_active_projectile.global_position = _proj_start
 	var dir = -global_transform.basis.z.normalized()
 	_proj_vel = dir * 24.0 + Vector3(0.0, 15.0, 0.0)
 	_proj_time = 0.0
+
+func _spawn_launch_dust_puff() -> void:
+	if not get_parent():
+		return
+	var dust = CPUParticles3D.new()
+	dust.position = global_position + Vector3(0.0, 1.2, 0.0)
+	dust.emitting = true
+	dust.one_shot = true
+	dust.amount = 18
+	dust.lifetime = 0.75
+	dust.explosiveness = 0.95
+	dust.direction = Vector3(0.0, 1.0, 0.0)
+	dust.spread = 85.0
+	dust.initial_velocity_min = 2.5
+	dust.initial_velocity_max = 5.5
+	dust.gravity = Vector3(0.0, -4.0, 0.0)
+	dust.scale_amount_min = 0.8
+	dust.scale_amount_max = 2.2
+	dust.color = Color(0.80, 0.76, 0.70, 0.55)
+
+	var d_mat = StandardMaterial3D.new()
+	d_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	d_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	d_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var m_tex = load("res://assets/particles/muzzle_01.png")
+	if m_tex:
+		d_mat.albedo_texture = m_tex
+	var q_m = QuadMesh.new()
+	q_m.size = Vector2(1.4, 1.4)
+	q_m.material = d_mat
+	dust.mesh = q_m
+	get_parent().add_child(dust)
+	get_tree().create_timer(1.0).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
 
 func _create_winch_wheel(wood_mat: Material, iron_mat: Material) -> Node3D:
 	var root = Node3D.new()
@@ -376,30 +496,90 @@ func _play_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
 func _spawn_impact_explosion(pos: Vector3) -> void:
 	if not get_parent():
 		return
-	var burst = CPUParticles3D.new()
-	burst.position = pos
-	burst.emitting = true
-	burst.one_shot = true
-	burst.amount = 28
-	burst.lifetime = 0.65
-	burst.explosiveness = 0.92
-	burst.direction = Vector3(0.0, 1.0, 0.0)
-	burst.spread = 68.0
-	burst.initial_velocity_min = 4.5
-	burst.initial_velocity_max = 9.5
-	burst.gravity = Vector3(0.0, -14.0, 0.0)
-	var m = SphereMesh.new()
-	m.radius = 0.22
-	m.height = 0.44
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(1.0, 0.45, 0.12)
-	mat.emission_enabled = true
-	mat.emission = Color(1.0, 0.38, 0.08)
-	mat.emission_energy_multiplier = 2.4
-	m.material = mat
-	burst.mesh = m
-	get_parent().add_child(burst)
-	get_tree().create_timer(0.8).timeout.connect(func(): if is_instance_valid(burst): burst.queue_free())
+
+	# 1. Expanding Ground Shockwave Ring using circle_05.png
+	var shockwave = MeshInstance3D.new()
+	var ring_mesh = PlaneMesh.new()
+	ring_mesh.size = Vector2(1.0, 1.0)
+	var ring_mat = StandardMaterial3D.new()
+	ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring_mat.albedo_color = Color(1.0, 0.88, 0.45, 0.90)
+	var c_tex = load("res://assets/particles/circle_05.png")
+	if c_tex:
+		ring_mat.albedo_texture = c_tex
+	ring_mesh.material = ring_mat
+	shockwave.mesh = ring_mesh
+	shockwave.position = pos + Vector3(0, 0.05, 0)
+	get_parent().add_child(shockwave)
+	var tw = shockwave.create_tween()
+	tw.tween_property(shockwave, "scale", Vector3(14.0, 1.0, 14.0), 0.52)
+	tw.parallel().tween_property(ring_mat, "albedo_color:a", 0.0, 0.52)
+	tw.tween_callback(shockwave.queue_free)
+
+	# 2. Fireball Explosion Burst using fire_01.png
+	var fire_burst = CPUParticles3D.new()
+	fire_burst.position = pos + Vector3(0, 0.4, 0)
+	fire_burst.emitting = true
+	fire_burst.one_shot = true
+	fire_burst.amount = 24
+	fire_burst.lifetime = 0.65
+	fire_burst.explosiveness = 0.95
+	fire_burst.direction = Vector3(0.0, 1.0, 0.0)
+	fire_burst.spread = 75.0
+	fire_burst.initial_velocity_min = 4.5
+	fire_burst.initial_velocity_max = 9.5
+	fire_burst.gravity = Vector3(0.0, -8.0, 0.0)
+	fire_burst.scale_amount_min = 1.0
+	fire_burst.scale_amount_max = 2.4
+	fire_burst.color = Color(1.0, 0.55, 0.12)
+
+	var fb_mat = StandardMaterial3D.new()
+	fb_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fb_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	fb_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fb_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var fb_tex = load("res://assets/particles/fire_01.png")
+	if fb_tex:
+		fb_mat.albedo_texture = fb_tex
+	var fq_mesh = QuadMesh.new()
+	fq_mesh.size = Vector2(1.2, 1.2)
+	fq_mesh.material = fb_mat
+	fire_burst.mesh = fq_mesh
+	get_parent().add_child(fire_burst)
+	get_tree().create_timer(0.9).timeout.connect(func(): if is_instance_valid(fire_burst): fire_burst.queue_free())
+
+	# 3. Flying Earth & Rock Debris using dirt_01.png
+	var debris = CPUParticles3D.new()
+	debris.position = pos + Vector3(0, 0.2, 0)
+	debris.emitting = true
+	debris.one_shot = true
+	debris.amount = 20
+	debris.lifetime = 0.85
+	debris.explosiveness = 0.92
+	debris.direction = Vector3(0.0, 1.0, 0.0)
+	debris.spread = 60.0
+	debris.initial_velocity_min = 5.0
+	debris.initial_velocity_max = 11.0
+	debris.gravity = Vector3(0.0, -18.0, 0.0)
+	debris.scale_amount_min = 0.6
+	debris.scale_amount_max = 1.6
+	debris.color = Color(0.48, 0.38, 0.26)
+
+	var d_mat = StandardMaterial3D.new()
+	d_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	d_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	d_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var d_tex = load("res://assets/particles/dirt_01.png")
+	if d_tex:
+		d_mat.albedo_texture = d_tex
+	var dq_mesh = QuadMesh.new()
+	dq_mesh.size = Vector2(0.8, 0.8)
+	dq_mesh.material = d_mat
+	debris.mesh = dq_mesh
+	get_parent().add_child(debris)
+	get_tree().create_timer(1.1).timeout.connect(func(): if is_instance_valid(debris): debris.queue_free())
+
 	var player = get_tree().get_first_node_in_group("player") as Node3D
 	if player and player.global_position.distance_to(pos) < 35.0:
 		CombatJuice.add_trauma(0.18)
