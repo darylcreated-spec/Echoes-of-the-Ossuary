@@ -39,13 +39,8 @@ func _build_visuals() -> void:
 	
 	# Floating Name Tag & Prompt
 	_label = Label3D.new()
-	_label.text = "🛡️ " + npc_name + "\n[E] Speak"
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 2.0
-	_label.font_size = 24
-	_label.outline_size = 6
-	_label.outline_modulate = Color(0.02, 0.03, 0.05)
-	_label.modulate = Color(0.9, 0.95, 1.0)
+	_label.position.y = 2.2
+	AssetLoader.style_world_label3d(_label, "🛡️ " + npc_name + "\n[E] Speak", 38, Color(0.85, 0.94, 1.0))
 	add_child(_label)
 
 func _build_interaction() -> void:

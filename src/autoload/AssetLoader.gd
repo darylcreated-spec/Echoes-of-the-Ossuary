@@ -665,3 +665,32 @@ func _create_procedural_prop(subtype: String, path: String) -> Node3D:
 	default_box.position.y = 0.5
 	root.add_child(default_box)
 	return root
+
+# --- MEDIEVAL TYPOGRAPHY & WORLD LABEL STYLING ---
+var _medieval_font: Font = null
+
+func get_medieval_font() -> Font:
+	if not _medieval_font:
+		if ResourceLoader.exists("res://assets/ui/MedievalSharp.ttf"):
+			_medieval_font = load("res://assets/ui/MedievalSharp.ttf") as Font
+	return _medieval_font
+
+func style_world_label3d(label: Label3D, text: String = "", font_size: int = 36, primary_color: Color = Color(1.0, 0.94, 0.72)) -> void:
+	if not label:
+		return
+	if text != "":
+		label.text = text
+	var f = get_medieval_font()
+	if f:
+		label.font = f
+	label.font_size = font_size
+	label.outline_size = 10
+	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
+	label.modulate = primary_color
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.double_sided = true
+	label.render_priority = 3
+	label.outline_render_priority = 2
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+

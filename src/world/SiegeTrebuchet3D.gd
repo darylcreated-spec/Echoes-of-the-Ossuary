@@ -196,12 +196,8 @@ func _build_trebuchet_assembly() -> void:
 
 	# Floating Label
 	var lbl = Label3D.new()
-	lbl.text = "☄️ " + trebuchet_name + "\n[E] Fire Siege Volley"
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 6.4, 0.0)
-	lbl.font_size = 24
-	lbl.outline_size = 6
-	lbl.modulate = Color(1.0, 0.78, 0.45)
+	lbl.position = Vector3(0.0, 6.6, 0.0)
+	AssetLoader.style_world_label3d(lbl, "☄️ " + trebuchet_name + "\n[E] Fire Siege Volley", 38, Color(1.0, 0.82, 0.50))
 	add_child(lbl)
 
 func _build_interaction() -> void:

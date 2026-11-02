@@ -9,6 +9,9 @@ const Hurtbox3DScript = preload("res://src/combat/Hurtbox3D.gd")
 @export var is_enemy: bool = false
 @export var is_crit: bool = false
 @export var source_node: Node3D = null
+var damage_source: Node3D:
+	get: return source_node
+	set(v): source_node = v
 
 var direction: Vector3 = Vector3.FORWARD
 var _timer: float = 0.0

@@ -58,10 +58,15 @@ func spawn_damage_number(pos: Vector3, amount: float, is_crit: bool, is_player_d
 	var label = Label3D.new()
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.double_sided = true
-	label.font_size = 40 if is_crit else 28
-	label.outline_size = 8
-	label.outline_modulate = Color(0, 0, 0, 0.9)
-	label.position = pos + Vector3(randf_range(-0.3, 0.3), 1.5 + randf_range(0.0, 0.4), randf_range(-0.3, 0.3))
+	var mf = AssetLoader.get_medieval_font()
+	if mf:
+		label.font = mf
+	label.font_size = 54 if is_crit else 38
+	label.outline_size = 10
+	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
+	label.render_priority = 4
+	label.outline_render_priority = 3
+	label.position = pos + Vector3(randf_range(-0.3, 0.3), 1.6 + randf_range(0.0, 0.4), randf_range(-0.3, 0.3))
 	
 	if is_heal:
 		label.text = "+" + str(int(amount))

@@ -50,11 +50,8 @@ func _on_body_exited(body: Node3D) -> void:
 
 func _build_floating_label() -> void:
 	_label = Label3D.new()
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 2.8
-	_label.font_size = 26
-	_label.outline_size = 8
-	_label.outline_modulate = Color(0.02, 0.03, 0.05)
+	_label.position.y = 2.95
+	AssetLoader.style_world_label3d(_label, "", 36, Color(1.0, 0.85, 0.3))
 	add_child(_label)
 	_update_label_text()
 
@@ -62,16 +59,14 @@ func _update_label_text() -> void:
 	if not _label:
 		return
 	if is_repaired or GameManager.world_repairs.get(repair_id, false):
-		_label.text = "✨ " + station_name + "\n[RESTORED & ACTIVE]"
-		_label.modulate = Color(0.3, 0.95, 0.5)
+		AssetLoader.style_world_label3d(_label, "✨ " + station_name + "\n[RESTORED & ACTIVE]", 36, Color(0.4, 0.98, 0.6))
 	else:
 		var req_strs: Array[String] = []
 		for mat in required_materials.keys():
 			var req_count = required_materials[mat]
 			var cur_count = GameManager.materials.get(mat, 0)
 			req_strs.append(mat.capitalize() + " (" + str(cur_count) + "/" + str(req_count) + ")")
-		_label.text = "🔨 " + station_name + "\n[E] Reconstruct: " + ", ".join(req_strs)
-		_label.modulate = Color(1.0, 0.85, 0.3)
+		AssetLoader.style_world_label3d(_label, "🔨 " + station_name + "\n[E] Reconstruct: " + ", ".join(req_strs), 36, Color(1.0, 0.88, 0.4))
 
 func _update_visual_state() -> void:
 	is_repaired = GameManager.world_repairs.get(repair_id, false)

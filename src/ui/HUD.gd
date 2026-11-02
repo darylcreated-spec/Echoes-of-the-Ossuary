@@ -195,10 +195,15 @@ func _build_ui_tree() -> void:
 	interact_prompt.anchor_right = 0.5
 	interact_prompt.anchor_top = 0.8
 	interact_prompt.anchor_bottom = 0.8
-	interact_prompt.offset_left = -150
-	interact_prompt.offset_right = 150
-	interact_prompt.add_theme_font_size_override("font_size", 20)
-	interact_prompt.modulate = Color(1.0, 0.95, 0.5)
+	interact_prompt.offset_left = -200
+	interact_prompt.offset_right = 200
+	var mf = AssetLoader.get_medieval_font()
+	if mf:
+		interact_prompt.add_theme_font_override("font", mf)
+	interact_prompt.add_theme_font_size_override("font_size", 24)
+	interact_prompt.add_theme_constant_override("outline_size", 6)
+	interact_prompt.add_theme_color_override("font_outline_color", Color(0.04, 0.04, 0.06, 0.95))
+	interact_prompt.modulate = Color(1.0, 0.95, 0.55)
 	interact_prompt.visible = false
 	root_control.add_child(interact_prompt)
 	

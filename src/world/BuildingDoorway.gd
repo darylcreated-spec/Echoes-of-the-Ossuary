@@ -35,13 +35,8 @@ func _setup_shape() -> void:
 
 func _setup_visual_marker() -> void:
 	_prompt_label = Label3D.new()
-	_prompt_label.text = "🚪 " + prompt_text
-	_prompt_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_prompt_label.position.y = 2.4
-	_prompt_label.font_size = 24
-	_prompt_label.outline_size = 6
-	_prompt_label.outline_modulate = Color(0.02, 0.03, 0.05)
-	_prompt_label.modulate = Color(1.0, 0.95, 0.5)
+	_prompt_label.position.y = 2.55
+	AssetLoader.style_world_label3d(_prompt_label, "🚪 " + prompt_text, 36, Color(1.0, 0.95, 0.55))
 	add_child(_prompt_label)
 
 func get_prompt_text() -> String:

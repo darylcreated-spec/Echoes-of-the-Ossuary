@@ -259,10 +259,8 @@ func _spawn_upgrade_altar(pos: Vector3) -> void:
 	altar.add_child(area)
 	
 	var label = Label3D.new()
-	label.text = "[E] Soul Altar"
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.position.y = 2.4
-	label.font_size = 30
+	label.position.y = 2.45
+	AssetLoader.style_world_label3d(label, "[E] Soul Altar", 36, Color(0.7, 0.95, 1.0))
 	altar.add_child(label)
 	
 	add_child(altar)
@@ -311,10 +309,8 @@ func _spawn_class_pedestals(base_pos: Vector3) -> void:
 		ped.add_child(preview)
 		
 		var label = Label3D.new()
-		label.text = "[E] " + c["name"]
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.position.y = 1.9
-		label.font_size = 26
+		label.position.y = 2.05
+		AssetLoader.style_world_label3d(label, "[E] " + c["name"], 34, Color(1.0, 0.92, 0.65))
 		ped.add_child(label)
 		
 		add_child(ped)

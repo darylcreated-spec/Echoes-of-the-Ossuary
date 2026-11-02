@@ -39,13 +39,8 @@ func _build_visuals() -> void:
 	
 	# Floating billboard label
 	_label = Label3D.new()
-	_label.text = icon + " " + display_name + "\n[E] Gather"
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = _base_y + 1.2
-	_label.font_size = 24
-	_label.outline_size = 6
-	_label.outline_modulate = Color(0.05, 0.05, 0.08)
-	_label.modulate = Color(1.0, 0.95, 0.6)
+	_label.position.y = _base_y + 1.3
+	AssetLoader.style_world_label3d(_label, icon + " " + display_name + "\n[E] Gather", 36, Color(1.0, 0.95, 0.65))
 	add_child(_label)
 
 func _build_interaction() -> void:

@@ -163,13 +163,8 @@ func _build_visuals() -> void:
 
 	# Floating Name Tag & Prompt (Always created for all NPCs)
 	_label = Label3D.new()
-	_label.text = icon + " " + npc_name + "\n[E] Speak"
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 2.0
-	_label.font_size = 28
-	_label.outline_size = 8
-	_label.outline_modulate = Color(0.02, 0.03, 0.05)
-	_label.modulate = Color(1.0, 0.90, 0.55)
+	_label.position.y = 2.2
+	AssetLoader.style_world_label3d(_label, icon + " " + npc_name + "\n[E] Speak", 38, Color(1.0, 0.92, 0.65))
 	add_child(_label)
 
 func _play_default_idle() -> void:

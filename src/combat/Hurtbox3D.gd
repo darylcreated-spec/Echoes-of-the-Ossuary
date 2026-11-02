@@ -24,7 +24,8 @@ func _on_area_entered(area: Area3D) -> void:
 		return
 	if area is Hitbox3DScript or area.get("damage") != null:
 		var hitbox = area
-		if hitbox.damage_source == owner_character:
+		var d_source = hitbox.damage_source if ("damage_source" in hitbox) else (hitbox.source_node if ("source_node" in hitbox) else null)
+		if d_source == owner_character and d_source != null:
 			return # Don't hit self
 			
 		var kb_dir = (global_position - hitbox.global_position).normalized()
@@ -38,7 +39,7 @@ func _on_area_entered(area: Area3D) -> void:
 		# Trigger i-frames
 		start_invulnerability(i_frame_duration)
 		
-		damage_received.emit(final_damage, kb_dir * kb_force, is_crit, hitbox.damage_source)
+		damage_received.emit(final_damage, kb_dir * kb_force, is_crit, d_source)
 
 func start_invulnerability(duration: float) -> void:
 	is_invulnerable = true

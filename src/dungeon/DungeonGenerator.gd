@@ -460,6 +460,19 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(12.5, 0.0, 2.2), Vector3.ONE * 1.8, 90.0)
 	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(13.5, 0.0, -5.2), Vector3.ONE * 1.8, -90.0)
 
+	# Royal Falconer Caelen - Oakhaven Huntsman NPC
+	var caelen = TownNPCScript.new()
+	caelen.npc_id = "royal_falconer"
+	caelen.npc_name = "Caelen"
+	caelen.npc_title = "Royal Falconer"
+	caelen.icon = "🦅"
+	caelen.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+	caelen.model_scale = Vector3(0.52, 0.52, 0.52)
+	caelen.model_rotation_y = 180.0
+	caelen.dialogue_text = "My hunting falcons scout the skies from the High Crags to the Weeping Fen. Strange darkness stirs within the catacombs below. Tread with vigilant eyes, warrior!"
+	caelen.position = Vector3(8.5, 0.0, -4.8)
+	parent.add_child(caelen)
+
 	# 6. South: Fortified Arch Gateway (Interactive Animated Portcullis Doors with Physics)
 	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
 	var gate = OverworldGateScript.new()
@@ -639,6 +652,19 @@ func _build_town_quarter(parent: Node3D) -> void:
 	barkeep.position = Vector3(-24.2, 0.0, 13.2)
 	parent.add_child(barkeep)
 
+	# NPC: Lyra the Minstrel / Realm Bard (Singing & entertaining patrons on the tavern terrace)
+	var lyra = TownNPCScript.new()
+	lyra.npc_id = "bard_lyra"
+	lyra.npc_name = "Lyra the Minstrel"
+	lyra.npc_title = "Realm Troubadour"
+	lyra.icon = "🎵"
+	lyra.model_path = "res://assets/characters/adventurers/Mage.glb"
+	lyra.model_scale = Vector3(0.52, 0.52, 0.52)
+	lyra.model_rotation_y = -90.0
+	lyra.dialogue_text = "*Strums a lively lute ballad*\n'Of ossuary depths and heroes bold, who braved the dark and seized the gold!' Greetings, champion! Would you care to hear a song of the ancient high kings?"
+	lyra.position = Vector3(-20.5, 0.0, 13.0)
+	parent.add_child(lyra)
+
 	# 2. Sanctuary Marketplace (Beside Tavern at X = -36.0, Z = 9.5, facing South 0° onto Street)
 	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-36.0, 0.0, 9.5), Vector3.ONE * 4.4, 0.0)
 	_add_static_box(parent, Vector3(-36.0, 2.5, 9.5), Vector3(7.4, 5.0, 5.8))
@@ -698,7 +724,27 @@ func _build_town_quarter(parent: Node3D) -> void:
 	archer.position = Vector3(30.0, 0.0, 2.0)
 	parent.add_child(archer)
 
-	# 5. Street Lantern Posts along Thoroughfares
+	# 5. East Granary & Flour Mill Warehouse (X = 43.5, Z = 4.5, facing West -90°)
+	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(43.5, 0.0, 4.5), Vector3.ONE * 5.6, -90.0)
+	_add_static_box(parent, Vector3(43.5, 3.5, 4.5), Vector3(6.5, 6.5, 6.5))
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(39.0, 0.0, 3.2), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(39.0, 0.0, 5.8), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(39.0, 0.0, 7.2), Vector3.ONE * 1.3)
+
+	# NPC: Dennis the Miller's Apprentice
+	var dennis = TownNPCScript.new()
+	dennis.npc_id = "miller_apprentice"
+	dennis.npc_name = "Dennis"
+	dennis.npc_title = "Granary Storeman"
+	dennis.icon = "🌾"
+	dennis.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	dennis.model_scale = Vector3(0.52, 0.52, 0.52)
+	dennis.model_rotation_y = -90.0
+	dennis.dialogue_text = "Flour sacks stacked high for the royal bakehouses! Between Miller Bronn's waterwheel and Farmer Giles's harvest, Oakhaven never hungers."
+	dennis.position = Vector3(38.0, 0.0, 4.5)
+	parent.add_child(dennis)
+
+	# 6. Street Lantern Posts along Thoroughfares
 	_place_lantern_post(parent, Vector3(-3.2, 0.0, 15.2), 0.0)
 	_place_lantern_post(parent, Vector3(3.2, 0.0, 15.2), 0.0)
 	_place_lantern_post(parent, Vector3(-2.8, 0.0, 19.8))
@@ -999,7 +1045,27 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(30.0, 3.5, 29.5), Vector3(6.0, 6.5, 6.0))
 	AmbientFX.create_chimney_smoke(parent, Vector3(30.0, 6.8, 29.5))
 
-	# 2. Second Sunnydale Farmhouse (Faces South 0° onto the Farm Lane)
+	# 2. Sunnydale Dairy Shed & Apiary (West Farm Lane: X = 20.0, Z = 29.5, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_home_B_yellow.gltf", Vector3(20.0, 0.0, 29.5), Vector3.ONE * 5.6, 0.0)
+	_add_static_box(parent, Vector3(20.0, 3.5, 29.5), Vector3(6.0, 6.5, 6.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(20.0, 6.8, 29.5))
+	_place_prop(parent, "res://assets/overworld/bucket_water.gltf", Vector3(17.2, 0.0, 33.0), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/crate_A_small.gltf", Vector3(22.8, 0.0, 33.0), Vector3.ONE * 1.6)
+
+	# NPC: Rosalind the Dairy Maid & Beekeeper
+	var rosalind = TownNPCScript.new()
+	rosalind.npc_id = "beekeeper_rosalind"
+	rosalind.npc_name = "Rosalind"
+	rosalind.npc_title = "Dairy Maid & Beekeeper"
+	rosalind.icon = "🍯"
+	rosalind.model_path = "res://assets/characters/adventurers/Mage.glb"
+	rosalind.model_scale = Vector3(0.52, 0.52, 0.52)
+	rosalind.model_rotation_y = 0.0
+	rosalind.dialogue_text = "Golden clover honey and fresh creamy milk! Sunnydale's meadows bloom bright in the summer sun. Keep the wolves at bay and our hives produce sweet comb all year round!"
+	rosalind.position = Vector3(20.0, 0.0, 33.5)
+	parent.add_child(rosalind)
+
+	# 3. Second Sunnydale Farmhouse (Faces South 0° onto the Farm Lane)
 	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(40.0, 0.0, 29.5), Vector3.ONE * 6.5, 0.0)
 	_add_static_box(parent, Vector3(40.0, 4.0, 29.5), Vector3(6.2, 7.0, 7.0))
 	AmbientFX.create_chimney_smoke(parent, Vector3(40.0, 8.2, 29.5))
@@ -1098,6 +1164,19 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	stablemaster.model_rotation_y = 180.0
 	stablemaster.position = Vector3(37.5, 0.0, 37.2)
 	parent.add_child(stablemaster)
+
+	# NPC: Silas the Herdsman (Tending cattle & warsteeds inside the pasture)
+	var silas = TownNPCScript.new()
+	silas.npc_id = "herdsman_silas"
+	silas.npc_name = "Silas"
+	silas.npc_title = "Pasture Herdsman"
+	silas.icon = "🌾"
+	silas.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	silas.model_scale = Vector3(0.54, 0.54, 0.54)
+	silas.model_rotation_y = -90.0
+	silas.dialogue_text = "Sunnydale pastures are lush and green this season! Our cattle thrive, and the royal warsteeds graze in safety away from the northern bandits."
+	silas.position = Vector3(34.0, 0.0, 48.0)
+	parent.add_child(silas)
 
 func _build_castle_citadel(parent: Node3D) -> void:
 	# =========================================================================
@@ -1585,6 +1664,25 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	_add_static_box(parent, Vector3(-47.5, 4.5, 72.0), Vector3(7.5, 9.0, 8.0))
 	AmbientFX.create_chimney_smoke(parent, Vector3(-47.5, 8.2, 72.0))
 
+	# Port Blackwater Customs House & Shipwright Workshop (South Promenade: X = -47.5, Z = 84.0, facing West -90°)
+	_place_prop(parent, "res://assets/overworld/building_home_A_yellow.gltf", Vector3(-47.5, 0.0, 84.0), Vector3.ONE * 5.8, -90.0)
+	_add_static_box(parent, Vector3(-47.5, 3.5, 84.0), Vector3(6.5, 7.0, 6.5))
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-51.5, 0.04, 82.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-51.5, 0.04, 86.0), Vector3.ONE * 1.4)
+
+	# NPC: Master Owen the Shipwright
+	var owen = TownNPCScript.new()
+	owen.npc_id = "shipwright_owen"
+	owen.npc_name = "Master Owen"
+	owen.npc_title = "Port Shipwright"
+	owen.icon = "🔨"
+	owen.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	owen.model_scale = Vector3(0.53, 0.53, 0.53)
+	owen.model_rotation_y = -90.0
+	owen.dialogue_text = "Good oak timber and pitch keep our cogs afloat against the sea swells. If your vessel needs a stout gangplank or sturdy oars, my workshop has the finest craftsmen in Blackwater!"
+	owen.position = Vector3(-52.5, 0.04, 84.0)
+	parent.add_child(owen)
+
 	# Harbor Cargo Stacks (Spaced neatly along the Quay Wall)
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-59.5, 0.04, 57.5), Vector3.ONE * 1.4)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-59.5, 0.04, 55.5), Vector3.ONE * 1.5)
@@ -1683,6 +1781,32 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	corin.dialogue_text = "Welcome to Port Blackwater. Keep your weapons ready—corsairs brawl on the southern beach, and strange abominations crawl from the seabed. Check the harbor bounties to keep our port safe!"
 	corin.position = Vector3(-55.0, 0.04, 52.0)
 	parent.add_child(corin)
+
+	# First Mate Kaelen (Standing on the main weather deck of The Sea Sovereign)
+	var kaelen = TownNPCScript.new()
+	kaelen.npc_id = "first_mate_kaelen"
+	kaelen.npc_name = "First Mate Kaelen"
+	kaelen.npc_title = "High-Seas Voyager"
+	kaelen.icon = "⚓"
+	kaelen.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	kaelen.model_scale = Vector3(0.53, 0.53, 0.53)
+	kaelen.model_rotation_y = 90.0
+	kaelen.dialogue_text = "Ahoy! The Sea Sovereign weathered a fierce gale past the Kraken Shoals. The tides run deep, but our timber hull holds firm. Walk up the gangplank to inspect our decks!"
+	kaelen.position = Vector3(-73.5, 1.85, 68.0)
+	parent.add_child(kaelen)
+
+	# Quartermaster Thaddeus (Stationed along the North Main Pier overseeing ship manifests)
+	var thaddeus = TownNPCScript.new()
+	thaddeus.npc_id = "quartermaster_thaddeus"
+	thaddeus.npc_name = "Quartermaster Thaddeus"
+	thaddeus.npc_title = "Harbor Manifest Officer"
+	thaddeus.icon = "📜"
+	thaddeus.model_path = "res://assets/characters/adventurers/Knight.glb"
+	thaddeus.model_scale = Vector3(0.52, 0.52, 0.52)
+	thaddeus.model_rotation_y = 180.0
+	thaddeus.dialogue_text = "Cargo manifests, iron ingots, and dried rations—all trade entering Port Blackwater passes my inspection. Watch your step along the wooden dock pilings!"
+	thaddeus.position = Vector3(-65.0, 0.04, 62.0)
+	parent.add_child(thaddeus)
 
 	# 9. Interactive World Restoration Station: Harbor Cargo Crane (On the Quay at X = -59.5, Z = 66.5)
 	var crane_station = WorldRepairStationScript.new()
@@ -1837,6 +1961,25 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-74.0, 0.0, -76.0), Vector3.ONE * 5.2, 0.0)
 	_add_static_box(parent, Vector3(-74.0, 4.0, -76.0), Vector3(7.0, 6.5, 7.0))
 
+	# Whisperwood Herbalist & Apothecary Cottage (South edge of Glade: X = -74.0, Z = -52.0, facing North 180°)
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-74.0, 0.0, -52.0), Vector3.ONE * 5.6, 180.0)
+	_add_static_box(parent, Vector3(-74.0, 3.5, -52.0), Vector3(6.5, 6.5, 6.5))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-74.0, 7.2, -52.0))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-70.5, 0.0, -55.5), Vector3.ONE * 2.0, 45.0)
+
+	# NPC: Sylas the Apprentice Herbalist
+	var sylas = TownNPCScript.new()
+	sylas.npc_id = "herbalist_sylas"
+	sylas.npc_name = "Sylas"
+	sylas.npc_title = "Forest Herbalist"
+	sylas.icon = "🌱"
+	sylas.model_path = "res://assets/characters/adventurers/Mage.glb"
+	sylas.model_scale = Vector3(0.52, 0.52, 0.52)
+	sylas.model_rotation_y = 180.0
+	sylas.dialogue_text = "The forest canopy whispers ancient secrets to those who listen. I brew restorative teas from golden chanterelles and pine needles. May your steps through Whisperwood be peaceful!"
+	sylas.position = Vector3(-74.0, 0.0, -56.5)
+	parent.add_child(sylas)
+
 	# 3. NPCs
 	var thorne = TownNPCScript.new()
 	thorne.npc_id = "druid_thorne"
@@ -1930,6 +2073,26 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(56.0, 0.0, -44.0), Vector3.ONE * 8.0)
 	_add_static_box(parent, Vector3(56.0, 6.0, -44.0), Vector3(4.5, 12.0, 4.5))
 
+	# Dwarven Ore Assay Depot & Mining Supply House (Valley Center: X = 65.0, Z = -46.0, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_home_A_red.gltf", Vector3(65.0, 0.0, -46.0), Vector3.ONE * 5.4, 0.0)
+	_add_static_box(parent, Vector3(65.0, 3.5, -46.0), Vector3(6.2, 6.5, 6.2))
+	AmbientFX.create_chimney_smoke(parent, Vector3(65.0, 6.8, -46.0))
+	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(61.5, 0.0, -42.0), Vector3.ONE * 1.4, 25.0)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(68.5, 0.0, -42.5), Vector3.ONE * 1.3)
+
+	# NPC: Thordin the Highland Prospector
+	var thordin = TownNPCScript.new()
+	thordin.npc_id = "prospector_thordin"
+	thordin.npc_name = "Thordin"
+	thordin.npc_title = "Dwarven Prospector"
+	thordin.icon = "💎"
+	thordin.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	thordin.model_scale = Vector3(0.38, 0.38, 0.38)
+	thordin.model_rotation_y = 0.0
+	thordin.dialogue_text = "Gold veins run deep through the granite beneath Khar-Drakken! Keep your eyes keen for raw mineral crystals in the crags—ancient treasures lie hidden where the earth breaks open!"
+	thordin.position = Vector3(65.0, 0.0, -41.5)
+	parent.add_child(thordin)
+
 	# Armory Rack beside the Foundry
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(60.5, 0.0, -58.0), Vector3.ONE * 1.8, 45.0)
 
@@ -1955,6 +2118,19 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	torv.dialogue_text = "By the thunder of stone! The Orc Warlords have seized our upper stronghold and stolen the Runebound Mountain Core! Cleave through their ranks, return the Core, and I shall temper your weapons with ancient dwarven runes!"
 	torv.position = Vector3(66.0, 0.0, -55.5)
 	parent.add_child(torv)
+
+	# Dwarven Smelter Durin (Tending the blast furnace and smelter bellows)
+	var durin = TownNPCScript.new()
+	durin.npc_id = "smelter_durin"
+	durin.npc_name = "Master Durin"
+	durin.npc_title = "Deep Mine Smelter"
+	durin.icon = "🔥"
+	durin.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	durin.model_scale = Vector3(0.38, 0.38, 0.38)
+	durin.model_rotation_y = 90.0
+	durin.dialogue_text = "Raw mountain ore makes the strongest steel in the realm! Stoke the coals and keep the slag channels clear. The King's army relies on our iron!"
+	durin.position = Vector3(74.5, 0.0, -56.5)
+	parent.add_child(durin)
 
 	# Interactive World Restoration Station: Smelter Blast Bellows
 	var bellows_station = WorldRepairStationScript.new()
@@ -2137,6 +2313,19 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	morrigan.dialogue_text = "Step not off the rotting planks, wanderer... The Weeping Fen swallows the careless whole. Bog Creeps and hollow dead guard the Sunken Fen Seal in the mire. Reclaim it and channel the ancient echoes!"
 	morrigan.position = Vector3(84.0, 0.2, 100.5)
 	parent.add_child(morrigan)
+
+	# Swamp Alchemist Agnes (Gathering weeping willow moss and brewing bog draughts)
+	var agnes = TownNPCScript.new()
+	agnes.npc_id = "alchemist_agnes"
+	agnes.npc_name = "Agnes"
+	agnes.npc_title = "Bog Alchemist"
+	agnes.icon = "🧪"
+	agnes.model_path = "res://assets/characters/adventurers/Mage.glb"
+	agnes.model_scale = Vector3(0.52, 0.52, 0.52)
+	agnes.model_rotation_y = 90.0
+	agnes.dialogue_text = "Grave-moss, willow-bark, and weeping lotus... the fen yields potent reagents for those brave enough to harvest them. Stay upon the boardwalk timbers, wanderer!"
+	agnes.position = Vector3(82.0, 0.2, 88.0)
+	parent.add_child(agnes)
 
 	# 5. Swamp Monsters & Sunken Fen Relic
 	_spawn_enemy(parent, EnemyAI.EnemyType.CREEP, Vector3(72.0, 0.0, 70.0), 45.0)

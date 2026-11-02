@@ -80,12 +80,8 @@ func _build_caravan_assembly() -> void:
 
 	# Floating Caravan Label
 	var lbl = Label3D.new()
-	lbl.text = "🐎 " + caravan_name + "\n[E] Trade & Hail"
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 2.7, 0.0)
-	lbl.font_size = 24
-	lbl.outline_size = 6
-	lbl.modulate = Color(1.0, 0.90, 0.60)
+	lbl.position = Vector3(0.0, 2.85, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🐎 " + caravan_name + "\n[E] Trade & Hail", 36, Color(1.0, 0.92, 0.65))
 	add_child(lbl)
 
 func _build_interaction() -> void:

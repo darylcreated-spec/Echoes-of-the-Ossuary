@@ -12,6 +12,7 @@ var _creak_timer: float = 0.0
 var _left_oar: Node3D = null
 var _right_oar: Node3D = null
 var _crew_anims: Array = []
+var _helm_wheel: Node3D = null
 
 func _ready() -> void:
 	add_to_group("medieval_ship")
@@ -30,119 +31,361 @@ func _ready() -> void:
 
 func _build_medieval_cog() -> void:
 	var hull_mat = StandardMaterial3D.new()
-	hull_mat.albedo_color = Color(0.28, 0.18, 0.11)
-	hull_mat.roughness = 0.88
+	hull_mat.albedo_color = Color(0.26, 0.17, 0.10)
+	hull_mat.roughness = 0.86
+
+	var plank_mat = StandardMaterial3D.new()
+	plank_mat.albedo_color = Color(0.32, 0.21, 0.13)
+	plank_mat.roughness = 0.84
 
 	var deck_mat = StandardMaterial3D.new()
-	deck_mat.albedo_color = Color(0.38, 0.26, 0.16)
-	deck_mat.roughness = 0.85
+	deck_mat.albedo_color = Color(0.40, 0.28, 0.18)
+	deck_mat.roughness = 0.82
 
 	var mast_mat = StandardMaterial3D.new()
-	mast_mat.albedo_color = Color(0.32, 0.22, 0.13)
+	mast_mat.albedo_color = Color(0.30, 0.20, 0.12)
 	mast_mat.roughness = 0.85
 
-	# 1. Lower Keel & Tapered Timber Hull (16m long x 5.2m beam)
+	var rope_mat = StandardMaterial3D.new()
+	rope_mat.albedo_color = Color(0.55, 0.48, 0.38)
+	rope_mat.roughness = 0.90
+
+	var iron_mat = StandardMaterial3D.new()
+	iron_mat.albedo_color = Color(0.18, 0.20, 0.22)
+	iron_mat.metallic = 0.85
+	iron_mat.roughness = 0.45
+
+	var gold_mat = StandardMaterial3D.new()
+	gold_mat.albedo_color = Color(0.85, 0.70, 0.22)
+	gold_mat.metallic = 0.75
+	gold_mat.roughness = 0.30
+
+	# 1. LOWER KEEL & MAIN HULL (16.5m length x 5.6m beam)
+	var keel = MeshInstance3D.new()
+	var k_mesh = BoxMesh.new()
+	k_mesh.size = Vector3(0.6, 0.8, 16.5)
+	k_mesh.material = hull_mat
+	keel.mesh = k_mesh
+	keel.position = Vector3(0.0, -0.2, 0.0)
+	_hull_pivot.add_child(keel)
+
+	# Main Hull Body
 	var hull_main = MeshInstance3D.new()
 	var hm_mesh = BoxMesh.new()
-	hm_mesh.size = Vector3(5.2, 2.2, 12.5)
+	hm_mesh.size = Vector3(5.6, 2.4, 13.0)
 	hm_mesh.material = hull_mat
 	hull_main.mesh = hm_mesh
-	hull_main.position = Vector3(0.0, 0.6, 0.0)
+	hull_main.position = Vector3(0.0, 0.7, 0.0)
 	_hull_pivot.add_child(hull_main)
 
-	# Bow Prow (Pointed forward wedge)
+	# Timber Rub-Rails / Wales (horizontal protective bands along port and starboard)
+	for side_x in [-2.85, 2.85]:
+		for rail_y in [0.4, 1.2]:
+			var wale = MeshInstance3D.new()
+			var w_mesh = BoxMesh.new()
+			w_mesh.size = Vector3(0.2, 0.18, 13.4)
+			w_mesh.material = plank_mat
+			wale.mesh = w_mesh
+			wale.position = Vector3(side_x, rail_y, 0.0)
+			_hull_pivot.add_child(wale)
+
+	# Bow Prow (Pointed forward timber stem)
 	var prow = MeshInstance3D.new()
 	var pr_mesh = PrismMesh.new()
-	pr_mesh.size = Vector3(5.0, 3.6, 2.4)
+	pr_mesh.size = Vector3(5.4, 3.8, 2.8)
 	pr_mesh.material = hull_mat
 	prow.mesh = pr_mesh
-	prow.position = Vector3(0.0, 0.8, -7.8)
+	prow.position = Vector3(0.0, 0.85, -7.9)
 	prow.rotation_degrees.x = -90.0
 	_hull_pivot.add_child(prow)
 
-	# Main Weather Deck
+	# Curved Bow Stempost & Figurehead (Golden Lion Crest on the Prow)
+	var stempost = MeshInstance3D.new()
+	var sp_mesh = BoxMesh.new()
+	sp_mesh.size = Vector3(0.4, 3.6, 0.6)
+	sp_mesh.material = plank_mat
+	stempost.mesh = sp_mesh
+	stempost.position = Vector3(0.0, 1.8, -9.4)
+	stempost.rotation_degrees.x = 24.0
+	_hull_pivot.add_child(stempost)
+
+	var figurehead = MeshInstance3D.new()
+	var fh_mesh = SphereMesh.new()
+	fh_mesh.radius = 0.38
+	fh_mesh.height = 0.76
+	fh_mesh.material = gold_mat
+	figurehead.mesh = fh_mesh
+	figurehead.position = Vector3(0.0, 3.2, -9.9)
+	_hull_pivot.add_child(figurehead)
+
+	# Bowsprit Spar (Forward jutting mast beam)
+	var bowsprit = MeshInstance3D.new()
+	var bs_mesh = CylinderMesh.new()
+	bs_mesh.top_radius = 0.10
+	bs_mesh.bottom_radius = 0.18
+	bs_mesh.height = 5.2
+	bs_mesh.material = mast_mat
+	bowsprit.mesh = bs_mesh
+	bowsprit.position = Vector3(0.0, 2.9, -11.0)
+	bowsprit.rotation_degrees.x = -72.0
+	_hull_pivot.add_child(bowsprit)
+
+	# Heavy Iron Anchor & Chain on Starboard Bow
+	var anchor_chain = MeshInstance3D.new()
+	var ac_mesh = CylinderMesh.new()
+	ac_mesh.top_radius = 0.06
+	ac_mesh.bottom_radius = 0.06
+	ac_mesh.height = 2.4
+	ac_mesh.material = iron_mat
+	anchor_chain.mesh = ac_mesh
+	anchor_chain.position = Vector3(2.5, 0.6, -7.2)
+	anchor_chain.rotation_degrees.x = 18.0
+	_hull_pivot.add_child(anchor_chain)
+
+	var anchor = MeshInstance3D.new()
+	var anc_mesh = BoxMesh.new()
+	anc_mesh.size = Vector3(0.2, 1.4, 0.8)
+	anc_mesh.material = iron_mat
+	anchor.mesh = anc_mesh
+	anchor.position = Vector3(2.6, -0.4, -6.8)
+	_hull_pivot.add_child(anchor)
+
+	# 2. MAIN WEATHER DECK & BULWARKS
 	var deck = MeshInstance3D.new()
 	var dk_mesh = BoxMesh.new()
-	dk_mesh.size = Vector3(5.4, 0.24, 13.0)
+	dk_mesh.size = Vector3(5.7, 0.25, 13.2)
 	dk_mesh.material = deck_mat
 	deck.mesh = dk_mesh
-	deck.position = Vector3(0.0, 1.75, 0.0)
+	deck.position = Vector3(0.0, 1.85, 0.0)
 	_hull_pivot.add_child(deck)
 
-	# Port & Starboard Gunwale Bulwarks (with open boarding gate on starboard when gangplank active)
+	# Port Bulwark (Full length)
 	var port_gw = MeshInstance3D.new()
 	var pgw_mesh = BoxMesh.new()
-	pgw_mesh.size = Vector3(0.22, 0.9, 12.6)
-	pgw_mesh.material = hull_mat
+	pgw_mesh.size = Vector3(0.25, 0.95, 12.8)
+	pgw_mesh.material = plank_mat
 	port_gw.mesh = pgw_mesh
-	port_gw.position = Vector3(-2.6, 2.2, 0.0)
+	port_gw.position = Vector3(-2.75, 2.35, 0.0)
 	_hull_pivot.add_child(port_gw)
 
+	# Starboard Bulwark (split for boarding gate when gangplank active)
 	if has_gangplank:
-		for seg_z in [-3.65, 3.65]:
+		for seg_z in [-3.8, 3.8]:
 			var stbd_gw = MeshInstance3D.new()
 			var sgw_mesh = BoxMesh.new()
-			sgw_mesh.size = Vector3(0.22, 0.9, 5.3)
-			sgw_mesh.material = hull_mat
+			sgw_mesh.size = Vector3(0.25, 0.95, 5.2)
+			sgw_mesh.material = plank_mat
 			stbd_gw.mesh = sgw_mesh
-			stbd_gw.position = Vector3(2.6, 2.2, seg_z)
+			stbd_gw.position = Vector3(2.75, 2.35, seg_z)
 			_hull_pivot.add_child(stbd_gw)
 	else:
 		var stbd_gw = MeshInstance3D.new()
 		stbd_gw.mesh = pgw_mesh
-		stbd_gw.position = Vector3(2.6, 2.2, 0.0)
+		stbd_gw.position = Vector3(2.75, 2.35, 0.0)
 		_hull_pivot.add_child(stbd_gw)
 
-	# 2. High Sterncastle (Aft Quarterdeck Cabin, Z in [3.5, 6.8])
-	var stern = MeshInstance3D.new()
-	var st_mesh = BoxMesh.new()
-	st_mesh.size = Vector3(5.4, 2.4, 3.8)
-	st_mesh.material = hull_mat
-	stern.mesh = st_mesh
-	stern.position = Vector3(0.0, 2.8, 4.8)
-	_hull_pivot.add_child(stern)
+	# Deck Cargo Hatch with Wood Grating
+	var hatch = MeshInstance3D.new()
+	var ht_mesh = BoxMesh.new()
+	ht_mesh.size = Vector3(2.2, 0.16, 2.6)
+	ht_mesh.material = plank_mat
+	hatch.mesh = ht_mesh
+	hatch.position = Vector3(0.0, 1.95, -2.2)
+	_hull_pivot.add_child(hatch)
 
-	# Sterncastle Quarterdeck Floor & Railings
-	var q_deck = MeshInstance3D.new()
-	var qd_mesh = BoxMesh.new()
-	qd_mesh.size = Vector3(5.6, 0.2, 4.0)
-	qd_mesh.material = deck_mat
-	q_deck.mesh = qd_mesh
-	q_deck.position = Vector3(0.0, 4.05, 4.8)
-	_hull_pivot.add_child(q_deck)
-
-	# 3. Forecastle Platform (Forward Bow Deck, Z in [-6.5, -4.0])
+	# 3. HIGH FORECASTLE PLATFORM (Bow Deck, Z in [-6.5, -4.2])
 	var f_castle = MeshInstance3D.new()
 	var fc_mesh = BoxMesh.new()
-	fc_mesh.size = Vector3(4.6, 1.4, 2.8)
+	fc_mesh.size = Vector3(4.8, 1.5, 3.2)
 	fc_mesh.material = hull_mat
 	f_castle.mesh = fc_mesh
-	f_castle.position = Vector3(0.0, 2.3, -5.2)
+	f_castle.position = Vector3(0.0, 2.5, -5.2)
 	_hull_pivot.add_child(f_castle)
 
-	# 4. Towering Mainmast (13.5m high) & Foremast (9.5m high)
+	var fc_deck = MeshInstance3D.new()
+	var fcd_mesh = BoxMesh.new()
+	fcd_mesh.size = Vector3(5.0, 0.22, 3.4)
+	fcd_mesh.material = deck_mat
+	fc_deck.mesh = fcd_mesh
+	fc_deck.position = Vector3(0.0, 3.35, -5.2)
+	_hull_pivot.add_child(fc_deck)
+
+	# Forecastle Railings
+	for side_x in [-2.4, 2.4]:
+		var fc_rail = MeshInstance3D.new()
+		var fcr_mesh = BoxMesh.new()
+		fcr_mesh.size = Vector3(0.18, 0.85, 3.4)
+		fcr_mesh.material = plank_mat
+		fc_rail.mesh = fcr_mesh
+		fc_rail.position = Vector3(side_x, 3.85, -5.2)
+		_hull_pivot.add_child(fc_rail)
+
+	# Forecastle Ladder / Companionway Stairs
+	var fc_stairs = MeshInstance3D.new()
+	var fcs_mesh = BoxMesh.new()
+	fcs_mesh.size = Vector3(1.1, 1.4, 0.3)
+	fcs_mesh.material = plank_mat
+	fc_stairs.mesh = fcs_mesh
+	fc_stairs.position = Vector3(1.6, 2.55, -3.4)
+	fc_stairs.rotation_degrees.x = -38.0
+	_hull_pivot.add_child(fc_stairs)
+
+	# 4. STEPPED STERNCASLE & CAPTAIN'S CABIN (Aft Quarterdeck, Z in [3.4, 7.2])
+	var stern = MeshInstance3D.new()
+	var st_mesh = BoxMesh.new()
+	st_mesh.size = Vector3(5.7, 2.5, 4.2)
+	st_mesh.material = hull_mat
+	stern.mesh = st_mesh
+	stern.position = Vector3(0.0, 2.9, 5.0)
+	_hull_pivot.add_child(stern)
+
+	# Glowing Transom Windows on Aft Transom
+	var win_mat = StandardMaterial3D.new()
+	win_mat.albedo_color = Color(1.0, 0.88, 0.45)
+	win_mat.emission_enabled = true
+	win_mat.emission = Color(1.0, 0.78, 0.35)
+	win_mat.emission_energy_multiplier = 1.8
+
+	for wx in [-1.6, 0.0, 1.6]:
+		var win = MeshInstance3D.new()
+		var w_mesh = BoxMesh.new()
+		w_mesh.size = Vector3(0.9, 0.9, 0.15)
+		w_mesh.material = win_mat
+		win.mesh = w_mesh
+		win.position = Vector3(wx, 3.1, 7.15)
+		_hull_pivot.add_child(win)
+
+	# Quarterdeck Floor & Railings
+	var q_deck = MeshInstance3D.new()
+	var qd_mesh = BoxMesh.new()
+	qd_mesh.size = Vector3(5.9, 0.22, 4.4)
+	qd_mesh.material = deck_mat
+	q_deck.mesh = qd_mesh
+	q_deck.position = Vector3(0.0, 4.25, 5.0)
+	_hull_pivot.add_child(q_deck)
+
+	for side_x in [-2.85, 2.85]:
+		var q_rail = MeshInstance3D.new()
+		var qr_mesh = BoxMesh.new()
+		qr_mesh.size = Vector3(0.2, 0.9, 4.4)
+		qr_mesh.material = plank_mat
+		q_rail.mesh = qr_mesh
+		q_rail.position = Vector3(side_x, 4.8, 5.0)
+		_hull_pivot.add_child(q_rail)
+
+	# Transom Stern Railing
+	var aft_rail = MeshInstance3D.new()
+	var ar_mesh = BoxMesh.new()
+	ar_mesh.size = Vector3(5.9, 0.9, 0.2)
+	ar_mesh.material = plank_mat
+	aft_rail.mesh = ar_mesh
+	aft_rail.position = Vector3(0.0, 4.8, 7.15)
+	_hull_pivot.add_child(aft_rail)
+
+	# Stern Quarterdeck Stairs
+	var q_stairs = MeshInstance3D.new()
+	var qs_mesh = BoxMesh.new()
+	qs_mesh.size = Vector3(1.2, 2.2, 0.35)
+	qs_mesh.material = plank_mat
+	q_stairs.mesh = qs_mesh
+	q_stairs.position = Vector3(-1.7, 3.0, 2.7)
+	q_stairs.rotation_degrees.x = 42.0
+	_hull_pivot.add_child(q_stairs)
+
+	# Wooden Ship's Rudder mounted to sternpost below waterline
+	var rudder = MeshInstance3D.new()
+	var rd_mesh = BoxMesh.new()
+	rd_mesh.size = Vector3(0.3, 2.6, 1.4)
+	rd_mesh.material = plank_mat
+	rudder.mesh = rd_mesh
+	rudder.position = Vector3(0.0, 0.4, 7.7)
+	_hull_pivot.add_child(rudder)
+
+	# Ship's Steering Wheel / Helm Station on Quarterdeck
+	var helm_post = MeshInstance3D.new()
+	var hp_mesh = CylinderMesh.new()
+	hp_mesh.top_radius = 0.14
+	hp_mesh.bottom_radius = 0.18
+	hp_mesh.height = 1.05
+	hp_mesh.material = mast_mat
+	helm_post.mesh = hp_mesh
+	helm_post.position = Vector3(0.0, 4.85, 4.6)
+	_hull_pivot.add_child(helm_post)
+
+	_helm_wheel = Node3D.new()
+	_helm_wheel.position = Vector3(0.0, 5.35, 4.5)
+	var wheel_rim = MeshInstance3D.new()
+	var wr_mesh = TorusMesh.new()
+	wr_mesh.inner_radius = 0.42
+	wr_mesh.outer_radius = 0.55
+	wr_mesh.material = gold_mat
+	wheel_rim.mesh = wr_mesh
+	wheel_rim.rotation_degrees.x = 90.0
+	_helm_wheel.add_child(wheel_rim)
+	for spk in [0.0, 45.0, 90.0, 135.0]:
+		var spoke = MeshInstance3D.new()
+		var sp_m = CylinderMesh.new()
+		sp_m.top_radius = 0.04
+		sp_m.bottom_radius = 0.04
+		sp_m.height = 1.2
+		sp_m.material = mast_mat
+		spoke.mesh = sp_m
+		spoke.rotation_degrees.z = spk
+		_helm_wheel.add_child(spoke)
+	_hull_pivot.add_child(_helm_wheel)
+
+	# 5. DUAL-MASTED RIG: TOWERING MAINMAST & FOREMAST
+	# Mainmast (14.2m)
 	var mainmast = MeshInstance3D.new()
 	var mm_mesh = CylinderMesh.new()
 	mm_mesh.top_radius = 0.16
-	mm_mesh.bottom_radius = 0.28
-	mm_mesh.height = 13.0
+	mm_mesh.bottom_radius = 0.30
+	mm_mesh.height = 14.2
 	mm_mesh.material = mast_mat
 	mainmast.mesh = mm_mesh
-	mainmast.position = Vector3(0.0, 8.0, -0.4)
+	mainmast.position = Vector3(0.0, 8.5, 0.4)
 	_hull_pivot.add_child(mainmast)
 
-	# Crow's Nest Lookout Basket atop Mainmast
+	# Crow's Nest Lookout Basket
 	var crows_nest = MeshInstance3D.new()
 	var cn_mesh = CylinderMesh.new()
-	cn_mesh.top_radius = 0.85
-	cn_mesh.bottom_radius = 0.65
-	cn_mesh.height = 0.9
+	cn_mesh.top_radius = 0.95
+	cn_mesh.bottom_radius = 0.70
+	cn_mesh.height = 1.0
 	cn_mesh.material = hull_mat
 	crows_nest.mesh = cn_mesh
-	crows_nest.position = Vector3(0.0, 12.6, -0.4)
+	crows_nest.position = Vector3(0.0, 13.4, 0.4)
 	_hull_pivot.add_child(crows_nest)
 
-	# Yardarm Crossbeams & Billowing Square Sails
+	# Foremast (9.8m)
+	var foremast = MeshInstance3D.new()
+	var fm_mesh = CylinderMesh.new()
+	fm_mesh.top_radius = 0.12
+	fm_mesh.bottom_radius = 0.22
+	fm_mesh.height = 9.8
+	fm_mesh.material = mast_mat
+	foremast.mesh = fm_mesh
+	foremast.position = Vector3(0.0, 6.4, -4.8)
+	_hull_pivot.add_child(foremast)
+
+	# Rigging Shrouds & Ratlines (Port & Starboard Rope Ladders)
+	for side_x in [-2.7, 2.7]:
+		for shroud_z in [-0.6, 1.4]:
+			var shroud = MeshInstance3D.new()
+			var sh_m = CylinderMesh.new()
+			sh_m.top_radius = 0.03
+			sh_m.bottom_radius = 0.03
+			sh_m.height = 11.8
+			sh_m.material = rope_mat
+			shroud.mesh = sh_m
+			var target_top = Vector3(0.0, 13.2, 0.4)
+			var base_pt = Vector3(side_x, 2.3, shroud_z)
+			shroud.position = (target_top + base_pt) * 0.5
+			shroud.look_at_from_position(shroud.position, target_top, Vector3.FORWARD)
+			shroud.rotation_degrees.x += 90.0
+			_hull_pivot.add_child(shroud)
+
+	# Yardarm Crossbeams & Billowing Cloth Sails
 	var flag_shader = load("res://shaders/waving_flag.gdshader")
 	var sail_mat: Material = null
 	if flag_shader:
@@ -156,38 +399,73 @@ func _build_medieval_cog() -> void:
 		std.cull_mode = BaseMaterial3D.CULL_DISABLED
 		sail_mat = std
 
-	for sail_y in [6.2, 10.2]:
+	# Main Course & Main Topsail
+	for sail_spec in [Vector3(6.8, 6.4, 3.0), Vector3(10.6, 5.2, 2.6)]:
+		var sy = sail_spec.x
+		var yw = sail_spec.y
+		var sh = sail_spec.z
+
 		var yard = MeshInstance3D.new()
 		var yd_mesh = CylinderMesh.new()
 		yd_mesh.top_radius = 0.10
 		yd_mesh.bottom_radius = 0.10
-		yd_mesh.height = 6.6
+		yd_mesh.height = yw + 0.6
 		yd_mesh.material = mast_mat
 		yard.mesh = yd_mesh
-		yard.position = Vector3(0.0, sail_y + 1.4, -0.55)
+		yard.position = Vector3(0.0, sy + sh * 0.5, 0.25)
 		yard.rotation_degrees.z = 90.0
 		_hull_pivot.add_child(yard)
 
 		var sail = MeshInstance3D.new()
 		var sl_mesh = BoxMesh.new()
-		sl_mesh.size = Vector3(6.2, 2.8, 0.12)
+		sl_mesh.size = Vector3(yw, sh, 0.12)
 		sl_mesh.material = sail_mat
 		sail.mesh = sl_mesh
-		sail.position = Vector3(0.0, sail_y, -0.75)
+		sail.position = Vector3(0.0, sy, 0.05)
 		_hull_pivot.add_child(sail)
 
-	# Pennant Flag flying atop the Mainmast peak
+	# Foresail on Foremast
+	var f_yard = MeshInstance3D.new()
+	var fyd_mesh = CylinderMesh.new()
+	fyd_mesh.top_radius = 0.08
+	fyd_mesh.bottom_radius = 0.08
+	fyd_mesh.height = 4.8
+	fyd_mesh.material = mast_mat
+	f_yard.mesh = fyd_mesh
+	f_yard.position = Vector3(0.0, 7.8, -4.95)
+	f_yard.rotation_degrees.z = 90.0
+	_hull_pivot.add_child(f_yard)
+
+	var f_sail = MeshInstance3D.new()
+	var fs_mesh = BoxMesh.new()
+	fs_mesh.size = Vector3(4.4, 2.5, 0.10)
+	fs_mesh.material = sail_mat
+	f_sail.mesh = fs_mesh
+	f_sail.position = Vector3(0.0, 6.4, -5.1)
+	_hull_pivot.add_child(f_sail)
+
+	# Triangular Jib Sail on Bowsprit
+	var jib = MeshInstance3D.new()
+	var jib_mesh = PrismMesh.new()
+	jib_mesh.size = Vector3(0.1, 4.2, 5.6)
+	jib_mesh.material = sail_mat
+	jib.mesh = jib_mesh
+	jib.position = Vector3(0.0, 5.2, -8.2)
+	jib.rotation_degrees.x = -65.0
+	_hull_pivot.add_child(jib)
+
+	# Pennant Flag flying atop Mainmast peak
 	var flag_scene = load("res://assets/overworld/flag_blue.gltf")
 	if flag_scene:
 		var pennant = flag_scene.instantiate()
-		pennant.scale = Vector3.ONE * 2.2
-		pennant.position = Vector3(0.0, 14.2, -0.4)
+		pennant.scale = Vector3.ONE * 2.4
+		pennant.position = Vector3(0.0, 15.2, 0.4)
 		_hull_pivot.add_child(pennant)
 
-	# 5. Deck Cargo Dressing (Barrels, Crates, Lanterns)
+	# 6. DECK CARGO DRESSING & WARM STERN LANTERNS
 	var barrel_scene = load("res://assets/overworld/barrel.gltf")
 	if barrel_scene:
-		for b_pos in [Vector3(-1.6, 1.85, 1.2), Vector3(-1.6, 1.85, 2.1), Vector3(1.6, 1.85, -1.5)]:
+		for b_pos in [Vector3(-1.8, 1.95, 0.8), Vector3(-1.8, 1.95, 1.7), Vector3(1.7, 1.95, -1.2)]:
 			var b = barrel_scene.instantiate()
 			b.scale = Vector3.ONE * 1.3
 			b.position = b_pos
@@ -197,26 +475,26 @@ func _build_medieval_cog() -> void:
 	if crate_scene:
 		var c = crate_scene.instantiate()
 		c.scale = Vector3.ONE * 1.4
-		c.position = Vector3(1.5, 1.85, 1.5)
+		c.position = Vector3(1.6, 1.95, 1.2)
 		_hull_pivot.add_child(c)
 
 	# Warm Stern Lanterns
 	var stern_light = OmniLight3D.new()
 	stern_light.light_color = Color(1.0, 0.78, 0.42)
-	stern_light.light_energy = 2.0
-	stern_light.omni_range = 10.0
-	stern_light.position = Vector3(0.0, 4.8, 6.8)
+	stern_light.light_energy = 2.4
+	stern_light.omni_range = 12.0
+	stern_light.position = Vector3(0.0, 5.2, 7.3)
 	_hull_pivot.add_child(stern_light)
 
-	# 6. Walkable Deck & Boarding Gangplank Colliders
+	# 7. WALKABLE DECK & BOARDING GANGPLANK COLLIDERS
 	var sb = StaticBody3D.new()
 	sb.name = "ShipDeckCollider"
 	sb.collision_layer = 1
 	var deck_col = CollisionShape3D.new()
 	var deck_box = BoxShape3D.new()
-	deck_box.size = Vector3(5.2, 0.4, 12.5)
+	deck_box.size = Vector3(5.6, 0.4, 13.0)
 	deck_col.shape = deck_box
-	deck_col.position = Vector3(0.0, 1.65, 0.0)
+	deck_col.position = Vector3(0.0, 1.75, 0.0)
 	sb.add_child(deck_col)
 
 	if has_gangplank:
@@ -239,30 +517,26 @@ func _build_medieval_cog() -> void:
 
 	add_child(sb)
 
-	# Ship Nameplate
+	# 8. HIGH-VISIBILITY MEDIEVAL NAMEPLATE
 	var lbl = Label3D.new()
-	lbl.text = "⛵ " + ship_name + " (Medieval Cog)\n[E] Inspect Vessel"
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 6.8, 0.0)
-	lbl.font_size = 26
-	lbl.outline_size = 6
-	lbl.modulate = Color(0.95, 0.90, 0.72)
+	lbl.position = Vector3(0.0, 7.2, 0.0)
+	AssetLoader.style_world_label3d(lbl, "⛵ " + ship_name + "\n[E] Inspect Vessel", 40, Color(1.0, 0.94, 0.72))
 	_hull_pivot.add_child(lbl)
 
-	# 7. Animated Deck Crew (Quartermaster Helmsman & Bow Lookout)
+	# 9. ANIMATED DECK CREW (Helmsman, Bow Lookout, Deck Sailor)
 	var helmsman = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue_Hooded.glb", "character", "Helmsman")
 	helmsman.scale = Vector3.ONE * 0.54
-	helmsman.position = Vector3(0.0, 4.15, 4.2)
+	helmsman.position = Vector3(0.0, 4.35, 4.0)
 	helmsman.rotation_degrees.y = 180.0
 	_hull_pivot.add_child(helmsman)
 	var hap = helmsman.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if hap:
 		_crew_anims.append(hap)
-		_play_ship_crew_anim(hap, "Idle")
+		_play_ship_crew_anim(hap, "Interact")
 
 	var lookout = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "Lookout")
 	lookout.scale = Vector3.ONE * 0.54
-	lookout.position = Vector3(0.0, 3.0, -5.0)
+	lookout.position = Vector3(0.0, 3.45, -5.4)
 	lookout.rotation_degrees.y = 180.0
 	_hull_pivot.add_child(lookout)
 	var lap = lookout.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -270,53 +544,96 @@ func _build_medieval_cog() -> void:
 		_crew_anims.append(lap)
 		_play_ship_crew_anim(lap, "Cheer")
 
+	var sailor = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Barbarian.glb", "character", "Sailor")
+	sailor.scale = Vector3.ONE * 0.52
+	sailor.position = Vector3(1.2, 1.95, -0.6)
+	sailor.rotation_degrees.y = 90.0
+	_hull_pivot.add_child(sailor)
+	var sap = sailor.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if sap:
+		_crew_anims.append(sap)
+		_play_ship_crew_anim(sap, "PickUp")
+
 func _build_rowboat() -> void:
 	var wood_mat = StandardMaterial3D.new()
-	wood_mat.albedo_color = Color(0.35, 0.23, 0.14)
-	wood_mat.roughness = 0.88
+	wood_mat.albedo_color = Color(0.36, 0.24, 0.15)
+	wood_mat.roughness = 0.85
 
+	var plank_mat = StandardMaterial3D.new()
+	plank_mat.albedo_color = Color(0.44, 0.30, 0.18)
+	plank_mat.roughness = 0.82
+
+	# Hull Main Shell
 	var hull = MeshInstance3D.new()
 	var h_mesh = BoxMesh.new()
-	h_mesh.size = Vector3(1.6, 0.65, 3.8)
+	h_mesh.size = Vector3(1.8, 0.70, 4.0)
 	h_mesh.material = wood_mat
 	hull.mesh = h_mesh
-	hull.position = Vector3(0.0, 0.25, 0.0)
+	hull.position = Vector3(0.0, 0.28, 0.0)
 	_hull_pivot.add_child(hull)
 
-	for bench_z in [-0.9, 0.0, 0.9]:
+	# Stem and Stern Knees (Tapered ends)
+	for end_z in [-2.1, 2.1]:
+		var stem = MeshInstance3D.new()
+		var st_m = PrismMesh.new()
+		st_m.size = Vector3(1.7, 0.9, 0.6)
+		st_m.material = wood_mat
+		stem.mesh = st_m
+		stem.position = Vector3(0.0, 0.35, end_z)
+		stem.rotation_degrees.x = -90.0 if end_z < 0 else 90.0
+		_hull_pivot.add_child(stem)
+
+	# Gunwale rails & Rowlocks
+	for side_x in [-0.92, 0.92]:
+		var gw = MeshInstance3D.new()
+		var gw_m = BoxMesh.new()
+		gw_m.size = Vector3(0.12, 0.22, 4.2)
+		gw_m.material = plank_mat
+		gw.mesh = gw_m
+		gw.position = Vector3(side_x, 0.65, 0.0)
+		_hull_pivot.add_child(gw)
+
+	# Benches (Thwarts)
+	for bench_z in [-1.0, 0.0, 1.0]:
 		var bench = MeshInstance3D.new()
 		var b_mesh = BoxMesh.new()
-		b_mesh.size = Vector3(1.5, 0.12, 0.35)
-		b_mesh.material = wood_mat
+		b_mesh.size = Vector3(1.65, 0.12, 0.40)
+		b_mesh.material = plank_mat
 		bench.mesh = b_mesh
 		bench.position = Vector3(0.0, 0.55, bench_z)
 		_hull_pivot.add_child(bench)
 
 	# Articulated Rowing Oars on Port & Starboard Gunwales
 	_left_oar = Node3D.new()
-	_left_oar.position = Vector3(-0.8, 0.62, 0.0)
+	_left_oar.position = Vector3(-0.95, 0.65, 0.0)
 	var lo_mesh = MeshInstance3D.new()
 	var oar_box = BoxMesh.new()
-	oar_box.size = Vector3(1.9, 0.08, 0.16)
-	oar_box.material = wood_mat
+	oar_box.size = Vector3(2.1, 0.08, 0.18)
+	oar_box.material = plank_mat
 	lo_mesh.mesh = oar_box
-	lo_mesh.position = Vector3(-0.75, -0.15, 0.0)
+	lo_mesh.position = Vector3(-0.85, -0.15, 0.0)
 	lo_mesh.rotation_degrees.z = 16.0
 	_left_oar.add_child(lo_mesh)
 	_hull_pivot.add_child(_left_oar)
 
 	_right_oar = Node3D.new()
-	_right_oar.position = Vector3(0.8, 0.62, 0.0)
+	_right_oar.position = Vector3(0.95, 0.65, 0.0)
 	var ro_mesh = MeshInstance3D.new()
 	ro_mesh.mesh = oar_box
-	ro_mesh.position = Vector3(0.75, -0.15, 0.0)
+	ro_mesh.position = Vector3(0.85, -0.15, 0.0)
 	ro_mesh.rotation_degrees.z = -16.0
 	_right_oar.add_child(ro_mesh)
 	_hull_pivot.add_child(_right_oar)
 
+	# High-Visibility Medieval Boat Label
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 2.6, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🛶 " + ship_name + "\n[E] Inspect Boat", 34, Color(1.0, 0.94, 0.72))
+	_hull_pivot.add_child(lbl)
+
 	# Animated Harbor Oarsman on Center Bench
 	var rower = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rower")
-	rower.scale = Vector3.ONE * 0.48
+	rower.scale = Vector3.ONE * 0.50
 	rower.position = Vector3(0.0, 0.55, 0.0)
 	_hull_pivot.add_child(rower)
 	var rap = rower.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -331,7 +648,7 @@ func _build_interaction() -> void:
 	area.collision_mask = 0
 	var col = CollisionShape3D.new()
 	var sp = SphereShape3D.new()
-	sp.radius = 3.2 if is_rowboat else 7.5
+	sp.radius = 3.6 if is_rowboat else 8.0
 	col.shape = sp
 	col.position = Vector3(0.0, 1.5, 0.0)
 	area.add_child(col)
@@ -352,7 +669,7 @@ func _play_ship_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
 		return
 	var anims = ap.get_animation_list()
 	var chosen = ""
-	for candidate in [keyword.to_lower(), "idle", "interact", "cheer"]:
+	for candidate in [keyword.to_lower(), "idle", "interact", "cheer", "pickup"]:
 		for a in anims:
 			if candidate in a.to_lower():
 				chosen = a
@@ -382,6 +699,9 @@ func _process(delta: float) -> void:
 		_hull_pivot.position.y = sin(_wave_time * 1.6) * 0.12
 		_hull_pivot.rotation_degrees.z = sin(_wave_time * 1.2) * 1.8
 		_hull_pivot.rotation_degrees.x = cos(_wave_time * 0.9) * 1.2
+
+	if _helm_wheel:
+		_helm_wheel.rotation_degrees.y = sin(_wave_time * 0.8) * 18.0
 
 	if _left_oar and _right_oar:
 		var row_sweep = sin(_wave_time * 2.8) * 28.0

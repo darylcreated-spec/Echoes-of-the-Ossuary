@@ -87,12 +87,9 @@ func _build_squadron() -> void:
 	# Regiment Floating Label
 	var lbl = Label3D.new()
 	var icon_str = "⚔️ " if faction_color == "red" else "🛡️ "
-	lbl.text = icon_str + regiment_name + " (Marching Column)\n[E] Rally"
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 2.5, -1.0)
-	lbl.font_size = 24
-	lbl.outline_size = 6
-	lbl.modulate = Color(1.0, 0.65, 0.65) if faction_color == "red" else Color(0.75, 0.9, 1.0)
+	lbl.position = Vector3(0.0, 2.7, -1.0)
+	var primary_c = Color(1.0, 0.72, 0.72) if faction_color == "red" else Color(0.82, 0.92, 1.0)
+	AssetLoader.style_world_label3d(lbl, icon_str + regiment_name + " (Marching Column)\n[E] Rally", 36, primary_c)
 	add_child(lbl)
 
 func _build_interaction() -> void:
