@@ -52,6 +52,8 @@ var combo_reset_time: float = 0.85
 var _combo_reset_timer: float = 0.0
 var _regen_timer: float = 0.0
 var _sea_hint_shown: bool = false
+var is_captaining_ship: bool = false
+var captained_ship: Node3D = null
 
 # Interaction
 var current_interactable: Node = null
@@ -358,6 +360,22 @@ func _physics_process(delta: float) -> void:
 	
 	if is_dead:
 		move_and_slide()
+		return
+
+	# Naval Ship Captaincy Input Delegate
+	if is_captaining_ship and captained_ship and is_instance_valid(captained_ship):
+		var raw_input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		var fire_port = Input.is_action_just_pressed("block")
+		var fire_star = Input.is_action_just_pressed("attack")
+		var fire_bow = Input.is_action_just_pressed("swap_stance")
+		var crew_vol = Input.is_action_just_pressed("dash")
+		var release = Input.is_action_just_pressed("interact")
+
+		if release:
+			captained_ship.release_helm()
+			return
+
+		captained_ship.handle_captain_input(raw_input, fire_port, fire_star, fire_bow, crew_vol, delta)
 		return
 
 	if is_input_locked:
@@ -891,6 +909,23 @@ func _mounted_leap() -> void:
 	AudioManager.play_sfx("dash", 0.08, -1.0)
 	CombatJuice.add_trauma(0.12)
 	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 0.3, 0), Color(0.9, 0.8, 0.5))
+
+func set_captained_ship(ship: Node3D) -> void:
+	is_captaining_ship = true
+	captained_ship = ship
+	is_blocking = false
+	if is_mounted:
+		dismount()
+	velocity = Vector3.ZERO
+	if anim_player:
+		play_anim("Interact", 0.1, 1.0)
+
+func clear_captained_ship() -> void:
+	is_captaining_ship = false
+	captained_ship = null
+	velocity = Vector3.ZERO
+	if anim_player:
+		play_anim("Idle", 0.1, 1.0)
 
 func _process_trample(delta: float) -> void:
 	if _trample_cooldown > 0.0:

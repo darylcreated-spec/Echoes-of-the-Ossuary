@@ -5,6 +5,28 @@ class_name MedievalShip3D
 @export var is_rowboat: bool = false
 @export var sail_color: Color = Color(0.92, 0.88, 0.78)
 @export var has_gangplank: bool = true
+@export var can_be_captained: bool = true
+
+var is_player_captained: bool = false
+var captain_player: Node3D = null
+var current_speed: float = 0.0
+var max_speed: float = 6.2 # knots
+var turn_speed: float = 0.95
+var rudder_target_rot: float = 0.0
+var port_reload_timer: float = 0.0
+var starboard_reload_timer: float = 0.0
+var bow_reload_timer: float = 0.0
+var max_reload_time: float = 2.4
+var current_health: float = 350.0
+var max_health: float = 350.0
+
+var _port_cannons: Array[Node3D] = []
+var _starboard_cannons: Array[Node3D] = []
+var _bow_cannon: Node3D = null
+var _marine_archers: Array[Node3D] = []
+var _marine_anims: Array[AnimationPlayer] = []
+var _marine_shoot_timer: float = 2.5
+var _helm_interact_area: Area3D = null
 
 var _hull_pivot: Node3D = null
 var _wave_time: float = 0.0
@@ -334,6 +356,19 @@ func _build_medieval_cog() -> void:
 		_helm_wheel.add_child(spoke)
 	_hull_pivot.add_child(_helm_wheel)
 
+	# Dedicated Quarterdeck Captain Helm Station Area3D
+	_helm_interact_area = Area3D.new()
+	_helm_interact_area.name = "QuarterdeckHelmStation"
+	_helm_interact_area.collision_layer = 1 << 5
+	_helm_interact_area.collision_mask = 0
+	var h_cs = CollisionShape3D.new()
+	var h_sp = SphereShape3D.new()
+	h_sp.radius = 2.4
+	h_cs.shape = h_sp
+	h_cs.position = Vector3(0.0, 4.85, 3.8)
+	_helm_interact_area.add_child(h_cs)
+	_hull_pivot.add_child(_helm_interact_area)
+
 	# 5. DUAL-MASTED RIG: TOWERING MAINMAST & FOREMAST
 	# Mainmast (14.2m)
 	var mainmast = MeshInstance3D.new()
@@ -554,7 +589,7 @@ func _build_medieval_cog() -> void:
 		_crew_anims.append(sap)
 		_play_ship_crew_anim(sap, "PickUp")
 
-	# 10. Deck Cannons & Cannonball Ammunition Stacks
+	# 10. Deck Cannons, Bow Chaser & Cannonball Ammunition Stacks
 	var cannon_scene = load("res://assets/ships/cannon.glb")
 	if cannon_scene:
 		for c_z in [-3.5, 0.0, 3.5]:
@@ -564,12 +599,38 @@ func _build_medieval_cog() -> void:
 			c_port.position = Vector3(-2.25, 1.85, c_z)
 			c_port.rotation_degrees.y = -90.0
 			_hull_pivot.add_child(c_port)
+			_port_cannons.append(c_port)
+
 			# Starboard battery
 			var c_star = cannon_scene.instantiate()
 			c_star.scale = Vector3.ONE * 1.6
 			c_star.position = Vector3(2.25, 1.85, c_z)
 			c_star.rotation_degrees.y = 90.0
 			_hull_pivot.add_child(c_star)
+			_starboard_cannons.append(c_star)
+
+		# Forward Bow Chaser Heavy Cannon (Forecastle peak)
+		_bow_cannon = cannon_scene.instantiate()
+		_bow_cannon.scale = Vector3.ONE * 1.8
+		_bow_cannon.position = Vector3(0.0, 3.45, -6.4)
+		_bow_cannon.rotation_degrees.y = 0.0
+		_hull_pivot.add_child(_bow_cannon)
+
+	# 10B. Armed Allied Marine Archers stationed on Gunwales and Forecastle
+	var archer_model = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "MarineArcher")
+	if archer_model:
+		var archer_spots = [Vector3(-1.8, 3.45, -5.2), Vector3(1.8, 3.45, -5.2), Vector3(2.2, 4.35, 5.2)]
+		for a_pos in archer_spots:
+			var marine = archer_model.duplicate()
+			marine.scale = Vector3.ONE * 0.52
+			marine.position = a_pos
+			marine.rotation_degrees.y = 180.0 if a_pos.z < 0 else -90.0
+			_hull_pivot.add_child(marine)
+			_marine_archers.append(marine)
+			var ap = marine.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			if ap:
+				_marine_anims.append(ap)
+				_play_ship_crew_anim(ap, "Idle")
 
 	var ball_scene = load("res://assets/ships/cannon-ball.glb")
 	if ball_scene:
@@ -719,14 +780,263 @@ func _build_interaction() -> void:
 	add_child(area)
 
 func get_prompt_text() -> String:
-	return "[E] Inspect " + ship_name
+	if is_rowboat:
+		return "[E] Inspect " + ship_name
+	if is_player_captained:
+		return "[E] Release Helm / Drop Anchor"
+	return "[E] Take the Helm / Captain " + ship_name
 
-func interact(_player: Node = null) -> void:
-	AudioManager.play_sfx_at_position("ship_creak", global_position, 36.0, 0.08, 0.0)
+func interact(player: Node = null) -> void:
+	if is_rowboat:
+		AudioManager.play_sfx_at_position("ship_creak", global_position, 36.0, 0.08, 0.0)
+		var hud = get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast("🛶 " + ship_name + ": Harbor rowboat plying the Port Blackwater shoals.")
+		return
+
+	if is_player_captained:
+		release_helm()
+	else:
+		board_and_captain(player)
+
+func _get_helm_world_position() -> Vector3:
+	return global_transform * Vector3(0.0, 4.35, 3.8)
+
+func board_and_captain(player: Node) -> void:
+	if not player or not is_instance_valid(player) or not can_be_captained:
+		return
+	is_player_captained = true
+	captain_player = player as Node3D
+	if player.has_method("set_captained_ship"):
+		player.set_captained_ship(self)
+
+	player.global_position = _get_helm_world_position()
+	player.global_rotation.y = global_rotation.y
+	AudioManager.play_sfx("naval_horn", 0.12, 0.0)
+
 	var hud = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_naval_hud"):
+		hud.show_naval_hud(self)
 	if hud and hud.has_method("show_toast"):
-		var desc = "Harbor rowboat plying the Port Blackwater shoals." if is_rowboat else "High-seas medieval cog moored at Port Blackwater. Walk up the boarding gangplank to explore the weather deck!"
-		hud.show_toast("⛵ " + ship_name + ": " + desc)
+		hud.show_toast("⚓ CAPTAIN ON DECK! [WASD] Sail • [LMB/J] Starboard Broadsides • [RMB/K] Port Broadsides • [Q] Chaser • [Space] Volley • [E] Release")
+
+func release_helm() -> void:
+	if not is_player_captained:
+		return
+	is_player_captained = false
+	current_speed = 0.0
+	if captain_player and is_instance_valid(captain_player):
+		if captain_player.has_method("clear_captained_ship"):
+			captain_player.clear_captained_ship()
+		captain_player.global_position = _get_helm_world_position() + transform.basis.z * 1.6
+		captain_player = null
+
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("hide_naval_hud"):
+		hud.hide_naval_hud()
+	if hud and hud.has_method("show_toast"):
+		hud.show_toast("⚓ Dropped anchor. Walking freely on deck.")
+
+func handle_captain_input(movement: Vector2, fire_port: bool, fire_starboard: bool, fire_bow: bool, crew_volley: bool, delta: float) -> void:
+	if not is_player_captained:
+		return
+
+	# Accelerate / Decelerate
+	if -movement.y > 0.1:
+		current_speed = move_toward(current_speed, max_speed, delta * 2.4)
+	elif -movement.y < -0.1:
+		current_speed = move_toward(current_speed, -max_speed * 0.45, delta * 2.2)
+	else:
+		current_speed = move_toward(current_speed, 0.0, delta * 1.0)
+
+	# Steer Rudder
+	rudder_target_rot = -movement.x
+	if abs(movement.x) > 0.05:
+		var speed_factor = clamp(abs(current_speed) / max_speed, 0.35, 1.0)
+		rotation.y -= movement.x * turn_speed * delta * speed_factor
+		if _helm_wheel:
+			_helm_wheel.rotation_degrees.y = -movement.x * 45.0
+	else:
+		if _helm_wheel:
+			_helm_wheel.rotation_degrees.y = lerp(_helm_wheel.rotation_degrees.y, 0.0, delta * 4.0)
+
+	# Forward Movement
+	var fwd = -transform.basis.z.normalized()
+	global_position += fwd * current_speed * delta * 2.0
+
+	# Clamp within deep ocean basin
+	global_position.x = clamp(global_position.x, -133.0, -65.0)
+	global_position.z = clamp(global_position.z, 48.0, 134.0)
+
+	# Keep captain locked to helm station
+	if captain_player and is_instance_valid(captain_player):
+		captain_player.global_position = _get_helm_world_position()
+		captain_player.global_rotation.y = global_rotation.y
+
+	# Weapons
+	if fire_port:
+		fire_port_broadside()
+	if fire_starboard:
+		fire_starboard_broadside()
+	if fire_bow:
+		fire_bow_chaser()
+	if crew_volley:
+		order_crew_volley()
+
+func fire_port_broadside() -> void:
+	if port_reload_timer > 0.0:
+		return
+	port_reload_timer = max_reload_time
+	AudioManager.play_sfx_at_position("cannon_fire", global_position + Vector3(0, 2, 0), 65.0, 0.1, 0.0)
+	CombatJuice.add_trauma(0.18)
+
+	var port_dir = -global_transform.basis.x.normalized()
+	for i in range(_port_cannons.size()):
+		var c = _port_cannons[i]
+		if is_instance_valid(c):
+			var muzzle = c.global_position + port_dir * 1.5 + Vector3(0, 0.3, 0)
+			_spawn_cannonball(muzzle, port_dir + Vector3(0, 0.08, randf_range(-0.12, 0.12)))
+
+func fire_starboard_broadside() -> void:
+	if starboard_reload_timer > 0.0:
+		return
+	starboard_reload_timer = max_reload_time
+	AudioManager.play_sfx_at_position("cannon_fire", global_position + Vector3(0, 2, 0), 65.0, 0.1, 0.0)
+	CombatJuice.add_trauma(0.18)
+
+	var star_dir = global_transform.basis.x.normalized()
+	for i in range(_starboard_cannons.size()):
+		var c = _starboard_cannons[i]
+		if is_instance_valid(c):
+			var muzzle = c.global_position + star_dir * 1.5 + Vector3(0, 0.3, 0)
+			_spawn_cannonball(muzzle, star_dir + Vector3(0, 0.08, randf_range(-0.12, 0.12)))
+
+func fire_bow_chaser() -> void:
+	if bow_reload_timer > 0.0:
+		return
+	bow_reload_timer = 2.0
+	AudioManager.play_sfx_at_position("cannon_fire", global_position + Vector3(0, 3.5, 0), 65.0, 0.1, 0.0)
+	CombatJuice.add_trauma(0.15)
+
+	var fwd_dir = -global_transform.basis.z.normalized()
+	var muzzle = global_position + fwd_dir * 7.5 + Vector3(0, 3.5, 0)
+	_spawn_cannonball(muzzle, fwd_dir + Vector3(0, 0.08, 0.0), 55.0)
+
+func order_crew_volley() -> void:
+	AudioManager.play_sfx_at_position("naval_horn", global_position + Vector3(0, 5, 0), 60.0, 0.15, 0.0)
+	CombatJuice.add_trauma(0.20)
+	for a in _marine_anims:
+		if is_instance_valid(a):
+			_play_ship_crew_anim(a, "Shoot")
+
+	var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+	var target_enemy: Node3D = null
+	var closest_dist = 60.0
+	for e in enemies:
+		if is_instance_valid(e) and not e.is_queued_for_deletion():
+			var d = global_position.distance_to(e.global_position)
+			if d < closest_dist:
+				closest_dist = d
+				target_enemy = e
+
+	for m in _marine_archers:
+		if is_instance_valid(m):
+			var arrow_start = m.global_position + Vector3(0, 1.4, 0)
+			var dest = target_enemy.global_position if target_enemy else global_position - global_transform.basis.z * 30.0
+			dest += Vector3(randf_range(-2, 2), 1.5, randf_range(-2, 2))
+			_spawn_flaming_arrow(arrow_start, dest)
+
+	if port_reload_timer <= 0.0:
+		fire_port_broadside()
+	if starboard_reload_timer <= 0.0:
+		fire_starboard_broadside()
+
+func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3, dmg: float = 40.0) -> void:
+	CombatJuice.spawn_hit_spark(start_pos, Color(1.0, 0.75, 0.2))
+
+	var ball = MeshInstance3D.new()
+	var sp = SphereMesh.new()
+	sp.radius = 0.28
+	sp.height = 0.56
+	ball.mesh = sp
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.18, 0.18, 0.20)
+	mat.metallic = 0.85
+	mat.roughness = 0.35
+	ball.material_override = mat
+
+	get_tree().current_scene.add_child(ball)
+	ball.global_position = start_pos
+
+	var target_dest = start_pos + shoot_dir.normalized() * 38.0
+	target_dest.y = max(target_dest.y, -0.2)
+
+	var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+	var hit_enemy: Node3D = null
+	for e in enemies:
+		if is_instance_valid(e) and not e.is_queued_for_deletion():
+			var to_e = e.global_position - start_pos
+			to_e.y = 0.0
+			var angle = shoot_dir.angle_to(to_e)
+			if angle < deg_to_rad(28.0) and to_e.length() < 42.0:
+				hit_enemy = e
+				target_dest = e.global_position + Vector3(randf_range(-1.2, 1.2), 1.2, randf_range(-1.2, 1.2))
+				break
+
+	var fly_time = 0.75
+	var tw = ball.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ball, "global_position:x", target_dest.x, fly_time)
+	tw.tween_property(ball, "global_position:z", target_dest.z, fly_time)
+	tw.tween_property(ball, "global_position:y", target_dest.y + 2.5, fly_time * 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(ball, "global_position:y", target_dest.y, fly_time * 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(func():
+		if is_instance_valid(ball):
+			ball.queue_free()
+		AudioManager.play_sfx_at_position("cannon_impact", target_dest, 45.0, 0.1, 0.0)
+		CombatJuice.spawn_hit_spark(target_dest, Color(1.0, 0.65, 0.2))
+		if hit_enemy and is_instance_valid(hit_enemy) and hit_enemy.has_method("take_naval_damage"):
+			hit_enemy.take_naval_damage(dmg, self)
+	)
+
+func _spawn_flaming_arrow(start_pos: Vector3, dest_pos: Vector3) -> void:
+	var arr = MeshInstance3D.new()
+	var cyl = CylinderMesh.new()
+	cyl.top_radius = 0.03
+	cyl.bottom_radius = 0.03
+	cyl.height = 0.95
+	arr.mesh = cyl
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.55, 0.1)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.45, 0.1)
+	mat.emission_energy_multiplier = 2.0
+	arr.material_override = mat
+
+	get_tree().current_scene.add_child(arr)
+	arr.global_position = start_pos
+	arr.look_at(dest_pos, Vector3.UP)
+
+	var tw = arr.create_tween()
+	tw.tween_property(arr, "global_position", dest_pos, 0.55)
+	tw.chain().tween_callback(func():
+		if is_instance_valid(arr):
+			arr.queue_free()
+		CombatJuice.spawn_hit_spark(dest_pos, Color(1.0, 0.6, 0.1))
+		var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+		for e in enemies:
+			if is_instance_valid(e) and not e.is_queued_for_deletion():
+				if e.global_position.distance_to(dest_pos) < 6.0 and e.has_method("take_naval_damage"):
+					e.take_naval_damage(16.0, self)
+	)
+
+func take_ship_damage(amount: float) -> void:
+	current_health = max(0.0, current_health - amount)
+	CombatJuice.add_trauma(0.12)
+	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 2.0, 0), Color(1.0, 0.7, 0.2))
+	var hud = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("update_ship_health"):
+		hud.update_ship_health(current_health, max_health)
 
 func _play_ship_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
 	if not ap:
@@ -751,6 +1061,26 @@ func _play_ship_crew_anim(ap: AnimationPlayer, keyword: String) -> void:
 func _process(delta: float) -> void:
 	_wave_time += delta
 	_creak_timer += delta
+
+	# Reload cooldowns
+	if port_reload_timer > 0.0:
+		port_reload_timer -= delta
+	if starboard_reload_timer > 0.0:
+		starboard_reload_timer -= delta
+	if bow_reload_timer > 0.0:
+		bow_reload_timer -= delta
+
+	# Auto marine archery defense against incoming raiders
+	_marine_shoot_timer -= delta
+	if _marine_shoot_timer <= 0.0:
+		_marine_shoot_timer = 2.6
+		var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+		for e in enemies:
+			if is_instance_valid(e) and not e.is_queued_for_deletion():
+				if global_position.distance_to(e.global_position) <= 52.0:
+					order_crew_volley()
+					break
+
 	if _creak_timer >= 5.2:
 		_creak_timer = 0.0
 		AudioManager.play_sfx_at_position("ship_creak", global_position, 28.0, 0.1, -8.0)
@@ -761,10 +1091,11 @@ func _process(delta: float) -> void:
 
 	if _hull_pivot:
 		_hull_pivot.position.y = sin(_wave_time * 1.6) * 0.12
-		_hull_pivot.rotation_degrees.z = sin(_wave_time * 1.2) * 1.8
+		var roll = sin(_wave_time * 1.2) * 1.8 + clamp(-rudder_target_rot * 12.0, -6.0, 6.0)
+		_hull_pivot.rotation_degrees.z = roll
 		_hull_pivot.rotation_degrees.x = cos(_wave_time * 0.9) * 1.2
 
-	if _helm_wheel:
+	if _helm_wheel and not is_player_captained:
 		_helm_wheel.rotation_degrees.y = sin(_wave_time * 0.8) * 18.0
 
 	if _left_oar and _right_oar:

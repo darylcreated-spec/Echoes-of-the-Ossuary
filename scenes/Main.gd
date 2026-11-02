@@ -631,6 +631,75 @@ func _run_gameplay_self_test() -> void:
 	assert(beach_ramp != null, "Beach Shoreline Ramp collider must exist along Golden Beach Cove (Z in [86.5, 114.0])")
 	print(" -> Verified Stone Harbor Sea Stairs and Golden Beach Cove Ramp are active for seamless egress!")
 
+	# 19. Medieval Naval Warfare: Harbor Defenses, Ship Captaincy & Raider Invasions
+	print("\n[TEST 19] Medieval Naval Warfare: Harbor Defenses, Ship Captaincy & Raider Invasions...")
+	# A. Discover Harbor Defense Bastion & Alarm Bell
+	var defense_towers = get_tree().get_nodes_in_group("harbor_defense_tower")
+	assert(defense_towers.size() > 0, "Expected HarborDefenseTower3D to be present at North Headland")
+	var tower = defense_towers[0]
+	print(" -> Harbor Defense Artillery Bastion verified at: ", tower.global_position)
+
+	var bells = get_tree().get_nodes_in_group("harbor_alarm_bell")
+	assert(bells.size() > 0, "Expected HarborAlarmBell3D to be present on the promenade")
+	var bell = bells[0]
+	bell.interact(player)
+	assert(bell.is_ringing == true, "Alarm bell must begin swinging and ringing when interacted")
+	print(" -> Harbor Alarm Bell sounded! Invasion event triggered.")
+
+	# B. Discover Flagship and Test Captaincy & Helm Controls
+	var harbor_ships = get_tree().get_nodes_in_group("medieval_ship")
+	var flagship = null
+	for s in harbor_ships:
+		if "The Sea Sovereign" in s.ship_name:
+			flagship = s
+			break
+	assert(flagship != null, "Flagship 'The Sea Sovereign' must exist in harbor")
+	assert(flagship._port_cannons.size() >= 3, "Flagship must have at least 3 port cannons")
+	assert(flagship._starboard_cannons.size() >= 3, "Flagship must have at least 3 starboard cannons")
+	assert(flagship._bow_cannon != null, "Flagship must have forward Bow Chaser cannon")
+	assert(flagship._marine_archers.size() >= 2, "Flagship must have armed Marine Archers")
+
+	# Take Helm
+	flagship.board_and_captain(player)
+	assert(flagship.is_player_captained == true, "Ship must be captained by player")
+	assert(player.is_captaining_ship == true, "Player controller must be in captaining stance")
+	print(" -> Player successfully boarded and captained Flagship!")
+
+	# Test Sailing Propulsion
+	flagship.handle_captain_input(Vector2(0.0, -1.0), false, false, false, false, 0.5) # Press [W] forward
+	assert(flagship.current_speed > 0.5, "Pressing [W] while captaining must increase sail speed")
+	print(" -> Ship accelerated under full sail: %.1f knots" % (flagship.current_speed * 1.85))
+
+	# Test Broadsides, Bow Chaser & Marine Crew Volley
+	flagship.fire_starboard_broadside()
+	assert(flagship.starboard_reload_timer > 0.0, "Starboard broadside must start reload cooldown")
+	flagship.fire_port_broadside()
+	assert(flagship.port_reload_timer > 0.0, "Port broadside must start reload cooldown")
+	flagship.fire_bow_chaser()
+	assert(flagship.bow_reload_timer > 0.0, "Bow chaser must start reload cooldown")
+	flagship.order_crew_volley()
+	print(" -> Starboard broadside, Port broadside, Bow Chaser, and Marine Archer Volley loosed successfully!")
+
+	# C. Enemy Corsair Raider Ship Combat & Sinking
+	var enemy_ships = get_tree().get_nodes_in_group("enemy_naval_ship")
+	assert(enemy_ships.size() > 0, "Enemy Corsair Ship must be present in ocean basin")
+	var enemy_raider = enemy_ships[0]
+	var raider_start_hp = enemy_raider.current_health
+	enemy_raider.take_naval_damage(45.0, flagship)
+	assert(enemy_raider.current_health < raider_start_hp, "Enemy raider must take damage from broadside hits")
+	print(" -> Enemy warship took broadside hit: HP reduced to %.1f" % enemy_raider.current_health)
+
+	# Test Sinking & Loot Drop
+	enemy_raider.take_naval_damage(200.0, flagship)
+	assert(enemy_raider._is_sinking == true, "Enemy warship must begin sinking on 0 HP")
+	print(" -> Enemy warship critically hit and sinking into ocean deeps!")
+
+	# Release Helm
+	flagship.release_helm()
+	assert(flagship.is_player_captained == false, "Releasing helm must disengage ship captaincy")
+	assert(player.is_captaining_ship == false, "Player must return to foot locomotion on deck")
+	print(" -> Released helm and returned to regular foot locomotion!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

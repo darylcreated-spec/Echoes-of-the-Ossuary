@@ -886,6 +886,71 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 
+		"cannon_fire":
+			# Thunderous acoustic naval cannon blast: sharp muzzle explosion + rolling sub bass rumble
+			var duration: float = 0.85
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 6.5)
+				var crack = (randf_range(-0.7, 0.7) + randf_range(-0.5, 0.5)) * exp(-t * 32.0)
+				var boom_freq = lerp(95.0, 38.0, t / duration)
+				var boom = sin(2.0 * PI * boom_freq * t) * 0.65 + sin(2.0 * PI * (boom_freq * 0.5) * t) * 0.35
+				var val = (boom * 0.75 + crack * 0.8) * env * 0.95
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"cannon_impact":
+			# Heavy oak timber splintering crash + foaming water splash
+			var duration: float = 0.55
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 8.0)
+				var splinter = (randf_range(-0.5, 0.5) + randf_range(-0.5, 0.5)) * exp(-t * 14.0)
+				var wood_thud = sin(2.0 * PI * lerp(180.0, 60.0, t / duration) * t) * 0.6
+				var water = sin(2.0 * PI * 240.0 * t) * exp(-t * 5.0) * 0.25
+				var val = (wood_thud * 0.6 + splinter * 0.6 + water) * env * 0.9
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"harbor_bell":
+			# Resonant heavy bronze alarm bell with acoustic harmonics (C5 = 523Hz + 1046Hz + 1569Hz)
+			var duration: float = 1.4
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 3.2)
+				var f1 = 523.25
+				var f2 = 1046.5
+				var f3 = 1569.75
+				var strike = (randf_range(-0.3, 0.3)) * exp(-t * 60.0)
+				var bell = sin(2.0 * PI * f1 * t) * 0.5 + sin(2.0 * PI * f2 * t) * 0.3 + sin(2.0 * PI * f3 * t) * 0.15
+				var val = (bell + strike * 0.5) * env * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"naval_horn":
+			# Deep brass nautical war horn (G2 = 98Hz + D3 = 146Hz) sounding broadsides / invasion
+			var duration: float = 1.6
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var attack = clamp(t / 0.18, 0.0, 1.0)
+				var decay = exp(-max(0.0, t - 1.1) * 4.5)
+				var env = attack * decay
+				var f1 = 98.0
+				var f2 = 146.83
+				var f3 = 196.0
+				var horn = sin(2.0 * PI * f1 * t) * 0.55 + sin(2.0 * PI * f2 * t) * 0.3 + sin(2.0 * PI * f3 * t) * 0.15
+				var val = horn * env * 0.8
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
 		_:
 			samples.resize(100)
 

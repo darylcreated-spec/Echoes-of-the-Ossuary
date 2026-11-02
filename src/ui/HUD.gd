@@ -42,6 +42,16 @@ var compass_bar: Control = null
 var dialogue_modal: DialogueModal = null
 var fade_curtain: ColorRect = null
 
+# Naval Captaincy HUD
+var _naval_hud_container: PanelContainer = null
+var _ship_name_lbl: Label = null
+var _ship_speed_lbl: Label = null
+var _ship_hp_bar: ProgressBar = null
+var _port_status_lbl: Label = null
+var _star_status_lbl: Label = null
+var _bow_status_lbl: Label = null
+var _active_captained_ship: Node3D = null
+
 # Mission Notification Toast
 var mission_toast: PanelContainer = null
 var mission_toast_lbl: Label = null
@@ -286,7 +296,144 @@ func _build_ui_tree() -> void:
 	fade_curtain.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fade_curtain)
 
+	_setup_naval_hud()
+
+func _setup_naval_hud() -> void:
+	_naval_hud_container = PanelContainer.new()
+	_naval_hud_container.name = "NavalHUDContainer"
+	_naval_hud_container.anchor_left = 0.5
+	_naval_hud_container.anchor_right = 0.5
+	_naval_hud_container.anchor_top = 1.0
+	_naval_hud_container.anchor_bottom = 1.0
+	_naval_hud_container.offset_left = -300
+	_naval_hud_container.offset_right = 300
+	_naval_hud_container.offset_top = -145
+	_naval_hud_container.offset_bottom = -15
+	_naval_hud_container.visible = false
+
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.11, 0.14, 0.94)
+	sb.border_color = Color(0.85, 0.72, 0.32)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 14
+	sb.content_margin_right = 14
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
+	_naval_hud_container.add_theme_stylebox_override("panel", sb)
+
+	var vb = VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 5)
+
+	# Row 1: Header
+	var hb_head = HBoxContainer.new()
+	_ship_name_lbl = Label.new()
+	_ship_name_lbl.text = "⛵ The Sea Sovereign • Flagship"
+	_ship_name_lbl.add_theme_font_size_override("font_size", 16)
+	_ship_name_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.55))
+	_ship_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hb_head.add_child(_ship_name_lbl)
+
+	_ship_speed_lbl = Label.new()
+	_ship_speed_lbl.text = "⚓ Speed: 0.0 Knots"
+	_ship_speed_lbl.add_theme_font_size_override("font_size", 15)
+	_ship_speed_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 1.0))
+	hb_head.add_child(_ship_speed_lbl)
+	vb.add_child(hb_head)
+
+	# Row 2: Hull Health Bar
+	_ship_hp_bar = ProgressBar.new()
+	_ship_hp_bar.min_value = 0.0
+	_ship_hp_bar.max_value = 350.0
+	_ship_hp_bar.value = 350.0
+	_ship_hp_bar.custom_minimum_size = Vector2(0, 16)
+	var hp_sb = StyleBoxFlat.new()
+	hp_sb.bg_color = Color(0.2, 0.75, 0.3)
+	hp_sb.set_corner_radius_all(3)
+	_ship_hp_bar.add_theme_stylebox_override("fill", hp_sb)
+	vb.add_child(_ship_hp_bar)
+
+	# Row 3: Broadside & Chaser Weapons
+	var hb_weap = HBoxContainer.new()
+	_port_status_lbl = Label.new()
+	_port_status_lbl.text = "◀ Port Cannons: [READY]"
+	_port_status_lbl.add_theme_font_size_override("font_size", 13)
+	_port_status_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hb_weap.add_child(_port_status_lbl)
+
+	_bow_status_lbl = Label.new()
+	_bow_status_lbl.text = "▲ Bow Chaser: [READY]"
+	_bow_status_lbl.add_theme_font_size_override("font_size", 13)
+	_bow_status_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bow_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hb_weap.add_child(_bow_status_lbl)
+
+	_star_status_lbl = Label.new()
+	_star_status_lbl.text = "Starboard Cannons: [READY] ▶"
+	_star_status_lbl.add_theme_font_size_override("font_size", 13)
+	_star_status_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_star_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hb_weap.add_child(_star_status_lbl)
+	vb.add_child(hb_weap)
+
+	# Row 4: Controls Legend
+	var c_lbl = Label.new()
+	c_lbl.text = "[W/S] Sail Speed • [A/D] Rudder • [LMB/J] Starboard Broadsides • [RMB/K] Port Broadsides • [Q] Chaser • [Space] Volley • [E] Release"
+	c_lbl.add_theme_font_size_override("font_size", 11)
+	c_lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	c_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vb.add_child(c_lbl)
+
+	_naval_hud_container.add_child(vb)
+	add_child(_naval_hud_container)
+
+func show_naval_hud(ship: Node3D) -> void:
+	_active_captained_ship = ship
+	if _ship_name_lbl and "ship_name" in ship:
+		_ship_name_lbl.text = "⛵ " + str(ship.ship_name) + " • Flagship"
+	if _ship_hp_bar and "current_health" in ship and "max_health" in ship:
+		_ship_hp_bar.max_value = ship.max_health
+		_ship_hp_bar.value = ship.current_health
+	if _naval_hud_container:
+		_naval_hud_container.visible = true
+
+func hide_naval_hud() -> void:
+	_active_captained_ship = null
+	if _naval_hud_container:
+		_naval_hud_container.visible = false
+
+func update_ship_health(curr: float, max_h: float) -> void:
+	if _ship_hp_bar:
+		_ship_hp_bar.max_value = max_h
+		_ship_hp_bar.value = curr
+
 func _process(_delta: float) -> void:
+	if _active_captained_ship and is_instance_valid(_active_captained_ship) and _naval_hud_container and _naval_hud_container.visible:
+		var knots = abs(_active_captained_ship.current_speed) * 1.85
+		if _ship_speed_lbl:
+			_ship_speed_lbl.text = "⚓ Speed: %.1f Knots" % knots
+		if _port_status_lbl:
+			if _active_captained_ship.port_reload_timer <= 0.0:
+				_port_status_lbl.text = "◀ Port Cannons: [READY]"
+				_port_status_lbl.modulate = Color(0.4, 1.0, 0.4)
+			else:
+				_port_status_lbl.text = "◀ Port Cannons: [%.1fs]" % _active_captained_ship.port_reload_timer
+				_port_status_lbl.modulate = Color(1.0, 0.75, 0.3)
+		if _star_status_lbl:
+			if _active_captained_ship.starboard_reload_timer <= 0.0:
+				_star_status_lbl.text = "Starboard Cannons: [READY] ▶"
+				_star_status_lbl.modulate = Color(0.4, 1.0, 0.4)
+			else:
+				_star_status_lbl.text = "Starboard Cannons: [%.1fs] ▶" % _active_captained_ship.starboard_reload_timer
+				_star_status_lbl.modulate = Color(1.0, 0.75, 0.3)
+		if _bow_status_lbl:
+			if _active_captained_ship.bow_reload_timer <= 0.0:
+				_bow_status_lbl.text = "▲ Bow Chaser: [READY]"
+				_bow_status_lbl.modulate = Color(0.4, 1.0, 0.4)
+			else:
+				_bow_status_lbl.text = "▲ Bow Chaser: [%.1fs]" % _active_captained_ship.bow_reload_timer
+				_bow_status_lbl.modulate = Color(1.0, 0.75, 0.3)
+
 	if time_weather_label:
 		var wm = get_tree().get_first_node_in_group("weather_manager")
 		if wm and GameManager.current_floor == 0:

@@ -19,6 +19,9 @@ const CampfireRestSite3DScript = preload("res://src/world/CampfireRestSite3D.gd"
 const AncientShrine3DScript = preload("res://src/world/AncientShrine3D.gd")
 const MarketStall3DScript = preload("res://src/world/MarketStall3D.gd")
 const HarborLadder3DScript = preload("res://src/world/HarborLadder3D.gd")
+const HarborAlarmBell3DScript = preload("res://src/world/HarborAlarmBell3D.gd")
+const HarborDefenseTower3DScript = preload("res://src/world/HarborDefenseTower3D.gd")
+const EnemyNavalShip3DScript = preload("res://src/world/EnemyNavalShip3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -1975,6 +1978,52 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	# The Tidecaller's Compass & Sunken Corsair Chest
 	_spawn_material_node(parent, "tidecaller_compass", "The Tidecaller's Compass", "🧭", "res://assets/items/quest_materials/Chalice.glb", Vector3(-56.0, 0.05, 108.0), Color(0.18, 0.75, 0.95), 80, 60, Vector3(2.2, 2.2, 2.2))
 	_spawn_material_node(parent, "smugglers_chest", "Sunken Corsair Chest", "📦", "res://assets/items/quest_materials/Chest_Ingots.glb", Vector3(-84.0, 0.25, 82.0), Color(0.95, 0.8, 0.2), 60, 45, Vector3(1.6, 1.6, 1.6))
+
+	# 11. Harbor Coastal Defenses: Artillery Watchtower & Bronze Alarm Bell
+	var defense_tower = HarborDefenseTower3DScript.new()
+	defense_tower.position = Vector3(-66.0, 0.0, 43.5)
+	parent.add_child(defense_tower)
+
+	var alarm_bell = HarborAlarmBell3DScript.new()
+	alarm_bell.position = Vector3(-51.5, 0.04, 66.0)
+	parent.add_child(alarm_bell)
+
+	# Harbor Pier Swivel Cannons (Coastal battery at the ends of North & South piers)
+	var swivel_scene = load("res://assets/ships/cannon-mobile.glb")
+	if not swivel_scene:
+		swivel_scene = load("res://assets/ships/cannon.glb")
+	if swivel_scene:
+		var sw1 = swivel_scene.instantiate()
+		sw1.scale = Vector3.ONE * 1.5
+		sw1.position = Vector3(-89.0, 0.25, 62.0)
+		sw1.rotation_degrees.y = -90.0 # Facing open ocean
+		parent.add_child(sw1)
+
+		var sw2 = swivel_scene.instantiate()
+		sw2.scale = Vector3.ONE * 1.5
+		sw2.position = Vector3(-85.0, 0.25, 82.0)
+		sw2.rotation_degrees.y = -90.0
+		parent.add_child(sw2)
+
+	# Floating Harbor Defense Buoys (Channel markers)
+	var buoy_scene = load("res://assets/ships/buoy-flag.glb")
+	if buoy_scene:
+		var b1 = buoy_scene.instantiate()
+		b1.scale = Vector3.ONE * 1.4
+		b1.position = Vector3(-96.0, -0.15, 52.0)
+		parent.add_child(b1)
+
+		var b2 = buoy_scene.instantiate()
+		b2.scale = Vector3.ONE * 1.4
+		b2.position = Vector3(-96.0, -0.15, 92.0)
+		parent.add_child(b2)
+
+	# 12. Enemy Corsair Invasion Warship (Patrolling offshore in the ocean basin)
+	var enemy_corsair = EnemyNavalShip3DScript.new()
+	enemy_corsair.ship_name = "The Blood Moon"
+	enemy_corsair.position = Vector3(-120.0, -0.22, 70.0)
+	enemy_corsair.rotation_degrees.y = -90.0
+	parent.add_child(enemy_corsair)
 
 func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float, x_end: float, z_center: float, width: float) -> void:
 	var pier_root = Node3D.new()
