@@ -20,6 +20,14 @@ var max_reload_time: float = 2.4
 var current_health: float = 350.0
 var max_health: float = 350.0
 
+var has_ironclad: bool = false
+var has_flaming_shot: bool = false
+var has_ram_prow: bool = false
+var _ram_spur_mesh: MeshInstance3D = null
+var _gangplank_mesh: MeshInstance3D = null
+var _is_boarded: bool = false
+var _row_sound_timer: float = 0.0
+
 var _port_cannons: Array[Node3D] = []
 var _starboard_cannons: Array[Node3D] = []
 var _bow_cannon: Node3D = null
@@ -38,6 +46,7 @@ var _helm_wheel: Node3D = null
 
 func _ready() -> void:
 	add_to_group("medieval_ship")
+	add_to_group("player_ships")
 	add_to_group("interactable")
 	_wave_time = randf_range(0.0, 20.0)
 	_creak_timer = randf_range(0.0, 4.5)
@@ -47,8 +56,19 @@ func _ready() -> void:
 
 	if is_rowboat:
 		_build_rowboat()
+		max_speed = 4.2
+		turn_speed = 1.4
 	else:
 		_build_medieval_cog()
+		var drydock_script = load("res://src/world/ShipwrightDrydock3D.gd")
+		if drydock_script:
+			if drydock_script.ship_ironclad:
+				apply_shipyard_upgrade("ironclad")
+			if drydock_script.ship_flaming_shot:
+				apply_shipyard_upgrade("flaming_shot")
+			if drydock_script.ship_ram_prow:
+				apply_shipyard_upgrade("ram_prow")
+
 	_build_interaction()
 
 func _build_medieval_cog() -> void:
@@ -780,26 +800,19 @@ func _build_interaction() -> void:
 	add_child(area)
 
 func get_prompt_text() -> String:
-	if is_rowboat:
-		return "[E] Inspect " + ship_name
 	if is_player_captained:
-		return "[E] Release Helm / Drop Anchor"
-	return "[E] Take the Helm / Captain " + ship_name
+		return "[E] Release " + ("Oars" if is_rowboat else "Helm / Drop Anchor")
+	return "[E] Take the " + ("Oars / Row " if is_rowboat else "Helm / Captain ") + ship_name
 
 func interact(player: Node = null) -> void:
-	if is_rowboat:
-		AudioManager.play_sfx_at_position("ship_creak", global_position, 36.0, 0.08, 0.0)
-		var hud = get_tree().get_first_node_in_group("hud")
-		if hud and hud.has_method("show_toast"):
-			hud.show_toast("🛶 " + ship_name + ": Harbor rowboat plying the Port Blackwater shoals.")
-		return
-
 	if is_player_captained:
 		release_helm()
 	else:
 		board_and_captain(player)
 
 func _get_helm_world_position() -> Vector3:
+	if is_rowboat:
+		return global_transform * Vector3(0.0, 0.45, 0.0)
 	return global_transform * Vector3(0.0, 4.35, 3.8)
 
 func board_and_captain(player: Node) -> void:
@@ -818,7 +831,10 @@ func board_and_captain(player: Node) -> void:
 	if hud and hud.has_method("show_naval_hud"):
 		hud.show_naval_hud(self)
 	if hud and hud.has_method("show_toast"):
-		hud.show_toast("⚓ CAPTAIN ON DECK! [WASD] Sail • [LMB/J] Starboard Broadsides • [RMB/K] Port Broadsides • [Q] Chaser • [Space] Volley • [E] Release")
+		if is_rowboat:
+			hud.show_toast("🛶 AT THE OARS! [WASD] Row Boat • [E] Release Oars")
+		else:
+			hud.show_toast("⚓ CAPTAIN ON DECK! [WASD] Sail • [LMB/J] Starboard Broadsides • [RMB/K] Port Broadsides • [Q] Chaser • [F] Boarding Grapple • [E] Release")
 
 func release_helm() -> void:
 	if not is_player_captained:
@@ -868,18 +884,37 @@ func handle_captain_input(movement: Vector2, fire_port: bool, fire_starboard: bo
 	global_position.x = clamp(global_position.x, -133.0, -65.0)
 	global_position.z = clamp(global_position.z, 48.0, 134.0)
 
+	# Rowboat oar animation & sound
+	if is_rowboat:
+		if abs(current_speed) > 0.1 or abs(movement.x) > 0.1:
+			_wave_time += delta * 4.0
+			var oar_rot = sin(_wave_time * 3.5) * 24.0
+			if _left_oar: _left_oar.rotation_degrees.x = oar_rot
+			if _right_oar: _right_oar.rotation_degrees.x = -oar_rot
+			_row_sound_timer += delta
+			if _row_sound_timer >= 1.2:
+				_row_sound_timer = 0.0
+				AudioManager.play_sfx_at_position("reel_splash", global_position, 20.0, 0.15, -6.0)
+		else:
+			if _left_oar: _left_oar.rotation_degrees.x = lerp(_left_oar.rotation_degrees.x, 0.0, delta * 3.0)
+			if _right_oar: _right_oar.rotation_degrees.x = lerp(_right_oar.rotation_degrees.x, 0.0, delta * 3.0)
+	else:
+		if has_ram_prow and current_speed > 2.5:
+			_check_ramming_collisions(delta)
+
 	# Keep captain locked to helm station
 	if captain_player and is_instance_valid(captain_player):
 		captain_player.global_position = _get_helm_world_position()
 		captain_player.global_rotation.y = global_rotation.y
 
-	# Weapons
-	if fire_port:
-		fire_port_broadside()
-	if fire_starboard:
-		fire_starboard_broadside()
-	if fire_bow:
-		fire_bow_chaser()
+	# Weapons (rowboat skips broadsides)
+	if not is_rowboat:
+		if fire_port:
+			fire_port_broadside()
+		if fire_starboard:
+			fire_starboard_broadside()
+		if fire_bow:
+			fire_bow_chaser()
 	if crew_volley:
 		order_crew_volley()
 
@@ -960,9 +995,18 @@ func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3, dmg: float = 40.0
 	sp.height = 0.56
 	ball.mesh = sp
 	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.18, 0.18, 0.20)
 	mat.metallic = 0.85
 	mat.roughness = 0.35
+
+	if has_flaming_shot:
+		dmg += 15.0
+		mat.albedo_color = Color(1.0, 0.42, 0.08)
+		mat.emission_enabled = true
+		mat.emission = Color(1.0, 0.35, 0.05)
+		mat.emission_energy_multiplier = 3.5
+	else:
+		mat.albedo_color = Color(0.18, 0.18, 0.20)
+
 	ball.material_override = mat
 
 	get_tree().current_scene.add_child(ball)
@@ -1105,3 +1149,127 @@ func _process(delta: float) -> void:
 		_left_oar.rotation_degrees.z = row_dip
 		_right_oar.rotation_degrees.y = -row_sweep
 		_right_oar.rotation_degrees.z = -row_dip
+
+func _check_ramming_collisions(delta: float) -> void:
+	var prow_pos = global_position - global_transform.basis.z * 8.5
+	var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+	for e in enemies:
+		if is_instance_valid(e) and not e.is_queued_for_deletion():
+			var dist = prow_pos.distance_to(e.global_position)
+			if dist < 6.5:
+				AudioManager.play_sfx_at_position("boulder_explosion", prow_pos, 50.0, 0.1, 2.0)
+				CombatJuice.add_trauma(0.35)
+				CombatJuice.spawn_hit_spark(prow_pos, Color(1.0, 0.4, 0.1))
+				if e.has_method("take_naval_damage"):
+					e.take_naval_damage(120.0, self)
+				current_speed *= 0.2
+				HUD.show_notification("⚡ BRONZE RAM IMPACT! Dealt 120 crushing hull damage!")
+				break
+
+func attempt_boarding_action() -> void:
+	if not is_player_captained:
+		return
+	var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
+	var target_ship: Node3D = null
+	var closest_dist = 14.0
+	for e in enemies:
+		if is_instance_valid(e) and not e.is_queued_for_deletion():
+			var d = global_position.distance_to(e.global_position)
+			if d < closest_dist:
+				closest_dist = d
+				target_ship = e
+
+	if not target_ship:
+		HUD.show_notification("No enemy warship in boarding range! Steer within 14m to grapple!")
+		return
+
+	_deploy_gangplank_and_board(target_ship)
+
+func _deploy_gangplank_and_board(enemy_ship: Node3D) -> void:
+	_is_boarded = true
+	AudioManager.play_sfx("wood_hammering")
+	AudioManager.play_sfx("naval_horn")
+	CombatJuice.add_trauma(0.25)
+
+	if not _gangplank_mesh:
+		_gangplank_mesh = MeshInstance3D.new()
+		var box = BoxMesh.new()
+		var dist = global_position.distance_to(enemy_ship.global_position)
+		box.size = Vector3(2.0, 0.25, max(4.0, dist))
+		_gangplank_mesh.mesh = box
+		var wood_mat = StandardMaterial3D.new()
+		wood_mat.albedo_color = Color(0.42, 0.28, 0.16)
+		_gangplank_mesh.material_override = wood_mat
+		get_tree().current_scene.add_child(_gangplank_mesh)
+
+		var mid = (global_position + enemy_ship.global_position) * 0.5 + Vector3(0.0, 1.8, 0.0)
+		_gangplank_mesh.global_position = mid
+		_gangplank_mesh.look_at(enemy_ship.global_position, Vector3.UP)
+
+		var sb = StaticBody3D.new()
+		var cs = CollisionShape3D.new()
+		var col_box = BoxShape3D.new()
+		col_box.size = box.size
+		cs.shape = col_box
+		sb.add_child(cs)
+		_gangplank_mesh.add_child(sb)
+
+	release_helm()
+	var duel_pos = enemy_ship.global_position + Vector3(0.0, 1.8, 0.0)
+	_spawn_pirate_captain_duel(duel_pos, enemy_ship)
+	HUD.show_notification("⚓ GRAPPLING HOOKS SECURED! Gangplank lowered! Defeat Corsair Captain Bloodfin!")
+
+func _spawn_pirate_captain_duel(duel_pos: Vector3, enemy_ship: Node3D) -> void:
+	var boss = AssetLoader.load_or_generate_model("res://assets/characters/monsters/Skeleton_Warrior.glb", "character", "CaptainBloodfin")
+	if not boss:
+		boss = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Barbarian.glb", "character", "CaptainBloodfin")
+	boss.scale = Vector3.ONE * 1.35
+	get_tree().current_scene.add_child(boss)
+	boss.global_position = duel_pos
+	boss.add_to_group("enemies")
+
+	var boss_lbl = Label3D.new()
+	boss_lbl.position = Vector3(0.0, 2.4, 0.0)
+	AssetLoader.style_world_label3d(boss_lbl, "☠️ Captain Bloodfin\n[Boarding Duel Boss]", 36, Color(1.0, 0.25, 0.25))
+	boss.add_child(boss_lbl)
+
+	if enemy_ship.has_signal("tree_exited"):
+		enemy_ship.tree_exited.connect(func():
+			if is_instance_valid(boss):
+				boss.queue_free()
+		)
+
+func apply_shipyard_upgrade(upgrade_type: String) -> void:
+	match upgrade_type:
+		"ironclad":
+			if not has_ironclad:
+				has_ironclad = true
+				max_health += 200.0
+				current_health += 200.0
+		"flaming_shot":
+			has_flaming_shot = true
+		"ram_prow":
+			if not has_ram_prow:
+				has_ram_prow = true
+				_attach_ram_prow()
+
+func repair_hull(amount: float) -> void:
+	current_health = min(max_health, current_health + amount)
+
+func _attach_ram_prow() -> void:
+	if _ram_spur_mesh or not _hull_pivot:
+		return
+	_ram_spur_mesh = MeshInstance3D.new()
+	var cone = CylinderMesh.new()
+	cone.top_radius = 0.05
+	cone.bottom_radius = 0.75
+	cone.height = 2.4
+	_ram_spur_mesh.mesh = cone
+	_ram_spur_mesh.position = Vector3(0.0, 0.6, -9.6)
+	_ram_spur_mesh.rotation_degrees.x = -90.0
+	var bronze_mat = StandardMaterial3D.new()
+	bronze_mat.albedo_color = Color(0.85, 0.68, 0.25)
+	bronze_mat.metallic = 0.9
+	bronze_mat.roughness = 0.35
+	_ram_spur_mesh.material_override = bronze_mat
+	_hull_pivot.add_child(_ram_spur_mesh)

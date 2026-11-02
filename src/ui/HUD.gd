@@ -1174,6 +1174,15 @@ func show_toast(text: String, duration: float = 2.6) -> void:
 	_toast_tween.tween_property(mission_toast, "modulate:a", 0.0, 0.35)
 	_toast_tween.tween_callback(func(): if mission_toast: mission_toast.visible = false)
 
+static func show_notification(text: String, duration: float = 2.6) -> void:
+	var tree = Engine.get_main_loop() as SceneTree
+	if tree:
+		var hud = tree.get_first_node_in_group("hud")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast(text, duration)
+			return
+	print("[NOTIFICATION] ", text)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
 		if realm_map_modal:

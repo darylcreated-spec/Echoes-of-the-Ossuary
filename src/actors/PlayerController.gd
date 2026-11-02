@@ -375,6 +375,10 @@ func _physics_process(delta: float) -> void:
 			captained_ship.release_helm()
 			return
 
+		var do_board = Input.is_key_pressed(KEY_F)
+		if do_board and captained_ship.has_method("attempt_boarding_action"):
+			captained_ship.attempt_boarding_action()
+
 		captained_ship.handle_captain_input(raw_input, fire_port, fire_star, fire_bow, crew_vol, delta)
 		return
 

@@ -60,7 +60,15 @@ const SFX_PATHS: Dictionary = {
 	"rain_loop": "res://assets/audio/sfx_rain_loop.ogg",
 	"ocean_swell": "res://assets/audio/sfx_ocean_swell.ogg",
 	"bow_shoot": "res://assets/audio/sfx_bow_shoot.ogg",
-	"arrow_impact": "res://assets/audio/sfx_arrow_impact.ogg"
+	"arrow_impact": "res://assets/audio/sfx_arrow_impact.ogg",
+	"naval_cannon": "res://assets/audio/sfx_naval_cannon.wav",
+	"harbor_bell": "res://assets/audio/sfx_harbor_bell.wav",
+	"naval_horn": "res://assets/audio/sfx_naval_horn.wav",
+	"sea_shanty_whistle": "res://assets/audio/sfx_sea_shanty_whistle.wav",
+	"wood_hammering": "res://assets/audio/sfx_wood_hammering.wav",
+	"reel_splash": "res://assets/audio/sfx_reel_splash.wav",
+	"fog_horn": "res://assets/audio/sfx_fog_horn.wav",
+	"creaking_rigging": "res://assets/audio/sfx_creaking_rigging.wav"
 }
 
 # Weather audio
@@ -115,6 +123,8 @@ func _load_or_generate_audio() -> void:
 
 func play_sfx(sfx_key: String, pitch_range: float = 0.08, volume_db: float = 0.0) -> void:
 	if not _audio_cache.has(sfx_key):
+		_audio_cache[sfx_key] = _generate_procedural_sfx(sfx_key)
+	if not _audio_cache.has(sfx_key) or _audio_cache[sfx_key] == null:
 		return
 		
 	var stream: AudioStream = _audio_cache[sfx_key]
@@ -948,6 +958,87 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var f3 = 196.0
 				var horn = sin(2.0 * PI * f1 * t) * 0.55 + sin(2.0 * PI * f2 * t) * 0.3 + sin(2.0 * PI * f3 * t) * 0.15
 				var val = horn * env * 0.8
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"sea_shanty_whistle":
+			# Playful maritime tin-whistle arpeggio (C5 -> E5 -> G5 -> C6)
+			var duration: float = 1.2
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var step = int(t * 3.5) % 4
+				var freq = 523.25
+				if step == 1: freq = 659.25
+				elif step == 2: freq = 783.99
+				elif step == 3: freq = 1046.50
+				var env = sin(PI * fposmod(t * 3.5, 1.0)) * exp(-t * 1.5)
+				var vibrato = sin(2.0 * PI * 6.0 * t) * 8.0
+				var whistle = sin(2.0 * PI * (freq + vibrato) * t) * 0.5 + sin(4.0 * PI * freq * t) * 0.15
+				var breath = (randf_range(-0.1, 0.1)) * 0.1
+				var val = (whistle + breath) * env * 0.75
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"wood_hammering":
+			# Crisp shipwright mallet strike on oak beam with timber reverb
+			var duration: float = 0.5
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 22.0)
+				var impact = (randf_range(-0.6, 0.6)) * exp(-t * 50.0)
+				var oak_ring = sin(2.0 * PI * 340.0 * t) * 0.5 + sin(2.0 * PI * 680.0 * t) * 0.3
+				var val = (oak_ring * 0.7 + impact) * env * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"reel_splash":
+			# Whirring fishing line tension + water bite splash
+			var duration: float = 0.85
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var reel_env = clamp(1.0 - (t / 0.5), 0.0, 1.0)
+				var reel_tick = sin(2.0 * PI * 1800.0 * t) * sin(2.0 * PI * 24.0 * t) * 0.35 * reel_env
+				var splash_t = max(0.0, t - 0.35)
+				var splash_env = exp(-splash_t * 9.0)
+				var water = (randf_range(-0.5, 0.5) + randf_range(-0.5, 0.5)) * splash_env * 0.6
+				var water_bubble = sin(2.0 * PI * (400.0 - splash_t * 200.0) * splash_t) * splash_env * 0.4
+				var val = (reel_tick + water + water_bubble) * 0.8
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"fog_horn":
+			# Powerful harbor lighthouse foghorn sounding across coastal sea
+			var duration: float = 2.4
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var attack = clamp(t / 0.3, 0.0, 1.0)
+				var decay = exp(-max(0.0, t - 1.8) * 3.5)
+				var env = attack * decay
+				var horn = sin(2.0 * PI * 65.4 * t) * 0.6 + sin(2.0 * PI * 130.8 * t) * 0.3 + sin(2.0 * PI * 196.2 * t) * 0.15
+				var val = horn * env * 0.9
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"creaking_rigging":
+			# Gentle creaking of wooden hulls and taut hemp rigging on waves
+			var duration: float = 1.5
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = sin(PI * (t / duration))
+				var strain_freq = 110.0 + sin(2.0 * PI * 1.8 * t) * 30.0
+				var groaning = sin(2.0 * PI * strain_freq * t) * 0.5 + sin(2.0 * PI * (strain_freq * 2.1) * t) * 0.25
+				var rope_rub = (randf_range(-0.2, 0.2)) * sin(2.0 * PI * 8.0 * t)
+				var val = (groaning + rope_rub) * env * 0.55
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 

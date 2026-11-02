@@ -22,6 +22,12 @@ const HarborLadder3DScript = preload("res://src/world/HarborLadder3D.gd")
 const HarborAlarmBell3DScript = preload("res://src/world/HarborAlarmBell3D.gd")
 const HarborDefenseTower3DScript = preload("res://src/world/HarborDefenseTower3D.gd")
 const EnemyNavalShip3DScript = preload("res://src/world/EnemyNavalShip3D.gd")
+const HarborLighthouse3DScript = preload("res://src/world/HarborLighthouse3D.gd")
+const ShipwreckCove3DScript = preload("res://src/world/ShipwreckCove3D.gd")
+const ShipwrightDrydock3DScript = preload("res://src/world/ShipwrightDrydock3D.gd")
+const HarborTavernTerrace3DScript = preload("res://src/world/HarborTavernTerrace3D.gd")
+const HarborFishingSpot3DScript = preload("res://src/world/HarborFishingSpot3D.gd")
+const DockworkerNPCScript = preload("res://src/actors/DockworkerNPC.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -2024,6 +2030,31 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	enemy_corsair.position = Vector3(-120.0, -0.22, 70.0)
 	enemy_corsair.rotation_degrees.y = -90.0
 	parent.add_child(enemy_corsair)
+
+	# 13. Port Blackwater & Ships Expansion: Lighthouse, Shipwreck Cove, Drydock, Tavern Terrace, Fishing Spot & Stevedores
+	var lighthouse = HarborLighthouse3DScript.new()
+	lighthouse.position = Vector3(-84.0, 0.0, 38.0)
+	parent.add_child(lighthouse)
+
+	var shipwreck = ShipwreckCove3DScript.new()
+	shipwreck.position = Vector3(-118.0, -0.3, 114.0)
+	parent.add_child(shipwreck)
+
+	var drydock = ShipwrightDrydock3DScript.new()
+	drydock.position = Vector3(-60.0, 0.0, 50.0)
+	parent.add_child(drydock)
+
+	var terrace = HarborTavernTerrace3DScript.new()
+	terrace.position = Vector3(-54.0, 0.04, 73.0)
+	parent.add_child(terrace)
+
+	var fishing_spot = HarborFishingSpot3DScript.new()
+	fishing_spot.position = Vector3(-84.0, 0.25, 84.0)
+	parent.add_child(fishing_spot)
+
+	var dockworker = DockworkerNPCScript.new()
+	dockworker.position = Vector3(-58.0, 0.04, 76.0)
+	parent.add_child(dockworker)
 
 func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float, x_end: float, z_center: float, width: float) -> void:
 	var pier_root = Node3D.new()

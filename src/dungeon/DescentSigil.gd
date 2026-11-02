@@ -159,12 +159,8 @@ func _physics_process(delta: float) -> void:
 			return
 
 func _on_body_entered(body: Node3D) -> void:
-	if (body.is_in_group("player") or body.name == "Player") and not _has_triggered:
-		# In Overworld Sanctuary (Floor 0), entering the Catacombs requires pressing [E] (interact)
-		# so the player can freely explore the cemetery and ancient crypt without accidental descent!
-		if GameManager.current_floor == 0:
-			return
-		trigger_descent()
+	# Keep descent manual via [E] interact so players aren't accidentally warped on spawn
+	pass
 
 func interact(_player: Node3D = null) -> void:
 	if not _has_triggered:

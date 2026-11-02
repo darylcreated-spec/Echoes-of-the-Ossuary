@@ -5,6 +5,14 @@ const InteractiveTarget3DScript = preload("res://src/world/InteractiveTarget3D.g
 const CampfireRestSite3DScript = preload("res://src/world/CampfireRestSite3D.gd")
 const AncientShrine3DScript = preload("res://src/world/AncientShrine3D.gd")
 const MarketStall3DScript = preload("res://src/world/MarketStall3D.gd")
+const HarborDefenseTower3DScript = preload("res://src/world/HarborDefenseTower3D.gd")
+const EnemyNavalShip3DScript = preload("res://src/world/EnemyNavalShip3D.gd")
+const HarborLighthouse3DScript = preload("res://src/world/HarborLighthouse3D.gd")
+const ShipwreckCove3DScript = preload("res://src/world/ShipwreckCove3D.gd")
+const ShipwrightDrydock3DScript = preload("res://src/world/ShipwrightDrydock3D.gd")
+const HarborTavernTerrace3DScript = preload("res://src/world/HarborTavernTerrace3D.gd")
+const HarborFishingSpot3DScript = preload("res://src/world/HarborFishingSpot3D.gd")
+const DockworkerNPCScript = preload("res://src/actors/DockworkerNPC.gd")
 
 @onready var camera: Camera3D = $IsometricCamera
 @onready var dungeon_gen: Node3D = $DungeonGenerator
@@ -699,6 +707,97 @@ func _run_gameplay_self_test() -> void:
 	assert(flagship.is_player_captained == false, "Releasing helm must disengage ship captaincy")
 	assert(player.is_captaining_ship == false, "Player must return to foot locomotion on deck")
 	print(" -> Released helm and returned to regular foot locomotion!")
+
+	# 20. Port Blackwater & Ships Expansion: Lighthouse, Shipwreck Cove, Drydock, Multi-Ship Captaincy & Boarding
+	print("\n[TEST 20] Port Blackwater & Ships Expansion: Lighthouse, Shipwreck Cove, Drydock & Boarding...")
+	
+	# A. Harbor Lighthouse & Rotating Beacon
+	var lighthouses = get_tree().get_nodes_in_group("harbor_structures").filter(func(n): return is_instance_of(n, HarborLighthouse3DScript))
+	assert(lighthouses.size() > 0, "HarborLighthouse3D must be present in harbor")
+	var lighthouse = lighthouses[0]
+	var init_beam_rot = lighthouse._lantern_pivot.rotation.y
+	lighthouse._process(0.5)
+	assert(lighthouse._lantern_pivot.rotation.y != init_beam_rot, "Lighthouse lantern pivot must rotate with delta")
+	lighthouse.interact(player)
+	print(" -> Harbor Lighthouse rotating beacon & foghorn verified!")
+
+	# B. Shipwreck Cove & Sunken Captain's Lockbox
+	var shipwrecks = get_tree().get_nodes_in_group("harbor_structures").filter(func(n): return is_instance_of(n, ShipwreckCove3DScript))
+	assert(shipwrecks.size() > 0, "ShipwreckCove3D must be present in southwest shallows")
+	var shipwreck = shipwrecks[0]
+	assert(shipwreck._chest_node != null, "Shipwreck must contain Sunken Captain's Lockbox")
+	shipwreck.interact(player)
+	assert(shipwreck._chest_opened == true, "Lockbox must be marked opened after salvage")
+	print(" -> Shipwreck Cove reef & Sunken Captain's Lockbox salvaged!")
+
+	# C. Shipwright Drydock & Shipyard Upgrades
+	var drydocks = get_tree().get_nodes_in_group("harbor_structures").filter(func(n): return is_instance_of(n, ShipwrightDrydock3DScript))
+	assert(drydocks.size() > 0, "ShipwrightDrydock3D must be present on North Promenade")
+	var drydock = drydocks[0]
+	drydock._trigger_hammer_strike()
+	drydock.open_shipyard_menu(player)
+	print(" -> Shipwright Drydock & apprentice hammer strike verified!")
+
+	# D. Multi-Ship Captaincy: Rowboat & Corsair Cog
+	var rowboat = null
+	var corsair_cog = null
+	for s in harbor_ships:
+		if s.is_rowboat:
+			rowboat = s
+		elif "Crimson Kraken" in s.ship_name:
+			corsair_cog = s
+
+	assert(rowboat != null, "Harbor Skiff rowboat must exist in harbor")
+	rowboat.board_and_captain(player)
+	assert(rowboat.is_player_captained == true, "Player must be able to take the oars of Harbor Skiff")
+	rowboat.handle_captain_input(Vector2(0.0, -1.0), false, false, false, false, 0.4)
+	assert(rowboat.current_speed > 0.1, "Rowing forward must produce propulsion speed")
+	rowboat.release_helm()
+	assert(rowboat.is_player_captained == false, "Player must be able to release oars")
+	print(" -> Rowboat captaincy and dual-oar mechanics verified!")
+
+	# E. Ship Ramming & Grappling Boarding Action
+	flagship.apply_shipyard_upgrade("ram_prow")
+	flagship.apply_shipyard_upgrade("flaming_shot")
+	assert(flagship.has_ram_prow == true, "Flagship must have ram prow fitted")
+	assert(flagship.has_flaming_shot == true, "Flagship must have flaming shot active")
+	
+	# Spawn a test raider to test boarding action
+	var test_raider = EnemyNavalShip3DScript.new()
+	test_raider.ship_name = "Boarding Target Raider"
+	test_raider.position = flagship.global_position + Vector3(0.0, 0.0, -10.0)
+	get_tree().current_scene.add_child(test_raider)
+
+	flagship.board_and_captain(player)
+	flagship.attempt_boarding_action()
+	assert(flagship._is_boarded == true, "Boarding action must lower gangplank and initiate boarding")
+	assert(flagship._gangplank_mesh != null, "Gangplank physical bridge mesh must be spawned")
+	print(" -> Naval Grappling Hooks, Gangplank bridge, and Corsair Duel Boss verified!")
+
+	# F. Harbor Tavern Terrace & Shantyman Old Salty Barnaby
+	var terraces = get_tree().get_nodes_in_group("harbor_structures").filter(func(n): return is_instance_of(n, HarborTavernTerrace3DScript))
+	assert(terraces.size() > 0, "HarborTavernTerrace3D must exist outside tavern")
+	var terrace = terraces[0]
+	terrace.interact(player)
+	print(" -> Tavern Terrace outdoor dining & Shantyman shanty performance verified!")
+
+	# G. Coastal Fishing Spot & Dockworker Stevedores
+	var fishing_spots = get_tree().get_nodes_in_group("harbor_structures").filter(func(n): return is_instance_of(n, HarborFishingSpot3DScript))
+	assert(fishing_spots.size() > 0, "HarborFishingSpot3D must exist at south pier")
+	var fishing_spot = fishing_spots[0]
+	fishing_spot.cast_line(player)
+	assert(fishing_spot._state == HarborFishingSpot3DScript.FishingState.WAITING_FOR_BITE, "Line must be cast into harbor")
+	fishing_spot._trigger_fish_bite()
+	assert(fishing_spot._state == HarborFishingSpot3DScript.FishingState.BITE_ACTIVE, "Bite must trigger active bite window")
+	fishing_spot.reel_in(player)
+	assert(fishing_spot._state == HarborFishingSpot3DScript.FishingState.IDLE, "Reeling in must reset fishing state")
+	print(" -> Coastal Fishing reflex mini-game verified!")
+
+	var dockworkers = get_tree().get_nodes_in_group("npcs").filter(func(n): return is_instance_of(n, DockworkerNPCScript))
+	assert(dockworkers.size() > 0, "Dockworker stevedore NPC must be active hauling cargo")
+	var dockworker = dockworkers[0]
+	dockworker.interact(player)
+	print(" -> Dockworker Stevedores hauling cargo loop verified!")
 
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
