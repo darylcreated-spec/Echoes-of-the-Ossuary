@@ -155,3 +155,30 @@ func spawn_bone_burst(pos: Vector3, count: int = 16) -> void:
 	
 	get_tree().current_scene.add_child(particles)
 	get_tree().create_timer(0.85).timeout.connect(particles.queue_free)
+
+# --- FLOATING POPUP TEXT ---
+func show_popup_text(pos: Vector3, text: String, color: Color = Color(0.95, 0.90, 0.45)) -> void:
+	if not get_tree() or not get_tree().current_scene:
+		return
+	var label = Label3D.new()
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.double_sided = true
+	var mf = AssetLoader.get_medieval_font()
+	if mf:
+		label.font = mf
+	label.font_size = 38
+	label.outline_size = 10
+	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
+	label.render_priority = 5
+	label.outline_render_priority = 4
+	label.position = pos
+	label.text = text
+	label.modulate = color
+	get_tree().current_scene.add_child(label)
+
+	var tween = label.create_tween()
+	var target_pos = label.position + Vector3(0, 1.2, 0)
+	tween.set_parallel(true)
+	tween.tween_property(label, "position", target_pos, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.75).set_delay(0.25)
+	tween.chain().tween_callback(label.queue_free)

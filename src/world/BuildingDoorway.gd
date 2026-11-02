@@ -8,9 +8,9 @@ signal player_transitioned(door_id: String)
 @export var target_position: Vector3 = Vector3(0.0, -100.0, 8.0)
 @export var target_rotation_y: float = 180.0
 @export var is_interior_exit: bool = false
-@export var target_cam_distance: float = 12.0
-@export var target_cam_pitch: float = 40.0
-@export var target_cam_yaw: float = 45.0
+@export var target_cam_distance: float = 11.5
+@export var target_cam_pitch: float = 46.0
+@export var target_cam_yaw: float = 0.0
 @export var target_bgm_key: String = ""
 @export var interior_name: String = "Castle Grand Hall"
 
@@ -70,12 +70,15 @@ func interact(player: Node3D) -> void:
 			
 	# Update camera distance & orientation in main
 	if main:
-		if "target_cam_distance" in main:
-			main.target_cam_distance = target_cam_distance
-		if "target_cam_pitch" in main:
-			main.target_cam_pitch = target_cam_pitch
-		if "target_cam_yaw" in main:
-			main.target_cam_yaw = target_cam_yaw
+		if is_interior_exit and main.has_method("apply_camera_preset") and "current_camera_preset" in main:
+			main.apply_camera_preset(main.current_camera_preset, false)
+		else:
+			if "target_cam_distance" in main:
+				main.target_cam_distance = target_cam_distance
+			if "target_cam_pitch" in main:
+				main.target_cam_pitch = target_cam_pitch
+			if "target_cam_yaw" in main:
+				main.target_cam_yaw = target_cam_yaw
 
 	if target_bgm_key != "":
 		AudioManager.crossfade_to_bgm(target_bgm_key, 0.85, -12.0)

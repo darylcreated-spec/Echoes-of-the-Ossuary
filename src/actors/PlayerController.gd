@@ -446,12 +446,20 @@ func _handle_aiming() -> void:
 	var ray_origin = cam.project_ray_origin(mouse_pos)
 	var ray_dir = cam.project_ray_normal(mouse_pos)
 	
-	# Raycast against ground plane at player's y
+	# Raycast against ground plane at player's y, with horizon-safe forward fallback for low-pitch 3rd-Person angles
 	var ground_plane = Plane(Vector3.UP, global_position.y)
 	var intersect = ground_plane.intersects_ray(ray_origin, ray_dir)
+	var look_target = Vector3.ZERO
+	var valid_target = false
 	
-	if intersect:
-		var look_target = intersect
+	if intersect and ray_dir.y < -0.02:
+		look_target = intersect
+		valid_target = true
+	else:
+		look_target = ray_origin + ray_dir * 35.0
+		valid_target = true
+		
+	if valid_target:
 		look_target.y = global_position.y
 		var dir_to_mouse = (look_target - global_position).normalized()
 		if dir_to_mouse.length_squared() > 0.001:
