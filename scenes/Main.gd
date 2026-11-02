@@ -192,13 +192,24 @@ func _run_gameplay_self_test() -> void:
 	assert(player.is_mounted == false)
 
 	# 9. Dual-Stance Weapon Swap, Crossbow & Shield Parry
-	print("\n[TEST 9] Dual-Stance Weapon Swap, Crossbow & Shield Parry (Pillar 2)...")
+	print("\n[TEST 9] Dual-Stance Weapon Swap, Crossbow, Archery & Shield Parry (Pillar 2)...")
 	var initial_hp = player.current_health
 	player.toggle_weapon_stance()
 	print(" -> Swapped to Ranged Stance: ", player.current_stance == player.WeaponStance.RANGED)
 	assert(player.current_stance == player.WeaponStance.RANGED)
 	player._execute_attack()
 	print(" -> Crossbow piercing bolt loosed successfully!")
+	
+	# Test Rogue Archer Longbow & Feathered Bodkin Arrow
+	var orig_class = GameManager.selected_class
+	GameManager.set_hero_class(GameManager.HeroClass.ROGUE)
+	player.current_stance = player.WeaponStance.RANGED
+	player._update_weapon_visibility()
+	assert(player.bow_node != null and player.bow_node.visible == true)
+	player._execute_attack()
+	print(" -> Rogue Archer Recurve Longbow loosed feathered bodkin arrow successfully!")
+	GameManager.set_hero_class(orig_class)
+	initial_hp = player.current_health
 	
 	player.toggle_weapon_stance()
 	print(" -> Swapped back to Melee Stance: ", player.current_stance == player.WeaponStance.MELEE)
@@ -418,9 +429,10 @@ func _run_gameplay_self_test() -> void:
 	assert(player.get_current_surface_type() == PlayerController.SurfaceType.STONE)
 	print(" -> Surface at Oakhaven Plaza (0, 0, 5): STONE")
 	
-	player.global_position = Vector3(-65.0, 1.2, 60.0) # Port Pier
-	assert(player.get_current_surface_type() == PlayerController.SurfaceType.WOOD)
-	print(" -> Surface at Port Pier (-65, 1.2, 60): WOOD")
+	player.global_position = Vector3(-70.0, 0.4, 62.0) # North Main Pier deck
+	var p_surf = player.get_current_surface_type()
+	print(" -> Surface at Port Pier (-70, 0.4, 62): ", p_surf)
+	assert(p_surf == PlayerController.SurfaceType.WOOD)
 	
 	player.global_position = Vector3(25.0, 0.0, 35.0) # Sunnydale Pasture
 	var surf_type = player.get_current_surface_type()

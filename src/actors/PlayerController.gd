@@ -36,6 +36,7 @@ var has_riposte_crit: bool = false
 var primary_weapon_node: Node3D = null
 var shield_node: Node3D = null
 var crossbow_node: Node3D = null
+var bow_node: Node3D = null
 
 # Timers & States
 var _can_attack: bool = true
@@ -149,15 +150,109 @@ func _setup_model_and_weapon() -> void:
 	shield_node.name = "EquippedShield"
 	AssetLoader.attach_weapon_socket(visual_model_root, shield_node, "handslot.l")
 
-	# Secondary Crossbow Attachment
+	# Secondary Crossbow Attachment (Knight / Barbarian)
 	var xbow_file = "res://assets/weapons/crossbow_1handed.gltf"
 	crossbow_node = AssetLoader.load_or_generate_model(xbow_file, "weapon", "crossbow_1handed")
 	crossbow_node.name = "EquippedCrossbow"
 	AssetLoader.attach_weapon_socket(visual_model_root, crossbow_node, "handslot.r")
 
+	# Recurve Longbow Attachment (Rogue Archer)
+	bow_node = _build_recurve_bow_model()
+	bow_node.name = "EquippedLongbow"
+	AssetLoader.attach_weapon_socket(visual_model_root, bow_node, "handslot.l")
+
 	_update_weapon_visibility()
 
+func _build_recurve_bow_model() -> Node3D:
+	var root = Node3D.new()
+	root.name = "RecurveLongbow"
+	
+	var yew_mat = StandardMaterial3D.new()
+	yew_mat.albedo_color = Color(0.44, 0.28, 0.16) # Rich carved yew stave
+	yew_mat.roughness = 0.75
+	
+	var grip_mat = StandardMaterial3D.new()
+	grip_mat.albedo_color = Color(0.18, 0.14, 0.12) # Wrapped leather riser
+	grip_mat.roughness = 0.88
+	
+	var string_mat = StandardMaterial3D.new()
+	string_mat.albedo_color = Color(0.92, 0.90, 0.85) # Braided linen bowstring
+	string_mat.roughness = 0.3
+	
+	# Center Riser / Grip
+	var riser = MeshInstance3D.new()
+	var r_mesh = CylinderMesh.new()
+	r_mesh.top_radius = 0.035
+	r_mesh.bottom_radius = 0.035
+	r_mesh.height = 0.22
+	riser.mesh = r_mesh
+	riser.material_override = grip_mat
+	root.add_child(riser)
+	
+	# Upper Limb
+	var upper_limb = MeshInstance3D.new()
+	var ul_mesh = CylinderMesh.new()
+	ul_mesh.top_radius = 0.018
+	ul_mesh.bottom_radius = 0.032
+	ul_mesh.height = 0.48
+	upper_limb.mesh = ul_mesh
+	upper_limb.material_override = yew_mat
+	upper_limb.position = Vector3(0, 0.32, -0.06)
+	upper_limb.rotation_degrees.x = -16.0
+	root.add_child(upper_limb)
+	
+	# Upper Tip
+	var upper_tip = MeshInstance3D.new()
+	var ut_mesh = CylinderMesh.new()
+	ut_mesh.top_radius = 0.012
+	ut_mesh.bottom_radius = 0.018
+	ut_mesh.height = 0.22
+	upper_tip.mesh = ut_mesh
+	upper_tip.material_override = yew_mat
+	upper_tip.position = Vector3(0, 0.60, 0.02)
+	upper_tip.rotation_degrees.x = 22.0
+	root.add_child(upper_tip)
+	
+	# Lower Limb
+	var lower_limb = MeshInstance3D.new()
+	var ll_mesh = CylinderMesh.new()
+	ll_mesh.top_radius = 0.032
+	ll_mesh.bottom_radius = 0.018
+	ll_mesh.height = 0.48
+	lower_limb.mesh = ll_mesh
+	lower_limb.material_override = yew_mat
+	lower_limb.position = Vector3(0, -0.32, -0.06)
+	lower_limb.rotation_degrees.x = 16.0
+	root.add_child(lower_limb)
+	
+	# Lower Tip
+	var lower_tip = MeshInstance3D.new()
+	var lt_mesh = CylinderMesh.new()
+	lt_mesh.top_radius = 0.018
+	lt_mesh.bottom_radius = 0.012
+	lt_mesh.height = 0.22
+	lower_tip.mesh = lt_mesh
+	lower_tip.material_override = yew_mat
+	lower_tip.position = Vector3(0, -0.60, 0.02)
+	lower_tip.rotation_degrees.x = -22.0
+	root.add_child(lower_tip)
+	
+	# Taut Bowstring
+	var string_inst = MeshInstance3D.new()
+	var str_mesh = CylinderMesh.new()
+	str_mesh.top_radius = 0.005
+	str_mesh.bottom_radius = 0.005
+	str_mesh.height = 1.32
+	string_inst.mesh = str_mesh
+	string_inst.material_override = string_mat
+	string_inst.position = Vector3(0, 0, 0.10)
+	root.add_child(string_inst)
+	
+	root.scale = Vector3(1.15, 1.15, 1.15)
+	return root
+
 func _update_weapon_visibility() -> void:
+	var is_rogue = (GameManager.selected_class == GameManager.HeroClass.ROGUE)
 	if current_stance == WeaponStance.MELEE:
 		if primary_weapon_node and is_instance_valid(primary_weapon_node):
 			primary_weapon_node.visible = true
@@ -165,14 +260,24 @@ func _update_weapon_visibility() -> void:
 			shield_node.visible = true
 		if crossbow_node and is_instance_valid(crossbow_node):
 			crossbow_node.visible = false
+		if bow_node and is_instance_valid(bow_node):
+			bow_node.visible = false
 		is_ranged = (GameManager.selected_class == GameManager.HeroClass.MAGE)
 	else:
 		if primary_weapon_node and is_instance_valid(primary_weapon_node):
 			primary_weapon_node.visible = false
 		if shield_node and is_instance_valid(shield_node):
 			shield_node.visible = false
-		if crossbow_node and is_instance_valid(crossbow_node):
-			crossbow_node.visible = true
+		if is_rogue:
+			if bow_node and is_instance_valid(bow_node):
+				bow_node.visible = true
+			if crossbow_node and is_instance_valid(crossbow_node):
+				crossbow_node.visible = false
+		else:
+			if crossbow_node and is_instance_valid(crossbow_node):
+				crossbow_node.visible = true
+			if bow_node and is_instance_valid(bow_node):
+				bow_node.visible = false
 		is_ranged = true
 
 func toggle_weapon_stance() -> void:
@@ -181,7 +286,10 @@ func toggle_weapon_stance() -> void:
 		is_blocking = false
 		_update_weapon_visibility()
 		AudioManager.play_sfx("weapon_swap", 0.08, -1.0)
-		_show_hud_toast("🏹 Stance: Crossbow (Ranged Piercing)")
+		if GameManager.selected_class == GameManager.HeroClass.ROGUE:
+			_show_hud_toast("🏹 Stance: Recurve Longbow (Feathered Bodkin Arrows)")
+		else:
+			_show_hud_toast("🏹 Stance: Crossbow (Ranged Piercing Bolts)")
 	else:
 		current_stance = WeaponStance.MELEE
 		_update_weapon_visibility()
@@ -405,44 +513,55 @@ func _execute_attack() -> void:
 	var is_crit = (randf() < crit_chance) or has_riposte_crit
 	var forward = -transform.basis.z
 
-	# Ranged Crossbow Stance
-	if current_stance == WeaponStance.RANGED:
+	# Ranged Archery / Marksmanship Stance (Longbow for Rogue, Crossbow for Knight / Barbarian)
+	if current_stance == WeaponStance.RANGED and GameManager.selected_class != GameManager.HeroClass.MAGE:
 		var dmg_mult = 2.5 if has_riposte_crit else (1.8 if is_crit else 1.0)
 		has_riposte_crit = false
 		var final_dmg = attack_damage * 1.5 * dmg_mult
+		var is_archer = (GameManager.selected_class == GameManager.HeroClass.ROGUE)
 		
 		var proj = Projectile3DScript.new()
+		proj.projectile_type = Projectile3DScript.ProjectileType.ARROW if is_archer else Projectile3DScript.ProjectileType.CROSSBOW_BOLT
 		proj.damage = final_dmg
 		proj.is_crit = is_crit
 		proj.is_enemy = false
 		proj.source_node = self
 		proj.direction = forward
-		proj.speed = 24.0
+		proj.speed = 28.0 if is_archer else 24.0
 		get_tree().current_scene.add_child(proj)
-		proj.global_position = global_position + Vector3(0, 1.1, 0) + forward * 0.8
+		proj.global_position = global_position + Vector3(0, 1.15, 0) + forward * 0.8
 		
-		# Twin Echoes Boon: extra bolt
+		# Twin Echoes Boon: extra arrow / bolt volley
 		if GameManager.has_boon("twin_echoes"):
 			var proj2 = Projectile3DScript.new()
+			proj2.projectile_type = proj.projectile_type
 			proj2.damage = final_dmg * 0.7
 			proj2.is_crit = is_crit
 			proj2.is_enemy = false
 			proj2.source_node = self
-			proj2.direction = forward.rotated(Vector3.UP, deg_to_rad(12.0))
-			proj2.speed = 24.0
+			proj2.direction = forward.rotated(Vector3.UP, deg_to_rad(10.0))
+			proj2.speed = proj.speed
 			get_tree().current_scene.add_child(proj2)
-			proj2.global_position = global_position + Vector3(0, 1.1, 0) + forward * 0.8
+			proj2.global_position = global_position + Vector3(0, 1.15, 0) + forward * 0.8
 			
-		AudioManager.play_sfx("crossbow_shoot", 0.08, 0.0)
 		CombatJuice.add_trauma(0.08)
-		if anim_player:
-			is_attacking = true
-			play_anim("1H_Ranged_Shoot", 0.04, 2.2)
-			get_tree().create_timer(0.22).timeout.connect(func():
-				if is_instance_valid(self) and anim_player and not is_dead:
-					play_anim("1H_Ranged_Reload", 0.04, 2.0)
-					get_tree().create_timer(0.20).timeout.connect(func(): is_attacking = false)
-			)
+		if is_archer:
+			AudioManager.play_sfx("bow_shoot", 0.08, 0.0)
+			if anim_player:
+				is_attacking = true
+				var a_name = "2H_Ranged_Shoot" if anim_player.has_animation("2H_Ranged_Shoot") else "1H_Ranged_Shoot"
+				play_anim(a_name, 0.04, 2.2)
+				get_tree().create_timer(min(0.28, attack_cooldown)).timeout.connect(func(): is_attacking = false)
+		else:
+			AudioManager.play_sfx("crossbow_shoot", 0.08, 0.0)
+			if anim_player:
+				is_attacking = true
+				play_anim("1H_Ranged_Shoot", 0.04, 2.2)
+				get_tree().create_timer(0.22).timeout.connect(func():
+					if is_instance_valid(self) and anim_player and not is_dead:
+						play_anim("1H_Ranged_Reload", 0.04, 2.0)
+						get_tree().create_timer(0.20).timeout.connect(func(): is_attacking = false)
+				)
 		return
 	
 	# Mage Arcane Staff Ranged
@@ -451,22 +570,26 @@ func _execute_attack() -> void:
 		has_riposte_crit = false
 		var final_dmg = attack_damage * dmg_mult
 		var proj = Projectile3DScript.new()
+		proj.projectile_type = Projectile3DScript.ProjectileType.ENERGY_ORB
 		proj.damage = final_dmg
 		proj.is_crit = is_crit
 		proj.is_enemy = false
 		proj.source_node = self
 		proj.direction = forward
+		proj.speed = 18.0
 		proj.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 		get_tree().current_scene.add_child(proj)
 		
 		# Twin Echoes Boon: extra projectile
 		if GameManager.has_boon("twin_echoes"):
 			var proj2 = Projectile3DScript.new()
+			proj2.projectile_type = Projectile3DScript.ProjectileType.ENERGY_ORB
 			proj2.damage = final_dmg * 0.7
 			proj2.is_crit = is_crit
 			proj2.is_enemy = false
 			proj2.source_node = self
 			proj2.direction = forward.rotated(Vector3.UP, deg_to_rad(15.0))
+			proj2.speed = 18.0
 			proj2.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 			get_tree().current_scene.add_child(proj2)
 			

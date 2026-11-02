@@ -58,7 +58,9 @@ const SFX_PATHS: Dictionary = {
 	"footstep_water": "res://assets/audio/sfx_footstep_water.ogg",
 	"thunder_rumble": "res://assets/audio/sfx_thunder_rumble.ogg",
 	"rain_loop": "res://assets/audio/sfx_rain_loop.ogg",
-	"ocean_swell": "res://assets/audio/sfx_ocean_swell.ogg"
+	"ocean_swell": "res://assets/audio/sfx_ocean_swell.ogg",
+	"bow_shoot": "res://assets/audio/sfx_bow_shoot.ogg",
+	"arrow_impact": "res://assets/audio/sfx_arrow_impact.ogg"
 }
 
 # Weather audio
@@ -412,6 +414,36 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var snap = (randf_range(-0.8, 0.8) * exp(-t * 90.0))
 				var thrum = sin(2.0 * PI * lerp(340.0, 120.0, t / duration) * t) * env * 0.6
 				var val = (snap * 0.6 + thrum * 0.5) * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"bow_shoot":
+			# Traditional longbow string release twang and vibrational hum
+			var duration: float = 0.26
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 22.0)
+				var twang = sin(2.0 * PI * lerp(580.0, 195.0, clamp(t / 0.12, 0.0, 1.0)) * t) * 0.75
+				var wood_flex = sin(2.0 * PI * 110.0 * t) * exp(-t * 40.0) * 0.4
+				var whiz = randf_range(-0.25, 0.25) * exp(-t * 18.0) * 0.45
+				var val = (twang + wood_flex + whiz) * env * 0.85
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"arrow_impact":
+			# Solid wooden arrow punch into target with shaft shudder
+			var duration: float = 0.16
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 38.0)
+				var thud = sin(2.0 * PI * 145.0 * t) * 0.7
+				var click = (randf_range(-0.5, 0.5) * exp(-t * 120.0))
+				var shudder = sin(2.0 * PI * 320.0 * t) * exp(-t * 24.0) * 0.35
+				var val = (thud + click + shudder) * env * 0.8
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 
