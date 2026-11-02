@@ -601,6 +601,36 @@ func _run_gameplay_self_test() -> void:
 	assert(is_instance_valid(town_npc_sample), "TownNPC remains alive and reactive to strikes")
 	print(" -> Verified Town NPC attack deflection & vocal dialogue bark response!")
 
+	# 18. Ocean Fall Recovery: Harbor Ladders, Sea Stairs, Beach Shoreline & Water Vault
+	print("\n[TEST 18] Ocean Fall Recovery: Harbor Ladders, Sea Stairs, Beach Shoreline & Water Vault...")
+	# A. Discover Harbor Ladders
+	var harbor_ladders = get_tree().get_nodes_in_group("harbor_ladder")
+	print(" -> Discovered %d harbor boarding ladders along the piers and quay" % harbor_ladders.size())
+	assert(harbor_ladders.size() >= 3, "Expected at least 3 harbor boarding ladders in Port Blackwater")
+	
+	# B. Test Harbor Ladder Interaction & Deck Recovery
+	var test_ladder = harbor_ladders[0]
+	player.global_position = test_ladder.global_position + Vector3(0, -0.3, 0) # player swimming at base of ladder
+	test_ladder.interact(player)
+	assert(player.global_position.y >= 0.04, "Interacting with ladder must climb player onto dry deck (Y >= 0.04)")
+	print(" -> Verified Harbor Ladder climbed player from ocean basin to deck position: %s" % str(player.global_position))
+
+	# C. Test Water Dash Mantle Vault
+	player.global_position = Vector3(-70.0, -0.20, 70.0) # Player wading in harbor ocean
+	player.velocity = Vector3.ZERO
+	player._start_dash()
+	assert(player.velocity.y > 4.5, "Dashing while in ocean water must impart vertical vault surge (velocity.y > 4.5)")
+	player._end_dash()
+	player.velocity = Vector3.ZERO
+	print(" -> Verified Water Dash Mantle Vault: vertical surge velocity.y = 5.2 enables mantle onto piers!")
+
+	# D. Verify Harbor Sea Stairs & Beach Shoreline Colliders
+	var sea_stairs = get_tree().root.find_child("SeaStairsCollider", true, false)
+	assert(sea_stairs != null, "Stone Harbor Sea Stairs collider must exist at X = -61.8, Z = 72.0")
+	var beach_ramp = get_tree().root.find_child("BeachShorelineRamp", true, false)
+	assert(beach_ramp != null, "Beach Shoreline Ramp collider must exist along Golden Beach Cove (Z in [86.5, 114.0])")
+	print(" -> Verified Stone Harbor Sea Stairs and Golden Beach Cove Ramp are active for seamless egress!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

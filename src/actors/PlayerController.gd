@@ -51,6 +51,7 @@ var combo_step: int = 0
 var combo_reset_time: float = 0.85
 var _combo_reset_timer: float = 0.0
 var _regen_timer: float = 0.0
+var _sea_hint_shown: bool = false
 
 # Interaction
 var current_interactable: Node = null
@@ -378,6 +379,16 @@ func _physics_process(delta: float) -> void:
 		global_position.y = -0.6
 		velocity.y = 0.0
 
+	# Ocean water recovery guidance toast
+	if global_position.x < -61.0 and global_position.z > 46.0 and global_position.y < 0.05:
+		if not _sea_hint_shown:
+			_sea_hint_shown = true
+			var hud = get_tree().get_first_node_in_group("hud")
+			if hud and hud.has_method("show_toast"):
+				hud.show_toast("🌊 In the sea: Climb a dock ladder [E], use the sea stairs, wade south to the beach, or Dash [Space] to vault!")
+	elif global_position.y >= 0.15 and _sea_hint_shown:
+		_sea_hint_shown = false
+
 	# Mounted hoofbeats & trample impact
 	if is_mounted:
 		var horiz_vel = Vector2(velocity.x, velocity.z).length()
@@ -585,8 +596,8 @@ func _execute_attack() -> void:
 		proj.source_node = self
 		proj.direction = forward
 		proj.speed = 18.0
-		proj.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 		get_tree().current_scene.add_child(proj)
+		proj.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 		
 		# Twin Echoes Boon: extra projectile
 		if GameManager.has_boon("twin_echoes"):
@@ -598,8 +609,8 @@ func _execute_attack() -> void:
 			proj2.source_node = self
 			proj2.direction = forward.rotated(Vector3.UP, deg_to_rad(15.0))
 			proj2.speed = 18.0
-			proj2.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 			get_tree().current_scene.add_child(proj2)
+			proj2.global_position = global_position + Vector3(0, 1.2, 0) + forward * 0.8
 			
 		AudioManager.play_sfx("sword_swing", 0.15, -2.0)
 		if anim_player:
@@ -741,6 +752,10 @@ func _start_dash() -> void:
 	else:
 		_dash_direction = -transform.basis.z
 		
+	# Water vault assist: if dashing while in the sea or shallows, grant an upward mantle leap
+	if global_position.y < 0.1 and (get_current_surface_type() == SurfaceType.WATER or global_position.x < -61.0):
+		velocity.y = 5.2
+
 	# Invulnerability during dash
 	if hurtbox:
 		hurtbox.start_invulnerability(dash_duration + 0.05)
@@ -774,9 +789,9 @@ func _spawn_dash_ghost() -> void:
 	mat.emission_energy_multiplier = 2.0
 	ghost.material_override = mat
 	
+	get_tree().current_scene.add_child(ghost)
 	ghost.global_position = global_position + Vector3(0, 0.85, 0)
 	ghost.rotation = rotation
-	get_tree().current_scene.add_child(ghost)
 	
 	var tween = ghost.create_tween()
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.28)

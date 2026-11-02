@@ -18,6 +18,7 @@ const InteractiveTarget3DScript = preload("res://src/world/InteractiveTarget3D.g
 const CampfireRestSite3DScript = preload("res://src/world/CampfireRestSite3D.gd")
 const AncientShrine3DScript = preload("res://src/world/AncientShrine3D.gd")
 const MarketStall3DScript = preload("res://src/world/MarketStall3D.gd")
+const HarborLadder3DScript = preload("res://src/world/HarborLadder3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -332,11 +333,16 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	add_f_col.call(Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 28.0))
 	add_f_col.call(Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 28.0))
 
-	# Ocean Quay Shoreline Collision Barriers (along X = -62.0 and Z = 46.0, leaving open gaps at Pier 1 Z=62 and Pier 2 Z=82)
+	# Ocean Quay Shoreline Collision Barriers (along X = -62.0 and Z = 46.0)
+	# Pier 1 at Z=62 (Z in [59.6, 64.4]), Pier 2 at Z=82 (Z in [79.6, 84.4]), Harbor Sea Stairs at Z=72 (Z in [70.4, 73.6]), and Golden Beach Cove (Z in [86.5, 114.0]) are fully open for water egress!
 	add_f_col.call(Vector3(75.0, 3.5, 0.4), Vector3(-99.5, 1.5, 46.0))
 	add_f_col.call(Vector3(0.4, 3.5, 13.6), Vector3(-62.0, 1.5, 52.8)) # Z: 46.0 to 59.6
-	add_f_col.call(Vector3(0.4, 3.5, 15.2), Vector3(-62.0, 1.5, 72.0)) # Z: 64.4 to 79.6
-	add_f_col.call(Vector3(0.4, 3.5, 52.6), Vector3(-62.0, 1.5, 110.7)) # Z: 84.4 to 137.0
+	add_f_col.call(Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 67.4))  # Z: 64.4 to 70.4
+	# Z: 70.4 to 73.6 is the open passage for Stone Harbor Sea Stairs!
+	add_f_col.call(Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 76.6))  # Z: 73.6 to 79.6
+	add_f_col.call(Vector3(0.4, 3.5, 2.1), Vector3(-62.0, 1.5, 85.45)) # Z: 84.4 to 86.5
+	# Z: 86.5 to 114.0 is Golden Beach Cove: completely OPEN for swimming and walking onto the sand!
+	add_f_col.call(Vector3(0.4, 3.5, 23.0), Vector3(-62.0, 1.5, 125.5)) # Z: 114.0 to 137.0
 
 	parent.add_child(floor_body)
 	
@@ -1670,6 +1676,82 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	sand_mesh_inst.position = Vector3(-54.0, 0.015, 100.0)
 	parent.add_child(sand_mesh_inst)
 
+	# Smooth Beach Shoreline Walkout Ramp (Connects submerged seabed Y = -0.35m directly to dry sand Y = 0.02m)
+	# Guarantees swimming players can smoothly walk out of the ocean anywhere along the beach cove!
+	var beach_ramp_body = StaticBody3D.new()
+	beach_ramp_body.name = "BeachShorelineRamp"
+	beach_ramp_body.collision_layer = 1
+	var br_col = CollisionShape3D.new()
+	var br_box = BoxShape3D.new()
+	br_box.size = Vector3(3.2, 0.20, 27.5)
+	br_col.shape = br_box
+	br_col.position = Vector3(-61.6, -0.17, 100.0)
+	br_col.rotation_degrees.z = -8.0
+	beach_ramp_body.add_child(br_col)
+	parent.add_child(beach_ramp_body)
+
+	# Wet Sand Visual Slope transitioning into the water
+	var wet_sand_inst = MeshInstance3D.new()
+	wet_sand_inst.name = "WetSandVisual"
+	var ws_mesh = PlaneMesh.new()
+	ws_mesh.size = Vector2(3.6, 27.5)
+	wet_sand_inst.mesh = ws_mesh
+	var wet_sand_mat = StandardMaterial3D.new()
+	wet_sand_mat.albedo_color = Color(0.55, 0.47, 0.32) # Dark glistening wet sand
+	wet_sand_mat.roughness = 0.55
+	wet_sand_inst.material_override = wet_sand_mat
+	wet_sand_inst.position = Vector3(-61.6, -0.12, 100.0)
+	wet_sand_inst.rotation_degrees.z = -8.0
+	parent.add_child(wet_sand_inst)
+
+	# 3B. Stone Harbor Sea Stairs (X = -61.8, Z = 72.0)
+	# Carved directly into the Stone Quay in front of The Rusty Anchor Tavern
+	# 4 broad stone treads descending from the promenade (Y = 0.02m) down into the sea (Y = -0.30m)
+	var stair_mat = StandardMaterial3D.new()
+	stair_mat.albedo_color = Color(0.35, 0.36, 0.38) # Weathered seaside granite
+	stair_mat.roughness = 0.85
+	
+	var stair_steps_data = [
+		Vector3(-63.3, -0.28, 72.0), # Step 1: Submerged in sea
+		Vector3(-62.7, -0.18, 72.0), # Step 2: At water line
+		Vector3(-62.1, -0.08, 72.0), # Step 3: Above water line
+		Vector3(-61.5,  0.02, 72.0)  # Step 4: Flush with promenade
+	]
+	for step_idx in range(stair_steps_data.size()):
+		var step = MeshInstance3D.new()
+		step.name = "SeaStairStep_%d" % step_idx
+		var st_mesh = BoxMesh.new()
+		st_mesh.size = Vector3(0.68, 0.14, 3.2)
+		step.mesh = st_mesh
+		step.material_override = stair_mat
+		step.position = stair_steps_data[step_idx]
+		parent.add_child(step)
+
+	# Walkable Incline Collider for Sea Stairs
+	var sea_stairs_body = StaticBody3D.new()
+	sea_stairs_body.name = "SeaStairsCollider"
+	sea_stairs_body.collision_layer = 1
+	var ssc_col = CollisionShape3D.new()
+	var ssc_box = BoxShape3D.new()
+	ssc_box.size = Vector3(2.6, 0.18, 3.2)
+	ssc_col.shape = ssc_box
+	ssc_col.position = Vector3(-62.4, -0.13, 72.0)
+	ssc_col.rotation_degrees.z = -7.5
+	sea_stairs_body.add_child(ssc_col)
+	parent.add_child(sea_stairs_body)
+
+	# Stone balustrade posts with warm navigational lanterns flanking the stairs
+	_place_lantern_post(parent, Vector3(-61.5, 0.04, 70.3), 0.0)
+	_place_lantern_post(parent, Vector3(-61.5, 0.04, 73.7), 0.0)
+
+	# Quay Wall Boarding Ladder (North Quay section at X = -61.4, Z = 54.0)
+	var quay_ladder = HarborLadder3DScript.new()
+	quay_ladder.name = "QuayBoardingLadder"
+	quay_ladder.position = Vector3(-61.4, -0.05, 54.0)
+	quay_ladder.rotation_degrees.y = 90.0
+	quay_ladder.target_deck_position = Vector3(-60.2, 0.05, 54.0)
+	parent.add_child(quay_ladder)
+
 	# 4. Flat Walkable Timber Harbor Piers extending West over the Ocean Water
 	# North Main Pier at Z = 62.0 (X from -61.5 out to -90.5)
 	_build_wooden_harbor_pier(parent, "NorthMainPier", -61.5, -90.5, 62.0, 4.2)
@@ -1970,7 +2052,62 @@ func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float
 	ramp_col.position = Vector3(x_start + 0.8, 0.10, z_center)
 	ramp_col.rotation_degrees.z = -7.0
 	sb.add_child(ramp_col)
+
+	# Low-Water Boat Landing Platform & Incline Gangway Ramp (Water Egress)
+	# Sits at Y = -0.10m (just 5cm above water) so any swimming player can climb/walk up effortlessly
+	var low_landing = MeshInstance3D.new()
+	low_landing.name = pier_name + "_LowLandingVisual"
+	var ll_mesh = BoxMesh.new()
+	ll_mesh.size = Vector3(4.6, 0.14, 2.0)
+	low_landing.mesh = ll_mesh
+	low_landing.material_override = wood_deck_mat
+	low_landing.position = Vector3(-75.0, -0.10, z_center - width * 0.5 - 1.0)
+	pier_root.add_child(low_landing)
+
+	var landing_col = CollisionShape3D.new()
+	var l_box = BoxShape3D.new()
+	l_box.size = Vector3(4.6, 0.20, 2.0)
+	landing_col.shape = l_box
+	landing_col.position = Vector3(-75.0, -0.10, z_center - width * 0.5 - 1.0)
+	sb.add_child(landing_col)
+
+	# Inclined Wooden Gangway connecting low landing (Y = -0.10m) up to pier deck (Y = 0.24m)
+	var gangway = MeshInstance3D.new()
+	gangway.name = pier_name + "_GangwayVisual"
+	var gw_mesh = BoxMesh.new()
+	gw_mesh.size = Vector3(1.6, 0.10, 1.8)
+	gangway.mesh = gw_mesh
+	gangway.material_override = wood_deck_mat
+	gangway.position = Vector3(-73.5, 0.07, z_center - width * 0.5 - 0.2)
+	gangway.rotation_degrees.x = -13.0
+	pier_root.add_child(gangway)
+
+	var gw_col = CollisionShape3D.new()
+	var gw_box = BoxShape3D.new()
+	gw_box.size = Vector3(1.6, 0.16, 1.8)
+	gw_col.shape = gw_box
+	gw_col.position = Vector3(-73.5, 0.07, z_center - width * 0.5 - 0.2)
+	gw_col.rotation_degrees.x = -13.0
+	sb.add_child(gw_col)
+
 	pier_root.add_child(sb)
+
+	# Interactive Boarding Ladders dipping into the sea along pier flanks
+	# South Ladder
+	var lad_south = HarborLadder3DScript.new()
+	lad_south.name = pier_name + "_LadderSouth"
+	lad_south.position = Vector3(-71.0, 0.0, z_center - width * 0.5 - 0.06)
+	lad_south.rotation_degrees.y = 0.0
+	lad_south.target_deck_position = Vector3(-71.0, 0.26, z_center)
+	pier_root.add_child(lad_south)
+
+	# North Ladder
+	var lad_north = HarborLadder3DScript.new()
+	lad_north.name = pier_name + "_LadderNorth"
+	lad_north.position = Vector3(-82.0, 0.0, z_center + width * 0.5 + 0.06)
+	lad_north.rotation_degrees.y = 180.0
+	lad_north.target_deck_position = Vector3(-82.0, 0.26, z_center)
+	pier_root.add_child(lad_north)
 
 # =========================================================================
 # REGION 2: WHISPERWOOD FOREST & SYLVA'S REST
