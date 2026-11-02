@@ -79,6 +79,9 @@ func _setup_collision_and_hurtbox() -> void:
 		add_child(hb)
 		hurtbox = hb
 
+	if hurtbox and not hurtbox.damage_received.is_connected(take_damage):
+		hurtbox.damage_received.connect(take_damage)
+
 	# Interaction for Mounting (Horses & Stags) or Petting/Vocalizing (Cattle & Foxes)
 	if animal_type in [AnimalType.HORSE, AnimalType.STAG, AnimalType.COW, AnimalType.BULL, AnimalType.FOX]:
 		add_to_group("interactable")
@@ -330,6 +333,11 @@ func _process_flee(delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, atan2(away_dir.x, away_dir.z), delta * 8.0)
 
 func _process_chase(delta: float) -> void:
+	if animal_type != AnimalType.WOLF:
+		current_ai_state = AIState.FLEE
+		_state_timer = randf_range(3.0, 5.0)
+		return
+
 	if not target_player:
 		current_ai_state = AIState.IDLE
 		return
@@ -353,6 +361,10 @@ func _process_chase(delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), delta * 8.0)
 
 func _execute_attack() -> void:
+	if animal_type != AnimalType.WOLF or attack_damage <= 0.0:
+		current_ai_state = AIState.FLEE
+		return
+
 	current_ai_state = AIState.ATTACK
 	_state_timer = 0.4
 	velocity.x = 0.0
@@ -373,12 +385,22 @@ func _execute_attack() -> void:
 func _process_attack(delta: float) -> void:
 	_state_timer -= delta
 	if _state_timer <= 0.0:
-		current_ai_state = AIState.CHASE
+		current_ai_state = AIState.CHASE if animal_type == AnimalType.WOLF else AIState.FLEE
 
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	if is_dead or amount <= 0.0:
+		return
 	super.take_damage(amount, knockback, is_crit, source)
-	if not is_dead and anim_player:
-		play_anim("Idle_HitReact_Left", 0.05, 1.6)
+	if not is_dead:
+		if anim_player:
+			play_anim("Idle_HitReact_Left", 0.05, 1.6)
+		# Harmless animals panic and flee, wolves counter-attack
+		if animal_type != AnimalType.WOLF:
+			current_ai_state = AIState.FLEE
+			_state_timer = randf_range(4.5, 7.0)
+		else:
+			current_ai_state = AIState.CHASE
+			_attack_cooldown = 0.5
 
 func die() -> void:
 	if is_dead:

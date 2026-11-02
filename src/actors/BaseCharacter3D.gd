@@ -222,7 +222,7 @@ func handle_knockback(delta: float) -> void:
 		knockback_velocity = knockback_velocity.lerp(Vector3.ZERO, delta * 12.0)
 
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
-	if is_dead:
+	if is_dead or amount <= 0.0:
 		return
 		
 	var actual_damage = max(1.0, amount - defense)

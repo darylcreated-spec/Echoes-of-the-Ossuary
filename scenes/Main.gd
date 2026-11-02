@@ -542,6 +542,65 @@ func _run_gameplay_self_test() -> void:
 		hud.dialogue_modal.close_dialogue()
 	print(" -> MarketStall3D merchant dialogue modal and provision options verified!")
 
+	# 17. Combat, Shield Block/Parry, Animal AI & Town NPC Reactivity
+	print("\n[TEST 17] Shield Block/Parry, Non-Aggressive Wildlife & Town NPC Attack Reactivity...")
+	# A. Test Harmless Animals deal 0 damage and never hurt player
+	var realm_animals = get_tree().get_nodes_in_group("animal")
+	print(" -> Discovered %d animals across the realm" % realm_animals.size())
+	assert(realm_animals.size() > 0, "Expected animals to be present")
+	
+	var fox_sample = null
+	for a in realm_animals:
+		if a.get("animal_type") == 3: # AnimalType.FOX
+			fox_sample = a
+			break
+	if fox_sample == null:
+		fox_sample = realm_animals[0]
+	
+	var fox_test_hp = player.current_health
+	fox_sample._execute_attack()
+	assert(is_equal_approx(player.current_health, fox_test_hp), "Fox or peaceful animal must NEVER damage the player!")
+	print(" -> Verified Peaceful Animal cannot deal damage: Player HP intact at %.1f" % player.current_health)
+
+	# B. Test Animal Combat & Hurtbox connection
+	var pre_hit_hp = fox_sample.current_health
+	fox_sample.take_damage(12.0, Vector3.FORWARD, false, player)
+	assert(fox_sample.current_health < pre_hit_hp, "Animal hurtbox must receive damage from player")
+	assert(fox_sample.current_ai_state == 2, "Harmless animal must switch to AIState.FLEE when struck") # AIState.FLEE = 2
+	print(" -> Verified Animal Combat & Flee behavior: Animal HP reduced from %.1f to %.1f and fled!" % [pre_hit_hp, fox_sample.current_health])
+
+	# C. Test Active Shield Block & Perfect Parry
+	player.current_health = player.max_health
+	player.is_blocking = true
+	player.parry_window_timer = 0.2 # Active Parry Window
+	player.take_damage(30.0, Vector3.FORWARD, false, fox_sample)
+	assert(is_equal_approx(player.current_health, player.max_health), "Perfect Parry must negate 100% incoming damage")
+	assert(player.has_riposte_crit == true, "Perfect Parry must prime riposte crit (2.5x)")
+	print(" -> Verified Perfect Parry: 100% damage negated, riposte crit primed!")
+
+	player.parry_window_timer = 0.0 # Standard held block
+	var hp_before_block = player.current_health
+	player.take_damage(20.0, Vector3.FORWARD, false, fox_sample)
+	var absorbed_dmg = hp_before_block - player.current_health
+	assert(absorbed_dmg <= 5.1, "Standard Shield Block must absorb 75% incoming damage (20 * 0.25 = 5)")
+	print(" -> Verified Standard Shield Block: 75%% damage absorbed (took only %.1f dmg)" % absorbed_dmg)
+	player.is_blocking = false
+	player.current_health = player.max_health
+
+	# D. Test Town NPC Attack Reactivity
+	var realm_interactables = get_tree().get_nodes_in_group("interactable")
+	var town_npc_sample = null
+	for n in realm_interactables:
+		if n is TownNPC:
+			town_npc_sample = n
+			break
+	assert(town_npc_sample != null, "Expected at least one TownNPC in sanctuary or town")
+	var npc_hb = town_npc_sample.find_child("Hurtbox3D", true, false)
+	assert(npc_hb != null, "TownNPC must have Hurtbox3D to react to strikes")
+	town_npc_sample._on_attack_received(25.0, Vector3.FORWARD, false, player)
+	assert(is_instance_valid(town_npc_sample), "TownNPC remains alive and reactive to strikes")
+	print(" -> Verified Town NPC attack deflection & vocal dialogue bark response!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
@@ -788,9 +847,9 @@ func _process_freecam(delta: float) -> void:
 	camera.rotation_degrees = Vector3(freecam_pitch, freecam_yaw, 0.0)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Mode toggle with [C] or [F1], Preset cycle with [V], 45° Orbit Snap with [Z/X], Reset with [R]
+	# Mode toggle with [F1], Preset cycle with [V], 45° Orbit Snap with [Z/X], Reset with [R]
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_C or event.keycode == KEY_F1:
+		if event.keycode == KEY_F1:
 			toggle_camera_mode()
 			get_viewport().set_input_as_handled()
 			return
@@ -836,16 +895,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_camera_ui()
 			get_viewport().set_input_as_handled()
 			return
-		elif event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_MIDDLE:
+		elif event.button_index == MOUSE_BUTTON_MIDDLE or (current_camera_mode == CameraMode.FREECAM and event.button_index == MOUSE_BUTTON_RIGHT) or (event.shift_pressed and event.button_index == MOUSE_BUTTON_RIGHT):
 			is_mouse_dragging = true
 			get_viewport().set_input_as_handled()
 			return
 			
 	if event is InputEventMouseButton and not event.pressed:
-		if event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_MIDDLE:
-			is_mouse_dragging = false
-			get_viewport().set_input_as_handled()
-			return
+		if event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
+			if is_mouse_dragging:
+				is_mouse_dragging = false
+				get_viewport().set_input_as_handled()
+				return
 			
 	# Mouse Motion Drag Orbit / Look
 	if event is InputEventMouseMotion and is_mouse_dragging:

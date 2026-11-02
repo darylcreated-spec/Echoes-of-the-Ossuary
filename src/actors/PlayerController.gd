@@ -476,7 +476,7 @@ func _handle_actions() -> void:
 		toggle_mount()
 
 	# Shield Block & Parry (Hold RMB / C)
-	if Input.is_action_pressed("block") and not is_mounted and current_stance == WeaponStance.MELEE:
+	if Input.is_action_pressed("block") and not is_mounted:
 		if not is_blocking:
 			is_blocking = true
 			parry_window_timer = PARRY_WINDOW
@@ -488,7 +488,7 @@ func _handle_actions() -> void:
 			play_anim("Idle", 0.1, 1.0)
 
 	# Attack (Primary)
-	if (Input.is_action_pressed("attack_primary") or Input.is_action_pressed("attack")) and _can_attack and not _is_dashing:
+	if (Input.is_action_pressed("attack_primary") or Input.is_action_pressed("attack")) and _can_attack and not _is_dashing and not is_blocking:
 		_execute_attack()
 		
 	# Special / Dash (or Leap while mounted)
@@ -931,6 +931,8 @@ func update_movement_animation(delta: float) -> void:
 
 # --- OVERRIDES ---
 func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	if is_dead or amount <= 0.0:
+		return
 	var forward = -transform.basis.z
 	var is_frontal = true
 	if source and source != self:
@@ -950,7 +952,10 @@ func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3
 			CombatJuice.spawn_damage_number(global_position + Vector3(0, 1.8, 0), 0.0, true, false)
 			has_riposte_crit = true
 			if source and "current_ai_state" in source:
-				source.current_ai_state = source.AIState.STAGGER
+				if "STAGGER" in source.AIState:
+					source.current_ai_state = source.AIState.STAGGER
+				elif "FLEE" in source.AIState:
+					source.current_ai_state = source.AIState.FLEE
 				source.set("_state_timer", 1.8)
 				source.velocity = -forward * 7.0
 			_show_hud_toast("⚔️ PERFECT PARRY! Riposte Counter Ready (2.5x Crit)!")

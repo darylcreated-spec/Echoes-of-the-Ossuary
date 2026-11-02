@@ -17,12 +17,14 @@ var _anim_player: AnimationPlayer = null
 var _idle_time: float = 0.0
 var _spark_timer: float = 0.0
 var _target_player: Node3D = null
+var _bark_cooldown: float = 0.0
 
 func _ready() -> void:
 	name = "NPC_" + npc_id
 	add_to_group("interactable")
 	_build_visuals()
 	_build_interaction()
+	_build_hurtbox()
 	_build_role_effects()
 	
 	var players = get_tree().get_nodes_in_group("player")
@@ -31,6 +33,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_idle_time += delta
+	if _bark_cooldown > 0.0:
+		_bark_cooldown -= delta
 	
 	# Procedural idle breathing & weight shift
 	if _model and is_instance_valid(_model):
@@ -205,6 +209,63 @@ func _build_interaction() -> void:
 	col.position.y = 1.5
 	_interact_area.add_child(col)
 	add_child(_interact_area)
+
+func _build_hurtbox() -> void:
+	var hb = Area3D.new()
+	hb.name = "Hurtbox3D"
+	hb.collision_layer = 4 # Layer 3: Enemy/NPC Hurtbox
+	hb.collision_mask = 8 # Layer 4: Player Hitbox
+	var HurtboxScript = load("res://src/combat/Hurtbox3D.gd")
+	if HurtboxScript:
+		hb.set_script(HurtboxScript)
+		hb.set("owner_character", self)
+	var hb_col = CollisionShape3D.new()
+	var hb_shape = CapsuleShape3D.new()
+	hb_shape.radius = 0.55
+	hb_shape.height = 1.8
+	hb_col.shape = hb_shape
+	hb_col.position.y = 0.9
+	hb.add_child(hb_col)
+	add_child(hb)
+	if hb.has_signal("damage_received"):
+		hb.damage_received.connect(_on_attack_received)
+
+func _on_attack_received(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+	CombatJuice.spawn_hit_spark(global_position + Vector3(0, 1.2, 0), Color(0.95, 0.85, 0.3))
+	AudioManager.play_sfx_at_position("parry_ring", global_position, 22.0, 0.08, 1.0)
+	
+	if _anim_player:
+		_play_work_gesture(["block", "hit", "dodge", "cheer"])
+		
+	if _bark_cooldown <= 0.0:
+		_bark_cooldown = 2.5
+		var barks = [
+			"Hold your steel, warrior! I am a peaceful citizen of this realm!",
+			"Peace! Keep your blade sheathed within these walls!",
+			"Mind your swing, traveler! Save that iron for the monsters in the dark!",
+			"By the gods! Do not brandish weapons against allies!"
+		]
+		if "guard" in npc_id or "commander" in npc_id or "captain" in npc_id:
+			barks = [
+				"Halt! Sheathe that blade before the Citadel Guard takes you in!",
+				"Stand down, warrior! Strike me again and you face the King's justice!",
+				"I am a sworn sentinel of this fortress. Lower your weapon!"
+			]
+		elif "king" in npc_id or "queen" in npc_id:
+			barks = [
+				"Treason! You dare raise steel against the Crown?!",
+				"Insolent knave! Lower that weapon before our guards cleave you in twain!"
+			]
+		elif "blacksmith" in npc_id:
+			barks = [
+				"Mind where you swing that iron! You'll dull the edge on my anvil!",
+				"Save that strength for the forge or the demons below, warrior!"
+			]
+		var chosen_bark = barks[randi() % barks.size()]
+		CombatJuice.show_popup_text(global_position + Vector3(0, 2.3, 0), "🛡️ " + chosen_bark, Color(1.0, 0.88, 0.4))
+		var hud = get_tree().get_first_node_in_group("hud")
+		if hud and hud.has_method("show_toast"):
+			hud.show_toast(icon + " " + npc_name + ": \"" + chosen_bark + "\"")
 
 func interact(player: Node3D) -> void:
 	if player:
