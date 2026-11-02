@@ -1,6 +1,10 @@
 extends Node3D
 
 const WeatherManagerScript = preload("res://src/world/WeatherManager.gd")
+const InteractiveTarget3DScript = preload("res://src/world/InteractiveTarget3D.gd")
+const CampfireRestSite3DScript = preload("res://src/world/CampfireRestSite3D.gd")
+const AncientShrine3DScript = preload("res://src/world/AncientShrine3D.gd")
+const MarketStall3DScript = preload("res://src/world/MarketStall3D.gd")
 
 @onready var camera: Camera3D = $IsometricCamera
 @onready var dungeon_gen: Node3D = $DungeonGenerator
@@ -490,6 +494,53 @@ func _run_gameplay_self_test() -> void:
 	snap_camera_yaw(-45.0)
 	assert(is_equal_approx(target_cam_yaw, 0.0))
 	print(" -> Cardinal 45° Step Orbit Snap [Z/X] verified!")
+
+	# 16. Free CC0 Asset Environment Enrichment & Interactive World Props
+	print("\n[TEST 16] Interactive Targets, Campfire Rest Sites, Ancient Shrines & Market Stalls...")
+	var targets = get_tree().get_nodes_in_group("archery_target")
+	print(" -> Discovered %d interactive archery targets across the realm" % targets.size())
+	assert(targets.size() >= 4, "Expected at least 4 interactive targets")
+	
+	# Test hitting an archery target
+	var test_target = targets[0]
+	assert(test_target is InteractiveTarget3DScript)
+	var initial_gold = GameManager.gold
+	test_target._on_damage_received(35.0, Vector3.FORWARD, true, player)
+	assert(test_target._hit_count >= 1, "Target should record hit count")
+	assert(abs(test_target._spring_velocity) > 0.0, "Target should have spring wobble velocity")
+	print(" -> InteractiveTarget3D spring wobble recoil & reward verified! (+%d Gold)" % (GameManager.gold - initial_gold))
+
+	# Test Campfire Rest Site
+	var campfires = get_tree().get_nodes_in_group("campfire_site")
+	print(" -> Discovered %d campfire rest sites across the realm" % campfires.size())
+	assert(campfires.size() >= 4, "Expected at least 4 campfire rest sites")
+	var test_campfire = campfires[0]
+	assert(test_campfire is CampfireRestSite3DScript)
+	player.current_health = 15.0
+	test_campfire.interact(player)
+	assert(is_equal_approx(player.current_health, player.max_health), "Campfire rest should heal player to full HP")
+	print(" -> CampfireRestSite3D full vitality restoration & cooldown reset verified!")
+
+	# Test Ancient Shrines
+	var shrines = get_tree().get_nodes_in_group("ancient_shrine")
+	print(" -> Discovered %d ancient elemental shrines across the realm" % shrines.size())
+	assert(shrines.size() >= 3, "Expected at least 3 ancient shrines")
+	for s in shrines:
+		assert(s is AncientShrine3DScript)
+		s.interact(player)
+	print(" -> AncientShrine3D blessings (Dawn, Hunt, Forge) applied and verified!")
+
+	# Test Market Stalls
+	var stalls = get_tree().get_nodes_in_group("market_stall")
+	print(" -> Discovered %d market stalls across the realm" % stalls.size())
+	assert(stalls.size() >= 2, "Expected at least 2 market stalls")
+	var test_stall = stalls[0]
+	assert(test_stall is MarketStall3DScript)
+	test_stall.interact(player)
+	if hud and hud.dialogue_modal:
+		assert(hud.dialogue_modal.visible, "Market stall interaction should open merchant dialogue modal")
+		hud.dialogue_modal.close_dialogue()
+	print(" -> MarketStall3D merchant dialogue modal and provision options verified!")
 
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")

@@ -14,6 +14,10 @@ const ArmyFormation3DScript = preload("res://src/actors/ArmyFormation3D.gd")
 const MedievalShip3DScript = preload("res://src/world/MedievalShip3D.gd")
 const HarborSeal3DScript = preload("res://src/actors/HarborSeal3D.gd")
 const CaravanWagon3DScript = preload("res://src/actors/CaravanWagon3D.gd")
+const InteractiveTarget3DScript = preload("res://src/world/InteractiveTarget3D.gd")
+const CampfireRestSite3DScript = preload("res://src/world/CampfireRestSite3D.gd")
+const AncientShrine3DScript = preload("res://src/world/AncientShrine3D.gd")
+const MarketStall3DScript = preload("res://src/world/MarketStall3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -461,6 +465,13 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(12.5, 0.0, 2.2), Vector3.ONE * 1.8, 90.0)
 	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(13.5, 0.0, -5.2), Vector3.ONE * 1.8, -90.0)
 
+	# Cathedral Altar of Dawn Ancient Shrine
+	var dawn_shrine = AncientShrine3DScript.new()
+	dawn_shrine.shrine_type = AncientShrine3DScript.ShrineType.DAWN
+	dawn_shrine.shrine_name = "Altar of Dawn (Cathedral)"
+	dawn_shrine.position = Vector3(18.5, 0.0, -8.5)
+	parent.add_child(dawn_shrine)
+
 	# Royal Falconer Caelen - Oakhaven Huntsman NPC
 	var caelen = TownNPCScript.new()
 	caelen.npc_id = "royal_falconer"
@@ -673,6 +684,19 @@ func _build_town_quarter(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-38.8, 0.0, 12.5), Vector3.ONE * 1.2)
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-38.0, 0.0, 13.0), Vector3.ONE * 1.4)
 
+	# Interactive Oakhaven Provisions Market Stall
+	var oakhaven_stall = MarketStall3DScript.new()
+	oakhaven_stall.stall_name = "Oakhaven Fresh Provisions"
+	oakhaven_stall.canopy_color = "green"
+	oakhaven_stall.position = Vector3(-31.5, 0.0, 10.2)
+	parent.add_child(oakhaven_stall)
+
+	# Interactive Sanctuary Waystation Campfire (Right by the southern crossroads)
+	var town_campfire = CampfireRestSite3DScript.new()
+	town_campfire.site_name = "Sanctuary Waystation Hearth"
+	town_campfire.position = Vector3(0.0, 0.0, 8.5)
+	parent.add_child(town_campfire)
+
 	# NPC: Merchant Corin
 	var merchant = TownNPCScript.new()
 	merchant.npc_id = "merchant"
@@ -707,8 +731,15 @@ func _build_town_quarter(parent: Node3D) -> void:
 	# 4. Guard Archery Training Yard (Dedicated East Sanctuary Green: X = 32.0, Z = 2.0, facing West -90° toward targets)
 	_place_prop(parent, "res://assets/overworld/building_archeryrange_blue.gltf", Vector3(34.0, 0.0, 2.0), Vector3.ONE * 4.5, -90.0)
 	_add_static_box(parent, Vector3(34.0, 3.5, 2.0), Vector3(7.0, 7.5, 7.0))
-	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(26.5, 0.0, 0.5), Vector3.ONE * 3.2, 90.0)
-	_place_prop(parent, "res://assets/overworld/target.gltf", Vector3(26.5, 0.0, 3.5), Vector3.ONE * 3.2, 90.0)
+	var target_1 = InteractiveTarget3DScript.new()
+	target_1.position = Vector3(26.5, 0.0, 0.5)
+	target_1.rotation_degrees.y = 90.0
+	parent.add_child(target_1)
+
+	var target_2 = InteractiveTarget3DScript.new()
+	target_2.position = Vector3(26.5, 0.0, 3.5)
+	target_2.rotation_degrees.y = 90.0
+	parent.add_child(target_2)
 	_place_prop(parent, "res://assets/overworld/bucket_arrows.gltf", Vector3(29.5, 0.0, 0.8), Vector3.ONE * 1.6)
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(29.5, 0.0, 4.2), Vector3.ONE * 1.6, 0.0)
 
@@ -1272,6 +1303,15 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	# Courtyard Armories & Props
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-9.5, 0.0, 41.0), Vector3.ONE * 1.8, 90.0)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(9.5, 0.0, 41.0), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-13.0, 0.0, 42.0), Vector3.ONE * 2.4, 90.0)
+	_place_prop(parent, "res://assets/overworld/bucket_arrows.gltf", Vector3(-10.5, 0.0, 43.5), Vector3.ONE * 1.6)
+
+	# Interactive Citadel Training Target
+	var citadel_target = InteractiveTarget3DScript.new()
+	citadel_target.target_name = "Citadel Practice Target"
+	citadel_target.position = Vector3(-10.0, 0.0, 44.0)
+	citadel_target.rotation_degrees.y = -90.0
+	parent.add_child(citadel_target)
 
 	# Circling Hawks Flock high above Castle Keep in the upper sky
 	var flock_castle = CirclingFlock.new()
@@ -1686,6 +1726,21 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	owen.position = Vector3(-52.5, 0.04, 84.0)
 	parent.add_child(owen)
 
+	# Interactive Harbor Market Stall (Smuggler's Fish & Provisions)
+	var harbor_stall = MarketStall3DScript.new()
+	harbor_stall.stall_name = "Blackwater Smuggler's Fish & Provisions"
+	harbor_stall.canopy_color = "red"
+	harbor_stall.position = Vector3(-54.0, 0.0, 68.0)
+	harbor_stall.rotation_degrees.y = -90.0
+	parent.add_child(harbor_stall)
+
+	# Dockside Cargo Barrels, Pallets & Storage Piles
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-58.0, 0.04, 64.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-58.0, 0.04, 64.5), Vector3.ONE * 1.2)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-57.2, 0.04, 65.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/post_lantern.gltf", Vector3(-61.2, 0.04, 64.0), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/post_lantern.gltf", Vector3(-61.2, 0.04, 80.0), Vector3.ONE * 1.8)
+
 	# Harbor Cargo Stacks (Spaced neatly along the Quay Wall)
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-59.5, 0.04, 57.5), Vector3.ONE * 1.4)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-59.5, 0.04, 55.5), Vector3.ONE * 1.5)
@@ -1949,7 +2004,19 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 
 	# 2. Sylva's Rest Enclave Buildings (Arranged around the Open Glade)
 	# Elder Druid's Stone Circle Shrine (West side of Glade at X = -84.0, Z = -64.0)
-	_place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-84.0, 0.0, -64.0), Vector3.ONE * 2.6, 90.0)
+	var hunt_shrine = AncientShrine3DScript.new()
+	hunt_shrine.shrine_type = AncientShrine3DScript.ShrineType.HUNT
+	hunt_shrine.shrine_name = "Ancient Waystone of the Wild Hunt"
+	hunt_shrine.position = Vector3(-84.0, 0.0, -64.0)
+	hunt_shrine.rotation_degrees.y = 90.0
+	parent.add_child(hunt_shrine)
+
+	# Whisperwood Ranger Campfire Rest Site in the Glade center
+	var forest_campfire = CampfireRestSite3DScript.new()
+	forest_campfire.site_name = "Sylva's Rest Woodland Hearth"
+	forest_campfire.position = Vector3(-74.0, 0.0, -64.0)
+	parent.add_child(forest_campfire)
+
 	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -59.5), Vector3(1.5, 2.5, 1.5))
 	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -68.5), Vector3(1.5, 2.5, 1.5))
 	_add_static_cyl(parent, Vector3(-86.0, 0.0, -59.5), 0.9, 7.5)
@@ -2098,6 +2165,23 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 
 	# Armory Rack beside the Foundry
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(60.5, 0.0, -58.0), Vector3.ONE * 1.8, 45.0)
+
+	# Dwarven Runeforge Ancient Shrine & Miner's Campfire
+	var forge_shrine = AncientShrine3DScript.new()
+	forge_shrine.shrine_type = AncientShrine3DScript.ShrineType.FORGE
+	forge_shrine.shrine_name = "Sacred Runeforge Waystone (Khar-Drakken)"
+	forge_shrine.position = Vector3(72.0, 0.0, -64.0)
+	parent.add_child(forge_shrine)
+
+	var crags_campfire = CampfireRestSite3DScript.new()
+	crags_campfire.site_name = "Stonegate Smelter Campfire"
+	crags_campfire.position = Vector3(60.0, 0.0, -48.0)
+	parent.add_child(crags_campfire)
+
+	# Mining Scaffolding & Rock Rubble
+	_place_prop(parent, "res://assets/overworld/building_scaffolding.gltf", Vector3(74.0, 0.0, -56.0), Vector3.ONE * 1.8, -90.0)
+	_place_prop(parent, "res://assets/overworld/ingot_stacked.gltf", Vector3(62.0, 0.0, -58.5), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(68.0, 0.0, -66.0), Vector3.ONE * 2.5)
 
 	# 3. The Orc Stronghold & Bastion (Upper Plateau: X in [92, 110], Z in [-88, -108])
 	var OverworldGateScript = preload("res://src/world/OverworldGate.gd")
@@ -2296,6 +2380,13 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/ribcage.gltf", Vector3(68.0, 0.0, 84.0), Vector3.ONE * 2.0, 35.0)
 	_place_prop(parent, "res://assets/overworld/coffin_decorated.gltf", Vector3(94.0, 0.0, 101.0), Vector3.ONE * 1.8, -25.0)
 
+	# Ominous Swamp Skull Warning Totems & Flickering Candles along the Boardwalk
+	_place_prop(parent, "res://assets/overworld/post_skull.gltf", Vector3(56.0, 0.0, 74.0), Vector3.ONE * 1.6, 25.0)
+	_place_prop(parent, "res://assets/overworld/post_skull.gltf", Vector3(82.0, 0.0, 74.0), Vector3.ONE * 1.6, -20.0)
+	_place_prop(parent, "res://assets/overworld/post_skull.gltf", Vector3(86.5, 0.0, 96.0), Vector3.ONE * 1.6, 110.0)
+	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(85.5, 0.12, 82.0), Vector3.ONE * 1.5, 45.0)
+	_place_prop(parent, "res://assets/overworld/skull_candle.gltf", Vector3(82.5, 0.12, 94.0), Vector3.ONE * 1.5, -60.0)
+
 	# Eerie Swamp Mist & Will-o'-the-Wisp Spores
 	AmbientFX.create_forest_fireflies(parent, Vector3(76.0, 1.5, 80.0), 16.0)
 	AmbientFX.create_forest_fireflies(parent, Vector3(88.0, 1.5, 96.0), 16.0)
@@ -2411,6 +2502,27 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.6, 40.0)
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 79.0), Vector3.ONE * 1.8)
 
+	# Encampment Soldier Hearth & Rest Site
+	var siege_campfire = CampfireRestSite3DScript.new()
+	siege_campfire.hearth_name = "Siege Vanguard Campfire"
+	siege_campfire.position = Vector3(0.0, 0.0, 84.0)
+	parent.add_child(siege_campfire)
+
+	# Siege Archery Training Target for Vanguard Archers
+	var siege_target = InteractiveTarget3DScript.new()
+	siege_target.target_name = "Siege Battery Practice Target"
+	siege_target.position = Vector3(10.5, 0.0, 82.0)
+	siege_target.rotation_degrees.y = -45.0
+	parent.add_child(siege_target)
+
+	# Catapult Boulder Ammunition Pyramids & Staging Pallets
+	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(-12.0, 0.0, 77.0), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(-12.8, 0.0, 76.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(12.0, 0.0, 77.0), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(12.8, 0.0, 76.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-12.5, 0.0, 76.8), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(12.5, 0.0, 76.8), Vector3.ONE * 1.4)
+
 	# NPC: Siege Master Vargos
 	var vargos = TownNPCScript.new()
 	vargos.npc_id = "siege_captain"
@@ -2481,6 +2593,19 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 	woodcutter.dialogue_text = "Welcome to Greenhollow Village! Our timberwrights fell the stoutest oaks for Port Blackwater's ships and the King's siege engines."
 	woodcutter.position = Vector3(-47.0, 0.0, -22.0)
 	parent.add_child(woodcutter)
+
+	# Greenhollow Village Hearth Rest Site
+	var greenhollow_hearth = CampfireRestSite3DScript.new()
+	greenhollow_hearth.hearth_name = "Greenhollow Village Hearth"
+	greenhollow_hearth.position = Vector3(-53.0, 0.0, -22.5)
+	parent.add_child(greenhollow_hearth)
+
+	# Greenhollow Village Archery Range Target
+	var greenhollow_target = InteractiveTarget3DScript.new()
+	greenhollow_target.target_name = "Greenhollow Forester Target"
+	greenhollow_target.position = Vector3(-44.0, 0.0, -17.0)
+	greenhollow_target.rotation_degrees.y = -60.0
+	parent.add_child(greenhollow_target)
 
 	# 2. Moving Horse-Drawn Trade Caravan Wagons on the Dry Realm Highways
 	var caravan_east = CaravanWagon3DScript.new()

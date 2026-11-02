@@ -865,6 +865,38 @@ func _on_dialogue_action(action_id: String) -> void:
 					dialogue_modal.show_dialogue("Marksman Drill", "🏹", "The Citadel Marksman drills your crossbow draw and blade stance! Permanent Attack Power increased!", [])
 			elif dialogue_modal:
 				dialogue_modal.show_dialogue("Marksman Drill", "🏹", "Marksman combat drills require 35 Gold coins for target bolts.", [])
+		"buy_market_apple":
+			if GameManager.gold >= 4:
+				GameManager.add_gold(-4)
+				if player and player.has_method("heal"):
+					player.heal(25.0)
+				if player and "move_speed" in player:
+					player.move_speed = min(player.move_speed + 0.8, 8.5)
+				AudioManager.play_sfx("gold_pickup", 0.06, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Market Vendor", "🍎", "Crisp, sweet honeyed apple from the orchard! (+25 HP & haste step).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Market Vendor", "🍎", "A honeyed apple costs 4 Gold coins, traveler.", [])
+		"buy_market_jerky":
+			if GameManager.gold >= 8:
+				GameManager.add_gold(-8)
+				if player and player.has_method("heal"):
+					player.heal(60.0)
+				AudioManager.play_sfx("gold_pickup", 0.06, 1.0)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Market Vendor", "🥩", "Smoked highland venison jerky packed with endurance! (+60 HP restored).", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Market Vendor", "🥩", "Hearty venison jerky is 8 Gold coins.", [])
+		"buy_market_whetstone":
+			if GameManager.gold >= 15:
+				GameManager.add_gold(-15)
+				GameManager.upgrade_attack_power_level += 1
+				GameManager.player_stats_changed.emit()
+				AudioManager.play_sfx("anvil_strike", 0.06, 1.2)
+				if dialogue_modal:
+					dialogue_modal.show_dialogue("Armorer Stall", "⚔️", "Fine dwarven whetstone oil applied to your edge! Permanent Attack Power increased!", [])
+			elif dialogue_modal:
+				dialogue_modal.show_dialogue("Armorer Stall", "⚔️", "Whetstone oil is 15 Gold coins.", [])
 
 func show_altar_modal() -> void:
 	altar_modal.visible = true
