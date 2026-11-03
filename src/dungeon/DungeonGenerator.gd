@@ -357,8 +357,8 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	
 	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River Z in [20, 28] and Ocean Basin X < -62, Z > 46)
 	var g_mat = StandardMaterial3D.new()
-	g_mat.albedo_color = Color(0.24, 0.44, 0.18) # Lush stylized medieval grass
-	g_mat.roughness = 0.88
+	g_mat.albedo_color = Color(0.20, 0.38, 0.16) # Rich medieval pasture green
+	g_mat.roughness = 0.92
 
 	var add_grass_plane = func(p_name: String, p_size: Vector2, p_pos: Vector3):
 		var g_mesh_inst = MeshInstance3D.new()
@@ -397,13 +397,45 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 		if offset_p < 14.0:
 			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(-half_s, 0.0, offset_p), Vector3.ONE * 8.5)
 
-	# 2. Central Cobblestone Sanctuary Plaza (Spacious paved courtyard X in [-12, 12], Z in [-10, 12])
-	for px in range(-6, 7):
-		for pz in range(-5, 7):
-			var stone = AssetLoader.load_or_generate_model("res://assets/dungeon/floor_tile_large.glb", "dungeon", "floor_tile_large")
-			stone.scale = Vector3(0.5, 1.0, 0.5)
-			stone.position = Vector3(px * 2.0, 0.02, pz * 2.0)
-			parent.add_child(stone)
+	# 2. Central Cobblestone Sanctuary Plaza (Spacious paved courtyard X in [-13, 13], Z in [-11, 13])
+	var plaza_mesh_inst = MeshInstance3D.new()
+	plaza_mesh_inst.name = "SanctuaryCobblestonePlaza"
+	var p_plane = PlaneMesh.new()
+	p_plane.size = Vector2(26.0, 24.0)
+	var plaza_mat = StandardMaterial3D.new()
+	var brick_tex = load("res://assets/village/T_UnevenBrick_BaseColor.png")
+	if brick_tex:
+		plaza_mat.albedo_texture = brick_tex
+		plaza_mat.uv1_scale = Vector3(8.0, 7.5, 1.0)
+	else:
+		plaza_mat.albedo_color = Color(0.42, 0.40, 0.38)
+	var brick_norm = load("res://assets/village/T_UnevenBrick_Normal.png")
+	if brick_norm:
+		plaza_mat.normal_enabled = true
+		plaza_mat.normal_texture = brick_norm
+	plaza_mat.roughness = 0.88
+	plaza_mesh_inst.mesh = p_plane
+	plaza_mesh_inst.material_override = plaza_mat
+	plaza_mesh_inst.position = Vector3(0.0, 0.02, 1.0)
+	parent.add_child(plaza_mesh_inst)
+
+	# Decorative Carved Stone Curb Border around the Plaza
+	var curb_mat = StandardMaterial3D.new()
+	curb_mat.albedo_color = Color(0.32, 0.30, 0.28)
+	curb_mat.roughness = 0.92
+	for curb_edge in [
+		{"size": Vector3(26.4, 0.08, 0.4), "pos": Vector3(0.0, 0.04, -11.0)},
+		{"size": Vector3(26.4, 0.08, 0.4), "pos": Vector3(0.0, 0.04, 13.0)},
+		{"size": Vector3(0.4, 0.08, 24.0), "pos": Vector3(-13.0, 0.04, 1.0)},
+		{"size": Vector3(0.4, 0.08, 24.0), "pos": Vector3(13.0, 0.04, 1.0)}
+	]:
+		var curb = MeshInstance3D.new()
+		var c_mesh = BoxMesh.new()
+		c_mesh.size = curb_edge["size"]
+		c_mesh.material = curb_mat
+		curb.mesh = c_mesh
+		curb.position = curb_edge["pos"]
+		parent.add_child(curb)
 
 	# 3. North: The Ancient Crypt (Proportionate mausoleum set back at Z = -16.5 so DescentSigil at Z = -6.5 has a clear forecourt)
 	var crypt = AssetLoader.load_or_generate_model("res://assets/overworld/crypt.gltf", "dungeon", "crypt")
@@ -442,8 +474,8 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	torval.npc_name = "Master Torval"
 	torval.npc_title = "Forge Master"
 	torval.icon = "⚒️"
-	torval.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-	torval.model_scale = Vector3(0.38, 0.38, 0.38)
+	torval.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	torval.model_scale = Vector3(0.52, 0.52, 0.52)
 	torval.model_rotation_y = 90.0
 	torval.dialogue_text = "Hail, warrior! The forge fires blaze with eternal embers. Deliver unto me the Soul Echoes reaped from the Ossuary depths, and I shall temper your weapons, bolster your armor, and sharpen your dash reflexes!"
 	torval.position = Vector3(-12.2, 0.0, -1.0)
@@ -582,8 +614,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	]
 	parent.add_child(guard_cross)
 
-	# Merchant Supply Wagon parked neatly in South-West Courtyard Corner
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-10.5, 0.0, 10.5), Vector3.ONE * 1.5, 15.0)
+	# Merchant Supply Caches in South-West Courtyard Corner
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-10.5, 0.0, 10.5), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-9.5, 0.0, 10.8), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.2)
 
@@ -1192,7 +1225,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	# Pasture Livestock Water Troughs & Hay Sacks (Cleanly spaced inside the fence)
 	_place_prop(parent, "res://assets/overworld/bucket_water.gltf", Vector3(28.0, 0.0, 41.0), Vector3.ONE * 2.2)
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(28.0, 0.0, 43.0), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(50.0, 0.0, 49.0), Vector3.ONE * 1.5, -20.0)
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(50.0, 0.0, 49.0), Vector3.ONE * 1.5, -20.0)
 
 	# Grazing Animals inside the open, unobstructed fenced pasture
 	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(30.0, 0.0, 44.0), 45.0)
@@ -2364,7 +2397,7 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_home_A_red.gltf", Vector3(65.0, 0.0, -46.0), Vector3.ONE * 5.4, 0.0)
 	_add_static_box(parent, Vector3(65.0, 3.5, -46.0), Vector3(6.2, 6.5, 6.2))
 	AmbientFX.create_chimney_smoke(parent, Vector3(65.0, 6.8, -46.0))
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(61.5, 0.0, -42.0), Vector3.ONE * 1.4, 25.0)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(61.5, 0.0, -42.0), Vector3.ONE * 1.4, 25.0)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(68.5, 0.0, -42.5), Vector3.ONE * 1.3)
 
 	# NPC: Thordin the Highland Prospector
@@ -2373,8 +2406,8 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	thordin.npc_name = "Thordin"
 	thordin.npc_title = "Dwarven Prospector"
 	thordin.icon = "💎"
-	thordin.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-	thordin.model_scale = Vector3(0.38, 0.38, 0.38)
+	thordin.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	thordin.model_scale = Vector3(0.52, 0.52, 0.52)
 	thordin.model_rotation_y = 0.0
 	thordin.dialogue_text = "Gold veins run deep through the granite beneath Khar-Drakken! Keep your eyes keen for raw mineral crystals in the crags—ancient treasures lie hidden where the earth breaks open!"
 	thordin.position = Vector3(65.0, 0.0, -41.5)
@@ -2716,7 +2749,7 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 65)
 	for bar_x in [-16.0, -10.5, -5.0, 5.0, 10.5, 16.0]:
 		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(bar_x, 0.0, 65.0), Vector3.ONE * 2.0, 90.0)
-	_place_prop(parent, "res://assets/village/Prop_Wagon.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.6, 40.0)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.5)
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 79.0), Vector3.ONE * 1.8)
 
 	# Encampment Soldier Hearth & Rest Site
@@ -2732,13 +2765,9 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	siege_target.rotation_degrees.y = -45.0
 	parent.add_child(siege_target)
 
-	# Catapult Boulder Ammunition Pyramids & Staging Pallets
-	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(-12.0, 0.0, 77.0), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(-12.8, 0.0, 76.5), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(12.0, 0.0, 77.0), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/projectile_catapult.gltf", Vector3(12.8, 0.0, 76.5), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-12.5, 0.0, 76.8), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(12.5, 0.0, 76.8), Vector3.ONE * 1.4)
+	# Staging Pallets & Ammunition Reserves outside Trebuchet battery
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-19.5, 0.0, 76.8), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(19.5, 0.0, 76.8), Vector3.ONE * 1.4)
 
 	# NPC: Siege Master Vargos
 	var vargos = TownNPCScript.new()
@@ -2836,10 +2865,10 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 
 	var caravan_west = CaravanWagon3DScript.new()
 	caravan_west.caravan_name = "Blackwater Spice Caravan"
-	caravan_west.position = Vector3(-24.0, 0.0, 34.0)
+	caravan_west.position = Vector3(-35.0, 0.0, 38.0)
 	caravan_west.waypoints = [
-		Vector3(-20.0, 0.0, 31.0),
-		Vector3(-46.0, 0.0, 50.0)
+		Vector3(-28.0, 0.0, 36.0),
+		Vector3(-55.0, 0.0, 48.0)
 	]
 	parent.add_child(caravan_west)
 

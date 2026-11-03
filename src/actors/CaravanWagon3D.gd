@@ -25,55 +25,31 @@ func _ready() -> void:
 	_build_interaction()
 
 func _build_caravan_assembly() -> void:
-	# 1. Draft Horse in Front (Z = +2.8m)
+	# 1. Pack Horse in Front (Z = +1.0m)
 	var horse_scene = load("res://assets/characters/animals/Horse.glb")
 	if horse_scene:
 		var horse = horse_scene.instantiate()
 		horse.scale = Vector3.ONE * 0.42
-		horse.position = Vector3(0.0, 0.0, 2.8)
+		horse.position = Vector3(0.0, 0.0, 0.8)
 		add_child(horse)
 		_horse_anim = horse.find_child("AnimationPlayer", true, false) as AnimationPlayer
 		_play_loop_anim(_horse_anim, "Walk")
 
-	# 2. Wooden Harness Shafts connecting Horse to Wagon
-	var wood_mat = StandardMaterial3D.new()
-	wood_mat.albedo_color = Color(0.36, 0.24, 0.14)
-	wood_mat.roughness = 0.88
-	for side_x in [-0.55, 0.55]:
-		var shaft = MeshInstance3D.new()
-		var s_mesh = BoxMesh.new()
-		s_mesh.size = Vector3(0.10, 0.10, 2.8)
-		s_mesh.material = wood_mat
-		shaft.mesh = s_mesh
-		shaft.position = Vector3(side_x, 0.75, 1.5)
-		add_child(shaft)
+		# Trade saddlebags on pack horse flanks
+		var sack_l = AssetLoader.load_or_generate_model("res://assets/overworld/sack.gltf", "dungeon", "prop")
+		sack_l.scale = Vector3.ONE * 0.65
+		sack_l.position = Vector3(-0.45, 0.75, 0.0)
+		horse.add_child(sack_l)
 
-	# 3. Loaded Medieval Cargo Wagon (Z = -0.5m)
-	_wagon_node = AssetLoader.load_or_generate_model("res://assets/village/Prop_Wagon.gltf", "dungeon", "prop")
-	_wagon_node.scale = Vector3.ONE * 1.65
-	_wagon_node.position = Vector3(0.0, 0.0, -0.5)
-	add_child(_wagon_node)
+		var sack_r = AssetLoader.load_or_generate_model("res://assets/overworld/sack.gltf", "dungeon", "prop")
+		sack_r.scale = Vector3.ONE * 0.65
+		sack_r.position = Vector3(0.45, 0.75, 0.0)
+		horse.add_child(sack_r)
 
-	# Cargo Barrels, Crates & Grain Sacks inside Wagon Bed
-	var barrel = AssetLoader.load_or_generate_model("res://assets/overworld/barrel.gltf", "dungeon", "prop")
-	barrel.scale = Vector3.ONE * 1.15
-	barrel.position = Vector3(-0.35, 0.85, -0.6)
-	add_child(barrel)
-
-	var crate = AssetLoader.load_or_generate_model("res://assets/overworld/crate_A_small.gltf", "dungeon", "prop")
-	crate.scale = Vector3.ONE * 1.25
-	crate.position = Vector3(0.35, 0.85, -0.4)
-	add_child(crate)
-
-	var sack = AssetLoader.load_or_generate_model("res://assets/overworld/sack.gltf", "dungeon", "prop")
-	sack.scale = Vector3.ONE * 1.3
-	sack.position = Vector3(0.0, 0.85, -1.2)
-	add_child(sack)
-
-	# 4. Walking Caravan Master beside the Draft Horse
+	# 2. Walking Caravan Trader alongside the Pack Horse
 	var driver = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rogue")
 	driver.scale = Vector3(0.53, 0.53, 0.53)
-	driver.position = Vector3(1.4, 0.0, 1.6)
+	driver.position = Vector3(1.1, 0.0, 0.5)
 	add_child(driver)
 	_driver_anim = driver.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_play_loop_anim(_driver_anim, "Walking_A")
@@ -121,13 +97,9 @@ func interact(_player: Node = null) -> void:
 func _process(delta: float) -> void:
 	_roll_time += delta * 9.0
 	_sfx_timer += delta
-	if _sfx_timer >= 1.1:
+	if _sfx_timer >= 1.6:
 		_sfx_timer = 0.0
-		AudioManager.play_sfx_at_position("wagon_rattle", global_position, 24.0, 0.1, -7.0)
-
-	if _wagon_node and is_instance_valid(_wagon_node):
-		_wagon_node.position.y = abs(sin(_roll_time)) * 0.035
-		_wagon_node.rotation_degrees.z = sin(_roll_time * 0.7) * 1.4
+		AudioManager.play_sfx_at_position("wagon_rattle", global_position, 20.0, 0.1, -12.0)
 
 	if _horse_anim and is_instance_valid(_horse_anim) and not _horse_anim.is_playing():
 		_play_loop_anim(_horse_anim, "Walk")

@@ -75,17 +75,17 @@ const SUN_COLORS = {
 }
 
 const SUN_ENERGIES = {
-	TimePeriod.DAWN: 0.95,
-	TimePeriod.DAY: 1.25,
-	TimePeriod.DUSK: 0.85,
-	TimePeriod.NIGHT: 0.32 # Soft moonlight
+	TimePeriod.DAWN: 0.70,
+	TimePeriod.DAY: 0.85,
+	TimePeriod.DUSK: 0.65,
+	TimePeriod.NIGHT: 0.22 # Soft moonlight
 }
 
 const AMBIENT_ENERGIES = {
-	TimePeriod.DAWN: 1.1,
-	TimePeriod.DAY: 1.35,
-	TimePeriod.DUSK: 1.0,
-	TimePeriod.NIGHT: 0.65
+	TimePeriod.DAWN: 0.50,
+	TimePeriod.DAY: 0.55,
+	TimePeriod.DUSK: 0.45,
+	TimePeriod.NIGHT: 0.25
 }
 
 func _ready() -> void:

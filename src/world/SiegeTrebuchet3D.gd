@@ -138,15 +138,7 @@ func _build_trebuchet_assembly() -> void:
 	_counterweight_pivot.add_child(cw_box)
 
 	# 6. Loaded Siege Boulder at Long Tip of Arm (Z = +5.8m)
-	var boulder_scene = load("res://assets/overworld/projectile_catapult.gltf")
-	if boulder_scene:
-		_loaded_boulder = boulder_scene.instantiate()
-		_loaded_boulder.scale = Vector3.ONE * 2.2
-	else:
-		_loaded_boulder = MeshInstance3D.new()
-		var sp = SphereMesh.new()
-		sp.radius = 0.45
-		(_loaded_boulder as MeshInstance3D).mesh = sp
+	_loaded_boulder = _create_stone_boulder()
 	_loaded_boulder.position = Vector3(0.0, -0.4, 5.8)
 	_arm_pivot.add_child(_loaded_boulder)
 
@@ -176,12 +168,11 @@ func _build_trebuchet_assembly() -> void:
 	_arm_pivot.add_child(pouch)
 
 	# Ammunition Pile beside the Trebuchet
-	if boulder_scene:
-		for b_offset in [Vector3(2.8, 0.3, 1.5), Vector3(3.3, 0.3, 2.1), Vector3(2.6, 0.3, 2.4), Vector3(3.0, 0.8, 1.9)]:
-			var ammo = boulder_scene.instantiate()
-			ammo.scale = Vector3.ONE * 1.8
-			ammo.position = b_offset
-			add_child(ammo)
+	for b_offset in [Vector3(2.8, 0.3, 1.5), Vector3(3.3, 0.3, 2.1), Vector3(2.6, 0.3, 2.4), Vector3(3.0, 0.8, 1.9)]:
+		var ammo = _create_stone_boulder()
+		ammo.scale = Vector3.ONE * 0.9
+		ammo.position = b_offset
+		add_child(ammo)
 
 	# 7. Rotating Windlass Winch Wheels at Rear of Frame (Z = 2.8m)
 	_winch_wheel_l = _create_winch_wheel(wood_mat, dark_iron_mat)
@@ -194,7 +185,7 @@ func _build_trebuchet_assembly() -> void:
 
 	# 8. Animated Siege Engineer Crew operating the Winch
 	var crew_configs = [
-		{"pos": Vector3(-2.5, 0.0, 2.8), "rot": 90.0, "model": "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf", "scale": Vector3.ONE * 0.38},
+		{"pos": Vector3(-2.5, 0.0, 2.8), "rot": 90.0, "model": "res://assets/characters/adventurers/Barbarian.glb", "scale": Vector3.ONE * 0.48},
 		{"pos": Vector3(2.5, 0.0, 2.8), "rot": -90.0, "model": "res://assets/characters/adventurers/Knight.glb", "scale": Vector3.ONE * 0.52}
 	]
 	for cc in crew_configs:
@@ -333,15 +324,8 @@ func _launch_boulder() -> void:
 	if _active_projectile and is_instance_valid(_active_projectile):
 		_active_projectile.queue_free()
 
-	var boulder_scene = load("res://assets/overworld/projectile_catapult.gltf")
-	if boulder_scene:
-		_active_projectile = boulder_scene.instantiate()
-		_active_projectile.scale = Vector3.ONE * 2.4
-	else:
-		_active_projectile = MeshInstance3D.new()
-		var sp = SphereMesh.new()
-		sp.radius = 0.5
-		(_active_projectile as MeshInstance3D).mesh = sp
+	_active_projectile = _create_stone_boulder()
+	_active_projectile.scale = Vector3.ONE * 1.3
 
 	# Add fiery trail light to projectile
 	var fire_light = OmniLight3D.new()
@@ -418,37 +402,49 @@ func _launch_boulder() -> void:
 	_proj_vel = dir * 24.0 + Vector3(0.0, 15.0, 0.0)
 	_proj_time = 0.0
 
+func _create_stone_boulder() -> Node3D:
+	var b = MeshInstance3D.new()
+	var sp = SphereMesh.new()
+	sp.radius = 0.52
+	sp.height = 1.04
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.36, 0.35, 0.34)
+	mat.roughness = 0.94
+	sp.material = mat
+	b.mesh = sp
+	return b
+
 func _spawn_launch_dust_puff() -> void:
 	if not get_parent():
 		return
 	var dust = CPUParticles3D.new()
-	dust.position = global_position + Vector3(0.0, 1.2, 0.0)
-	dust.emitting = true
+	dust.position = global_position + Vector3(0.0, 0.4, 0.0)
 	dust.one_shot = true
-	dust.amount = 18
-	dust.lifetime = 0.75
-	dust.explosiveness = 0.95
+	dust.amount = 14
+	dust.lifetime = 0.70
+	dust.explosiveness = 0.88
 	dust.direction = Vector3(0.0, 1.0, 0.0)
-	dust.spread = 85.0
-	dust.initial_velocity_min = 2.5
-	dust.initial_velocity_max = 5.5
-	dust.gravity = Vector3(0.0, -4.0, 0.0)
-	dust.scale_amount_min = 0.8
-	dust.scale_amount_max = 2.2
-	dust.color = Color(0.80, 0.76, 0.70, 0.55)
+	dust.spread = 75.0
+	dust.initial_velocity_min = 1.8
+	dust.initial_velocity_max = 3.6
+	dust.gravity = Vector3(0.0, -3.0, 0.0)
+	dust.scale_amount_min = 0.6
+	dust.scale_amount_max = 1.5
+	dust.color = Color(0.44, 0.38, 0.30, 0.50)
 
 	var d_mat = StandardMaterial3D.new()
 	d_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	d_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	d_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	d_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-	var m_tex = load("res://assets/particles/muzzle_01.png")
-	if m_tex:
-		d_mat.albedo_texture = m_tex
+	var d_tex = load("res://assets/particles/dirt_01.png")
+	if d_tex:
+		d_mat.albedo_texture = d_tex
 	var q_m = QuadMesh.new()
-	q_m.size = Vector2(1.4, 1.4)
+	q_m.size = Vector2(0.95, 0.95)
 	q_m.material = d_mat
 	dust.mesh = q_m
 	get_parent().add_child(dust)
+	dust.emitting = true
 	get_tree().create_timer(1.0).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
 
 func _create_winch_wheel(wood_mat: Material, iron_mat: Material) -> Node3D:

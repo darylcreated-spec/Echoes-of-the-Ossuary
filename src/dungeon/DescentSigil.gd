@@ -152,11 +152,8 @@ func _physics_process(delta: float) -> void:
 	if _label:
 		_label.position.y = 3.0 + sin(_time * 3.5) * 0.18
 
-	# Immediate step-on trigger: check overlapping player body every frame
-	for b in get_overlapping_bodies():
-		if (b.is_in_group("player") or b.name == "Player") and not _has_triggered:
-			trigger_descent()
-			return
+	# Descent is triggered via [E] interact so players aren't accidentally warped on spawn or test runs
+	pass
 
 func _on_body_entered(body: Node3D) -> void:
 	# Keep descent manual via [E] interact so players aren't accidentally warped on spawn
