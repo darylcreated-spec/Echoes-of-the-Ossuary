@@ -90,16 +90,28 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 			"fov": 54.0
 		},
 		{
+			"name": "09B_harbor_fishing_dory",
+			"cam_pos": Vector3(-60.0, 3.2, 78.5),
+			"look_at": Vector3(-68.0, 0.6, 74.0),
+			"fov": 50.0
+		},
+		{
 			"name": "10_revolving_harbor_lighthouse",
-			"cam_pos": Vector3(-60.0, 5.5, 52.0),
-			"look_at": Vector3(-84.0, 6.0, 38.0),
-			"fov": 52.0
+			"cam_pos": Vector3(-66.0, 8.5, 68.0),
+			"look_at": Vector3(-84.0, 9.5, 38.0),
+			"fov": 55.0
 		},
 		{
 			"name": "11_expanded_ocean_naval_battle",
 			"cam_pos": Vector3(-95.0, 12.0, 75.0),
 			"look_at": Vector3(-140.0, 1.0, 110.0),
 			"fov": 55.0
+		},
+		{
+			"name": "11B_pirate_corsair_warship",
+			"cam_pos": Vector3(-102.0, 5.5, 80.0),
+			"look_at": Vector3(-120.0, 2.5, 70.0),
+			"fov": 52.0
 		},
 		{
 			"name": "12_corsair_archipelago_bastion",

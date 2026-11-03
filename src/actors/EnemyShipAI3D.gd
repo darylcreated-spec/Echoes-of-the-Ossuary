@@ -43,73 +43,66 @@ func _build_pirate_ship_visuals() -> void:
 	_hull_pivot.name = "HullPivot"
 	add_child(_hull_pivot)
 
-	# 1. Dark Timber Pirate Hull
-	var wood_dark = StandardMaterial3D.new()
-	wood_dark.albedo_color = Color(0.22, 0.16, 0.12)
-	wood_dark.roughness = 0.88
+	# 1. Authentic 3D Pirate Warship Model (ship-pirate-medium.glb)
+	var ship_scene = load("res://assets/ships/ship-pirate-medium.glb")
+	if ship_scene:
+		var ship_inst = ship_scene.instantiate()
+		ship_inst.name = "PirateShipModel"
+		ship_inst.scale = Vector3.ONE * 1.55
+		ship_inst.position = Vector3(0.0, 0.25, 0.0)
+		AssetLoader.apply_ship_materials(ship_inst)
+		_hull_pivot.add_child(ship_inst)
+	else:
+		var wood_dark = StandardMaterial3D.new()
+		wood_dark.albedo_color = Color(0.22, 0.16, 0.12)
+		wood_dark.roughness = 0.88
+		var hull = MeshInstance3D.new()
+		var hm = BoxMesh.new()
+		hm.size = Vector3(4.8, 2.4, 13.5)
+		hm.material = wood_dark
+		hull.mesh = hm
+		hull.position = Vector3(0.0, 1.2, 0.0)
+		_hull_pivot.add_child(hull)
 
-	var hull = MeshInstance3D.new()
-	var hm = BoxMesh.new()
-	hm.size = Vector3(4.8, 2.4, 13.5)
-	hm.material = wood_dark
-	hull.mesh = hm
-	hull.position = Vector3(0.0, 1.2, 0.0)
-	_hull_pivot.add_child(hull)
-
-	# Bow & Stern sheer blocks
-	var bow = MeshInstance3D.new()
-	var bm = BoxMesh.new()
-	bm.size = Vector3(4.2, 2.8, 4.0)
-	bm.material = wood_dark
-	bow.mesh = bm
-	bow.position = Vector3(0.0, 1.6, -7.0)
-	_hull_pivot.add_child(bow)
-
-	# 2. Mainmast & Black/Crimson Jolly Roger Sail
+	# 2. Mainmast / Pennant Node for Sinking Animation & Jolly Roger Flag
 	_mast_node = Node3D.new()
 	_mast_node.name = "Mainmast"
+	_mast_node.position = Vector3(0.0, 12.0, 0.0)
 	_hull_pivot.add_child(_mast_node)
 
-	var mast = MeshInstance3D.new()
-	var mm = CylinderMesh.new()
-	mm.top_radius = 0.16
-	mm.bottom_radius = 0.22
-	mm.height = 9.5
-	mm.material = wood_dark
-	mast.mesh = mm
-	mast.position = Vector3(0.0, 5.2, -0.5)
-	_mast_node.add_child(mast)
-
-	# Square Rigged Black Pirate Sail
-	var sail_mat = StandardMaterial3D.new()
-	sail_mat.albedo_color = Color(0.12, 0.11, 0.13)
-	sail_mat.roughness = 0.95
-	var sail = MeshInstance3D.new()
-	var sm = BoxMesh.new()
-	sm.size = Vector3(6.5, 5.0, 0.12)
-	sm.material = sail_mat
-	sail.mesh = sm
-	sail.position = Vector3(0.0, 6.0, -0.45)
-	_mast_node.add_child(sail)
-
-	# Crimson Cross / Skull Insignia on Sail
 	var skull_lbl = Label3D.new()
 	skull_lbl.text = "☠️"
 	skull_lbl.font_size = 96
-	skull_lbl.position = Vector3(0.0, 6.0, -0.38)
+	skull_lbl.position = Vector3(0.0, 0.0, 0.0)
 	skull_lbl.double_sided = true
 	_mast_node.add_child(skull_lbl)
 
-	# 3. Bronze Ram Prow at waterline
+	# 3. Skeleton Pirate Captain on Aft Castle Deck
+	var skel_scene = load("res://assets/characters/skeletons/Skeleton_Warrior.glb")
+	if skel_scene:
+		var captain = skel_scene.instantiate()
+		captain.name = "PirateCaptain"
+		captain.scale = Vector3.ONE * 0.52
+		captain.position = Vector3(0.0, 3.2, 3.2)
+		captain.rotation_degrees.y = 180.0
+		_hull_pivot.add_child(captain)
+		var ap = captain.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if ap and ap.has_animation("Cheer"):
+			var a = ap.get_animation("Cheer")
+			if a: a.loop_mode = Animation.LOOP_LINEAR
+			ap.play("Cheer")
+
+	# 4. Bronze Ram Spur at Waterline
 	var ram = MeshInstance3D.new()
-	var rm = BoxMesh.new()
-	rm.size = Vector3(1.4, 0.8, 2.5)
+	var rm = PrismMesh.new()
+	rm.size = Vector3(1.6, 2.0, 1.4)
 	var bronze = StandardMaterial3D.new()
 	bronze.albedo_color = Color(0.72, 0.48, 0.22)
 	bronze.metallic = 0.8
 	ram.mesh = rm
 	ram.material_override = bronze
-	ram.position = Vector3(0.0, 0.4, -9.0)
+	ram.position = Vector3(0.0, 0.5, -8.0)
+	ram.rotation_degrees.x = -90.0
 	_hull_pivot.add_child(ram)
 
 func _build_ui_and_collider() -> void:

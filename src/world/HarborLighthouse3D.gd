@@ -97,10 +97,88 @@ func _build_lighthouse_structure() -> void:
 	roof.material_override = copper_mat
 	add_child(roof)
 
-	# 3. Rotating Lantern Pivot & Beams
+	# 3. Medieval Beacon Fire Brazier & Rotating Seaward Maritime Spotlight
+	# Authentic medieval iron beacon fire brazier on the tower catwalk
+	var brazier = MeshInstance3D.new()
+	var br_mesh = CylinderMesh.new()
+	br_mesh.top_radius = 1.6
+	br_mesh.bottom_radius = 1.1
+	br_mesh.height = 1.2
+	var iron_mat = StandardMaterial3D.new()
+	iron_mat.albedo_color = Color(0.2, 0.2, 0.22)
+	iron_mat.metallic = 0.85
+	iron_mat.roughness = 0.4
+	brazier.mesh = br_mesh
+	brazier.material_override = iron_mat
+	brazier.position.y = 14.6
+	add_child(brazier)
+
+	# Roaring fire flames in the brazier
+	var fire_particles = CPUParticles3D.new()
+	fire_particles.name = "BrazierFlames"
+	fire_particles.amount = 22
+	fire_particles.lifetime = 0.55
+	fire_particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	fire_particles.emission_sphere_radius = 0.8
+	fire_particles.direction = Vector3.UP
+	fire_particles.spread = 22.0
+	fire_particles.gravity = Vector3(0.0, 4.0, 0.0)
+	fire_particles.initial_velocity_min = 1.2
+	fire_particles.initial_velocity_max = 2.4
+	fire_particles.scale_amount_min = 0.9
+	fire_particles.scale_amount_max = 1.8
+	fire_particles.color = Color(1.0, 0.65, 0.18, 0.85)
+
+	var flame_mat = StandardMaterial3D.new()
+	flame_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	flame_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	flame_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var f_tex = load("res://assets/particles/flame_02.png")
+	if f_tex:
+		flame_mat.albedo_texture = f_tex
+	var f_quad = QuadMesh.new()
+	f_quad.size = Vector2(1.1, 1.1)
+	f_quad.material = flame_mat
+	fire_particles.mesh = f_quad
+	fire_particles.position.y = 15.3
+	add_child(fire_particles)
+
+	# Rising wood smoke from the beacon fire
+	var smoke_particles = CPUParticles3D.new()
+	smoke_particles.name = "BrazierSmoke"
+	smoke_particles.amount = 16
+	smoke_particles.lifetime = 1.4
+	smoke_particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	smoke_particles.emission_sphere_radius = 0.6
+	smoke_particles.direction = Vector3.UP
+	smoke_particles.spread = 35.0
+	smoke_particles.gravity = Vector3(0.0, 3.0, 0.0)
+	smoke_particles.initial_velocity_min = 0.6
+	smoke_particles.initial_velocity_max = 1.6
+	smoke_particles.scale_amount_min = 1.2
+	smoke_particles.scale_amount_max = 2.8
+	smoke_particles.color = Color(0.25, 0.22, 0.20, 0.45)
+
+	var smk_mat = StandardMaterial3D.new()
+	smk_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smk_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smk_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	var s_tex = load("res://assets/particles/smoke_04.png")
+	if s_tex:
+		smk_mat.albedo_texture = s_tex
+	var s_quad = QuadMesh.new()
+	s_quad.size = Vector2(1.4, 1.4)
+	s_quad.material = smk_mat
+	smoke_particles.mesh = s_quad
+	smoke_particles.position.y = 15.8
+	add_child(smoke_particles)
+
+	# Seaward Maritime Beacon Pivot (Aimed out across the ocean channel toward South-West)
 	_lantern_pivot = Node3D.new()
 	_lantern_pivot.name = "LanternPivot"
 	_lantern_pivot.position.y = 15.5
+	# Initial base angle 2.356 rad (135 deg: facing South-West across the ocean)
+	_lantern_pivot.rotation.y = 2.356
 	add_child(_lantern_pivot)
 
 	# Emissive central lamp core
@@ -110,60 +188,55 @@ func _build_lighthouse_structure() -> void:
 	sphere.height = 1.2
 	lamp_core.mesh = sphere
 	var emissive_mat = StandardMaterial3D.new()
-	emissive_mat.albedo_color = Color(1.0, 0.95, 0.7)
+	emissive_mat.albedo_color = Color(1.0, 0.85, 0.45)
 	emissive_mat.emission_enabled = true
-	emissive_mat.emission = Color(1.0, 0.92, 0.6)
-	emissive_mat.emission_energy_multiplier = 4.0
+	emissive_mat.emission = Color(1.0, 0.82, 0.35)
+	emissive_mat.emission_energy_multiplier = 4.5
 	lamp_core.material_override = emissive_mat
 	_lantern_pivot.add_child(lamp_core)
 
-	# Primary maritime rotating spotlight beam
+	# Seaward spotlight beam (points forward along -Z of the pivot out over the bay)
 	_beam_spotlight = SpotLight3D.new()
-	_beam_spotlight.light_color = Color(1.0, 0.94, 0.7)
+	_beam_spotlight.light_color = Color(1.0, 0.90, 0.62)
 	_beam_spotlight.light_energy = beacon_energy
 	_beam_spotlight.spot_range = beacon_range
-	_beam_spotlight.spot_angle = 24.0
+	_beam_spotlight.spot_angle = 26.0
 	_beam_spotlight.spot_attenuation = 0.6
 	_beam_spotlight.shadow_enabled = true
-	_beam_spotlight.position = Vector3(0.0, 0.0, 0.5)
-	_beam_spotlight.rotation_degrees.x = -6.0 # angled down toward the bay
+	_beam_spotlight.position = Vector3(0.0, 0.0, -0.2)
+	_beam_spotlight.rotation_degrees.x = -6.0 # tilted slightly down toward the water
 	_lantern_pivot.add_child(_beam_spotlight)
 
-	# Opposite counter-beam (dual beam lighthouse)
-	var back_spotlight = SpotLight3D.new()
-	back_spotlight.light_color = Color(1.0, 0.94, 0.7)
-	back_spotlight.light_energy = beacon_energy * 0.75
-	back_spotlight.spot_range = beacon_range * 0.8
-	back_spotlight.spot_angle = 26.0
-	back_spotlight.spot_attenuation = 0.6
-	back_spotlight.position = Vector3(0.0, 0.0, -0.5)
-	back_spotlight.rotation_degrees = Vector3(-6.0, 180.0, 0.0)
-	_lantern_pivot.add_child(back_spotlight)
-
-	# Visual volumetric light cone
+	# Aligned visual volumetric light cone (also extends forward along -Z toward the sea)
 	_beam_cone_mesh = MeshInstance3D.new()
 	var cone = CylinderMesh.new()
 	cone.top_radius = 0.2
 	cone.bottom_radius = 6.0
 	cone.height = 36.0
 	_beam_cone_mesh.mesh = cone
-	_beam_cone_mesh.position = Vector3(0.0, -1.8, 18.0)
-	_beam_cone_mesh.rotation_degrees.x = 84.0
+	_beam_cone_mesh.position = Vector3(0.0, -1.9, -18.0)
+	_beam_cone_mesh.rotation_degrees.x = -84.0
 	var beam_mat = StandardMaterial3D.new()
 	beam_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	beam_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	beam_mat.albedo_color = Color(1.0, 0.95, 0.7, 0.18)
+	beam_mat.albedo_color = Color(1.0, 0.88, 0.55, 0.22)
 	beam_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_beam_cone_mesh.material_override = beam_mat
 	_lantern_pivot.add_child(_beam_cone_mesh)
 
-	# Local ambient omni light
+	# Local ambient warm firelight omni light
 	_omni_light = OmniLight3D.new()
-	_omni_light.light_color = Color(1.0, 0.9, 0.65)
-	_omni_light.light_energy = 3.0
-	_omni_light.omni_range = 10.0
+	_omni_light.light_color = Color(1.0, 0.75, 0.35)
+	_omni_light.light_energy = 3.8
+	_omni_light.omni_range = 14.0
 	_omni_light.position.y = 15.5
 	add_child(_omni_light)
+
+	# High-visibility World Label
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 19.5, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🔥 Port Blackwater Beacon Tower\n[E] Sound Foghorn", 38, Color(1.0, 0.88, 0.55))
+	add_child(lbl)
 
 	# 4. Foghorn Horn Bells on catwalk
 	var horn_mesh = MeshInstance3D.new()
@@ -194,9 +267,18 @@ func _build_lighthouse_structure() -> void:
 	_interact_area.collision_mask = 1
 	add_child(_interact_area)
 
+var _seaward_sweep_time: float = 0.0
+
 func _process(delta: float) -> void:
 	if _lantern_pivot:
-		_lantern_pivot.rotate_y(rotation_speed * delta)
+		_seaward_sweep_time += delta * rotation_speed
+		# Base angle 2.356 rad (135 deg South-West out across the ocean) sweeping +/- 45 deg (0.78 rad)
+		var sweep = sin(_seaward_sweep_time) * 0.78
+		_lantern_pivot.rotation.y = 2.356 + sweep
+
+	# Natural fire flicker on the beacon brazier
+	if _omni_light:
+		_omni_light.light_energy = 3.6 + sin(Time.get_ticks_msec() * 0.008) * 0.6 + randf_range(-0.15, 0.15)
 
 func interact(player: Node) -> void:
 	sound_foghorn(player)

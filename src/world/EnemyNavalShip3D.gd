@@ -38,7 +38,8 @@ func _build_visuals() -> void:
 	if not ship_model:
 		ship_model = AssetLoader.load_or_generate_model("res://assets/ships/ship-medium.glb", "prop", "pirate_ship_fallback")
 	if ship_model:
-		ship_model.scale = Vector3.ONE * 2.8
+		ship_model.scale = Vector3.ONE * 1.6
+		AssetLoader.apply_ship_materials(ship_model)
 		_hull_pivot.add_child(ship_model)
 
 	# 2. Black Pirate Jolly Roger Pennant Flag
@@ -49,7 +50,7 @@ func _build_visuals() -> void:
 		_hull_pivot.add_child(flag)
 
 	# 3. Skeleton Pirate Crew on Gun Deck
-	var pirate_skel = AssetLoader.load_or_generate_model("res://assets/characters/monsters/Skeleton_Warrior.glb", "character", "PirateSkel")
+	var pirate_skel = AssetLoader.load_or_generate_model("res://assets/characters/skeletons/Skeleton_Warrior.glb", "character", "PirateSkel")
 	if pirate_skel:
 		pirate_skel.scale = Vector3.ONE * 0.52
 		pirate_skel.position = Vector3(0.0, 1.8, 2.4)

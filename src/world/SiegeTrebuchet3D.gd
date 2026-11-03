@@ -3,7 +3,7 @@ class_name SiegeTrebuchet3D
 
 @export var trebuchet_name: String = "Counterweight Trebuchet"
 @export var fire_interval: float = 7.5
-@export var launch_direction: Vector3 = Vector3(0.0, 0.0, -1.0) # Fires North toward Citadel by default
+@export var launch_direction: Vector3 = Vector3(0.0, 0.0, 1.0) # Fires South out of the village toward the enemy siege lines
 
 var _arm_pivot: Node3D = null
 var _counterweight_pivot: Node3D = null
@@ -198,6 +198,18 @@ func _build_trebuchet_assembly() -> void:
 		if ap:
 			_crew_anims.append(ap)
 			_play_crew_anim(ap, "Interact")
+
+	# 9. Siege Battery Work Torches (Illuminates winch crew and mechanism at night)
+	for torch_x in [-2.9, 2.9]:
+		var torch_light = OmniLight3D.new()
+		torch_light.name = "SiegeTorchLight"
+		torch_light.light_color = Color(1.0, 0.68, 0.28)
+		torch_light.light_energy = 1.85
+		torch_light.omni_range = 7.5
+		torch_light.omni_attenuation = 1.2
+		torch_light.shadow_enabled = false
+		torch_light.position = Vector3(torch_x, 2.1, 2.8)
+		add_child(torch_light)
 
 	# Static Physics Collider
 	var sb = StaticBody3D.new()

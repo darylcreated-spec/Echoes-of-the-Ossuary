@@ -142,7 +142,7 @@ func _fire_coastal_cannon() -> void:
 		ball.mesh = sp
 	get_tree().current_scene.add_child(ball)
 	ball.global_position = muzzle_pos
-	ball.scale = Vector3.ONE * 1.5
+	ball.scale = Vector3.ONE * 0.5
 
 	var target_dest = _target_ship.global_position + Vector3(randf_range(-1.5, 1.5), 1.0, randf_range(-1.5, 1.5))
 	var fly_time = 0.85

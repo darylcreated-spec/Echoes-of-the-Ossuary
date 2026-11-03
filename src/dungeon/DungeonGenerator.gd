@@ -3269,15 +3269,17 @@ func _build_swamp_boardwalk(parent: Node3D, start_pos: Vector3, end_pos: Vector3
 # REGION 5: CRIMSON SIEGE ENCAMPMENT, TREBUCHETS & MARCHING ARMIES (Z in [58, 105])
 # =========================================================================
 func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
-	# 1. Counterweight Trebuchet Battery (Articulated & Actively Hurling Boulders)
+	# 1. Counterweight Trebuchet Battery (Articulated & Actively Hurling Boulders South Out of the Village)
 	var treb_west = SiegeTrebuchet3DScript.new()
 	treb_west.trebuchet_name = "Goliath Counterweight Trebuchet"
 	treb_west.position = Vector3(-14.0, 0.0, 74.0)
+	treb_west.rotation_degrees.y = 180.0
 	parent.add_child(treb_west)
 
 	var treb_east = SiegeTrebuchet3DScript.new()
 	treb_east.trebuchet_name = "Dreadhammer Siege Trebuchet"
 	treb_east.position = Vector3(14.0, 0.0, 74.0)
+	treb_east.rotation_degrees.y = 180.0
 	parent.add_child(treb_east)
 
 	# 2. Siege Towers, Crimson Command Pavilions, Stake Barricades & Ammunition Wagons

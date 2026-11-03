@@ -104,13 +104,29 @@ var _ship_colormap_texture: Texture2D = null
 
 func get_ship_colormap_texture() -> Texture2D:
 	if not _ship_colormap_texture:
-		var img = Image.new()
-		var p = ProjectSettings.globalize_path("res://assets/ships/Textures/colormap.png")
-		if FileAccess.file_exists(p):
-			var err = img.load(p)
-			if err == OK:
-				_ship_colormap_texture = ImageTexture.create_from_image(img)
+		var img = Image.load_from_file("res://assets/ships/Textures/colormap.png")
+		if img and not img.is_empty():
+			_ship_colormap_texture = ImageTexture.create_from_image(img)
+		else:
+			var p = ProjectSettings.globalize_path("res://assets/ships/Textures/colormap.png")
+			if FileAccess.file_exists(p):
+				var fallback_img = Image.new()
+				if fallback_img.load(p) == OK:
+					_ship_colormap_texture = ImageTexture.create_from_image(fallback_img)
 	return _ship_colormap_texture
+
+func apply_ship_materials(ship_node: Node3D) -> void:
+	var tex = get_ship_colormap_texture()
+	if not tex:
+		return
+	for mi in ship_node.find_children("*", "MeshInstance3D", true, false):
+		var orig_mat = mi.get_active_material(0)
+		var mat = StandardMaterial3D.new()
+		mat.albedo_texture = tex
+		mat.roughness = 0.82
+		if orig_mat:
+			mat.cull_mode = orig_mat.cull_mode
+		mi.material_override = mat
 
 # --- SAFE ASSET INSTANTIATOR ---
 func load_or_generate_model(asset_path: String, fallback_type: String, fallback_subtype: String) -> Node3D:

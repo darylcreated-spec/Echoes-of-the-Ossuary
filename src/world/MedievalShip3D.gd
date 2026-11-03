@@ -697,61 +697,42 @@ func _build_ocean_wake_vfx(half_beam: float, length: float) -> void:
 		_hull_pivot.add_child(wake)
 
 func _build_rowboat() -> void:
-	var wood_mat = StandardMaterial3D.new()
-	wood_mat.albedo_color = Color(0.36, 0.24, 0.15)
-	wood_mat.roughness = 0.85
-
 	var plank_mat = StandardMaterial3D.new()
 	plank_mat.albedo_color = Color(0.44, 0.30, 0.18)
 	plank_mat.roughness = 0.82
 
-	# Hull Main Shell
-	var hull = MeshInstance3D.new()
-	var h_mesh = BoxMesh.new()
-	h_mesh.size = Vector3(1.8, 0.70, 4.0)
-	h_mesh.material = wood_mat
-	hull.mesh = h_mesh
-	hull.position = Vector3(0.0, 0.28, 0.0)
-	_hull_pivot.add_child(hull)
+	# 1. Authentic Medieval Vessel Model (boat-sail-a.glb for fishing boats or boat-row-large.glb for skiffs)
+	var is_fishing = ("Fisher" in ship_name or "Dory" in ship_name)
+	var boat_path = "res://assets/ships/boat-sail-a.glb" if is_fishing else "res://assets/ships/boat-row-large.glb"
+	var boat_scene = load(boat_path)
+	if boat_scene:
+		var boat_inst = boat_scene.instantiate()
+		boat_inst.name = "BoatModel"
+		boat_inst.scale = Vector3.ONE * (1.4 if is_fishing else 1.6)
+		boat_inst.position = Vector3(0.0, 0.05, 0.0)
+		AssetLoader.apply_ship_materials(boat_inst)
+		_hull_pivot.add_child(boat_inst)
+	else:
+		# Fallback procedural hull
+		var wood_mat = StandardMaterial3D.new()
+		wood_mat.albedo_color = Color(0.36, 0.24, 0.15)
+		wood_mat.roughness = 0.85
+		var hull = MeshInstance3D.new()
+		var h_mesh = BoxMesh.new()
+		h_mesh.size = Vector3(1.8, 0.70, 4.0)
+		h_mesh.material = wood_mat
+		hull.mesh = h_mesh
+		hull.position = Vector3(0.0, 0.28, 0.0)
+		_hull_pivot.add_child(hull)
 
-	# Stem and Stern Knees (Tapered ends)
-	for end_z in [-2.1, 2.1]:
-		var stem = MeshInstance3D.new()
-		var st_m = PrismMesh.new()
-		st_m.size = Vector3(1.7, 0.9, 0.6)
-		st_m.material = wood_mat
-		stem.mesh = st_m
-		stem.position = Vector3(0.0, 0.35, end_z)
-		stem.rotation_degrees.x = -90.0 if end_z < 0 else 90.0
-		_hull_pivot.add_child(stem)
-
-	# Gunwale rails & Rowlocks
-	for side_x in [-0.92, 0.92]:
-		var gw = MeshInstance3D.new()
-		var gw_m = BoxMesh.new()
-		gw_m.size = Vector3(0.12, 0.22, 4.2)
-		gw_m.material = plank_mat
-		gw.mesh = gw_m
-		gw.position = Vector3(side_x, 0.65, 0.0)
-		_hull_pivot.add_child(gw)
-
-	# Benches (Thwarts)
-	for bench_z in [-1.0, 0.0, 1.0]:
-		var bench = MeshInstance3D.new()
-		var b_mesh = BoxMesh.new()
-		b_mesh.size = Vector3(1.65, 0.12, 0.40)
-		b_mesh.material = plank_mat
-		bench.mesh = b_mesh
-		bench.position = Vector3(0.0, 0.55, bench_z)
-		_hull_pivot.add_child(bench)
-
-	# Articulated Rowing Oars on Port & Starboard Gunwales
-	_left_oar = Node3D.new()
-	_left_oar.position = Vector3(-0.95, 0.65, 0.0)
-	var lo_mesh = MeshInstance3D.new()
+	# 2. Articulated Rowing Oars on Port & Starboard Gunwales
 	var oar_box = BoxMesh.new()
 	oar_box.size = Vector3(2.1, 0.08, 0.18)
 	oar_box.material = plank_mat
+
+	_left_oar = Node3D.new()
+	_left_oar.position = Vector3(-1.05, 0.75, 0.0)
+	var lo_mesh = MeshInstance3D.new()
 	lo_mesh.mesh = oar_box
 	lo_mesh.position = Vector3(-0.85, -0.15, 0.0)
 	lo_mesh.rotation_degrees.z = 16.0
@@ -759,7 +740,7 @@ func _build_rowboat() -> void:
 	_hull_pivot.add_child(_left_oar)
 
 	_right_oar = Node3D.new()
-	_right_oar.position = Vector3(0.95, 0.65, 0.0)
+	_right_oar.position = Vector3(1.05, 0.75, 0.0)
 	var ro_mesh = MeshInstance3D.new()
 	ro_mesh.mesh = oar_box
 	ro_mesh.position = Vector3(0.85, -0.15, 0.0)
@@ -767,17 +748,25 @@ func _build_rowboat() -> void:
 	_right_oar.add_child(ro_mesh)
 	_hull_pivot.add_child(_right_oar)
 
-	# High-Visibility Medieval Boat Label
+	# 3. High-Visibility Medieval Boat Label
 	var lbl = Label3D.new()
 	lbl.position = Vector3(0.0, 2.6, 0.0)
 	AssetLoader.style_world_label3d(lbl, "🛶 " + ship_name + "\n[E] Inspect Boat", 34, Color(1.0, 0.94, 0.72))
 	_hull_pivot.add_child(lbl)
 
-	# Animated Harbor Oarsman on Center Bench
+	# 4. Animated Harbor Oarsman on Center Bench
 	var rower = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rower")
 	rower.scale = Vector3.ONE * 0.50
 	rower.position = Vector3(0.0, 0.55, 0.0)
 	_hull_pivot.add_child(rower)
+
+	# 5. Warm Stern Fishing Lantern
+	var stern_light = OmniLight3D.new()
+	stern_light.light_color = Color(1.0, 0.82, 0.45)
+	stern_light.light_energy = 1.8
+	stern_light.omni_range = 6.0
+	stern_light.position = Vector3(0.0, 1.4, 1.8)
+	_hull_pivot.add_child(stern_light)
 	var rap = rower.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if rap:
 		_crew_anims.append(rap)

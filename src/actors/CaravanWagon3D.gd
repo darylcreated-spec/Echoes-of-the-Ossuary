@@ -54,6 +54,17 @@ func _build_caravan_assembly() -> void:
 	_driver_anim = driver.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_play_loop_anim(_driver_anim, "Walking_A")
 
+	# 3. Warm Trade Lantern on Front Post (Illuminates horse, driver and trail at night)
+	var caravan_lantern = OmniLight3D.new()
+	caravan_lantern.name = "CaravanLantern"
+	caravan_lantern.light_color = Color(1.0, 0.76, 0.42)
+	caravan_lantern.light_energy = 1.9
+	caravan_lantern.omni_range = 8.5
+	caravan_lantern.omni_attenuation = 1.1
+	caravan_lantern.shadow_enabled = true
+	caravan_lantern.position = Vector3(0.0, 1.35, 0.6)
+	add_child(caravan_lantern)
+
 	# Floating Caravan Label
 	var lbl = Label3D.new()
 	lbl.position = Vector3(0.0, 2.85, 0.0)
