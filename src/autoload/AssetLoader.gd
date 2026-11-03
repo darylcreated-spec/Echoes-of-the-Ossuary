@@ -100,6 +100,18 @@ func _init_materials() -> void:
 	mat_crimson.roughness = 0.8
 	_material_cache["cloth_crimson"] = mat_crimson
 
+var _ship_colormap_texture: Texture2D = null
+
+func get_ship_colormap_texture() -> Texture2D:
+	if not _ship_colormap_texture:
+		var img = Image.new()
+		var p = ProjectSettings.globalize_path("res://assets/ships/Textures/colormap.png")
+		if FileAccess.file_exists(p):
+			var err = img.load(p)
+			if err == OK:
+				_ship_colormap_texture = ImageTexture.create_from_image(img)
+	return _ship_colormap_texture
+
 # --- SAFE ASSET INSTANTIATOR ---
 func load_or_generate_model(asset_path: String, fallback_type: String, fallback_subtype: String) -> Node3D:
 	var candidates: Array[String] = [asset_path]
@@ -123,6 +135,18 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 								var aabb = c.mesh.get_aabb()
 								if aabb.position.x < -0.5:
 									c.position.x += 1.0
+					if "assets/ships" in candidate or "ship" in candidate:
+						var colormap_tex = get_ship_colormap_texture()
+						if colormap_tex:
+							for mi in instance.find_children("*", "MeshInstance3D", true, false):
+								var mat = mi.get_active_material(0)
+								if mat is StandardMaterial3D:
+									if mat.albedo_texture == null or mat.resource_name == "colormap":
+										mat.albedo_texture = colormap_tex
+										mat.roughness = 0.85
+								elif mat is ORMMaterial3D:
+									if mat.albedo_texture == null:
+										mat.albedo_texture = colormap_tex
 					return instance
 
 	# Procedural Fallback Generator

@@ -100,9 +100,9 @@ func _ready() -> void:
 	
 	if "--test-gameplay" in OS.get_cmdline_args() or "--test-gameplay" in OS.get_cmdline_user_args():
 		_run_gameplay_self_test()
-	elif "--capture-world" in OS.get_cmdline_args() or "--capture-world" in OS.get_cmdline_user_args():
+	elif "--capture-map-tour" in OS.get_cmdline_args() or "--capture-map-tour" in OS.get_cmdline_user_args() or "--capture-world" in OS.get_cmdline_args() or "--capture-world" in OS.get_cmdline_user_args():
 		var audit_script = load("res://tools/world_screenshot_audit.gd")
-		audit_script.run_audit(self, "before")
+		audit_script.run_audit(self, "tour")
 	elif "--capture-world-after" in OS.get_cmdline_args() or "--capture-world-after" in OS.get_cmdline_user_args():
 		var audit_script = load("res://tools/world_screenshot_audit.gd")
 		audit_script.run_audit(self, "after")

@@ -16,10 +16,16 @@ var _light: OmniLight3D = null
 var _interact_area: Area3D = null
 var _time: float = 0.0
 var _base_y: float = 0.5
+var _is_heavy_grounded: bool = false
 
 func _ready() -> void:
 	name = "MaterialNode_" + material_id
 	add_to_group("interactable")
+	# Ground heavy physical resources like logs, lumber piles, and iron ore so they don't hover unnaturally
+	var m_lower = material_id.to_lower()
+	if "log" in m_lower or "timber" in m_lower or "lumber" in m_lower or "wood" in m_lower or "ore" in m_lower or "chest" in m_lower:
+		_is_heavy_grounded = true
+		_base_y = 0.04
 	_build_visuals()
 	_build_interaction()
 
@@ -32,14 +38,14 @@ func _build_visuals() -> void:
 	# Glow Light
 	_light = OmniLight3D.new()
 	_light.light_color = glow_color
-	_light.light_energy = 1.4
-	_light.omni_range = 3.5
+	_light.light_energy = 0.8 if _is_heavy_grounded else 1.4
+	_light.omni_range = 2.8 if _is_heavy_grounded else 3.5
 	_light.position.y = _base_y + 0.3
 	add_child(_light)
 	
 	# Floating billboard label
 	_label = Label3D.new()
-	_label.position.y = _base_y + 1.3
+	_label.position.y = _base_y + (1.0 if _is_heavy_grounded else 1.3)
 	AssetLoader.style_world_label3d(_label, icon + " " + display_name + "\n[E] Gather", 36, Color(1.0, 0.95, 0.65))
 	add_child(_label)
 
@@ -58,6 +64,8 @@ func _build_interaction() -> void:
 	add_child(_interact_area)
 
 func _process(delta: float) -> void:
+	if _is_heavy_grounded:
+		return
 	_time += delta
 	if _model:
 		_model.rotation.y += delta * 1.5

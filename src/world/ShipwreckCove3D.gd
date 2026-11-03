@@ -42,14 +42,12 @@ func _build_cove_environment() -> void:
 
 	# 2. Split Timbers Wreck Hull
 	var wreck_path = "res://assets/ships/ship-wreck.glb"
-	if ResourceLoader.exists(wreck_path):
-		var w_scene = load(wreck_path)
-		if w_scene:
-			var w_inst = w_scene.instantiate()
-			w_inst.scale = Vector3(1.8, 1.8, 1.8)
-			w_inst.rotation_degrees = Vector3(14.0, 42.0, -18.0)
-			w_inst.position = Vector3(0.0, 0.2, 0.0)
-			add_child(w_inst)
+	var w_inst = AssetLoader.load_or_generate_model(wreck_path, "prop", "shipwreck")
+	if w_inst:
+		w_inst.scale = Vector3(1.8, 1.8, 1.8)
+		w_inst.rotation_degrees = Vector3(14.0, 42.0, -18.0)
+		w_inst.position = Vector3(0.0, 0.2, 0.0)
+		add_child(w_inst)
 	else:
 		# Fallback procedural broken hull
 		var hull_box = MeshInstance3D.new()

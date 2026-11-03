@@ -24,8 +24,10 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 	if player:
 		player.visible = false
 
-	var out_dir = "C:/Users/daryl/.gemini/antigravity/brain/640c2dd3-f80b-4056-8054-fea3906ae403"
+	var out_dir = "C:/Users/daryl/.gemini/antigravity/brain/b85f0ffa-34bf-4cb5-a1fb-9879dd096756/screenshots"
 	DirAccess.make_dir_recursive_absolute(out_dir)
+	var local_dir = "res://screenshots/map_tour"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(local_dir))
 
 	# 1. Print Native Model Dimensions & Audit Scene Overlaps
 	if out_prefix == "before":
@@ -34,69 +36,105 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 
 	var views = [
 		{
-			"name": "01_overview_central",
-			"cam_pos": Vector3(0.0, 95.0, 75.0),
-			"look_at": Vector3(0.0, 0.0, 20.0),
-			"fov": 60.0
+			"name": "01_oakhaven_sanctuary_plaza",
+			"cam_pos": Vector3(0.0, 6.2, 11.2),
+			"look_at": Vector3(0.0, 1.2, -6.0),
+			"fov": 52.0
 		},
 		{
-			"name": "02_port_blackwater_overview",
-			"cam_pos": Vector3(-38.0, 32.0, 96.0),
-			"look_at": Vector3(-72.0, 0.0, 66.0),
-			"fov": 55.0
-		},
-		{
-			"name": "03_port_ships_and_piers",
-			"cam_pos": Vector3(-52.0, 18.0, 92.0),
-			"look_at": Vector3(-80.0, 1.0, 68.0),
+			"name": "02_cathedral_of_light_cloister",
+			"cam_pos": Vector3(8.0, 5.0, 6.0),
+			"look_at": Vector3(18.5, 3.0, -1.0),
 			"fov": 50.0
 		},
 		{
-			"name": "04_oakhaven_town_and_market",
-			"cam_pos": Vector3(8.0, 26.0, 34.0),
-			"look_at": Vector3(-12.0, 1.0, 14.0),
-			"fov": 52.0
-		},
-		{
-			"name": "05_east_village_and_watermill",
-			"cam_pos": Vector3(44.0, 26.0, 34.0),
-			"look_at": Vector3(24.0, 1.0, 13.0),
-			"fov": 52.0
-		},
-		{
-			"name": "06_sunnydale_farmlands_pasture",
-			"cam_pos": Vector3(12.0, 24.0, 56.0),
-			"look_at": Vector3(31.0, 1.0, 36.0),
-			"fov": 52.0
-		},
-		{
-			"name": "07_castle_citadel_and_siege",
-			"cam_pos": Vector3(28.0, 30.0, 88.0),
-			"look_at": Vector3(0.0, 2.0, 56.0),
-			"fov": 55.0
-		},
-		{
-			"name": "08_greenhollow_village",
-			"cam_pos": Vector3(-30.0, 22.0, 0.0),
-			"look_at": Vector3(-50.0, 1.0, -20.0),
+			"name": "03_craftsman_row_forge",
+			"cam_pos": Vector3(-8.0, 5.0, 6.0),
+			"look_at": Vector3(-18.5, 2.5, -1.0),
 			"fov": 50.0
 		},
 		{
-			"name": "09_whisperwood_forest_enclave",
-			"cam_pos": Vector3(-56.0, 26.0, -40.0),
-			"look_at": Vector3(-80.0, 1.0, -64.0),
+			"name": "04_west_market_boars_tusk_tavern",
+			"cam_pos": Vector3(-16.0, 5.0, 18.0),
+			"look_at": Vector3(-28.0, 2.5, 10.0),
 			"fov": 52.0
 		},
 		{
-			"name": "10_khar_drakken_crags_mines",
-			"cam_pos": Vector3(50.0, 30.0, -36.0),
-			"look_at": Vector3(80.0, 2.0, -68.0),
+			"name": "05_royal_highway_and_stone_bridge",
+			"cam_pos": Vector3(0.0, 5.5, 15.0),
+			"look_at": Vector3(0.0, 1.0, 28.0),
+			"fov": 48.0
+		},
+		{
+			"name": "06_watermill_paddlewheel_canal",
+			"cam_pos": Vector3(14.0, 5.0, 16.0),
+			"look_at": Vector3(24.5, 2.0, 21.0),
+			"fov": 50.0
+		},
+		{
+			"name": "07_sunnydale_farmlands_windmill",
+			"cam_pos": Vector3(16.0, 8.0, 48.0),
+			"look_at": Vector3(32.0, 2.5, 36.0),
+			"fov": 52.0
+		},
+		{
+			"name": "08_castle_citadel_royal_throne",
+			"cam_pos": Vector3(0.0, 8.5, 30.0),
+			"look_at": Vector3(0.0, 4.0, 48.0),
+			"fov": 52.0
+		},
+		{
+			"name": "09_port_blackwater_quay_piers",
+			"cam_pos": Vector3(-48.0, 6.5, 58.0),
+			"look_at": Vector3(-75.0, 1.5, 68.0),
+			"fov": 54.0
+		},
+		{
+			"name": "10_revolving_harbor_lighthouse",
+			"cam_pos": Vector3(-60.0, 5.5, 52.0),
+			"look_at": Vector3(-84.0, 6.0, 38.0),
+			"fov": 52.0
+		},
+		{
+			"name": "11_expanded_ocean_naval_battle",
+			"cam_pos": Vector3(-95.0, 12.0, 75.0),
+			"look_at": Vector3(-140.0, 1.0, 110.0),
 			"fov": 55.0
 		},
 		{
-			"name": "11_weeping_fen_swamp",
-			"cam_pos": Vector3(56.0, 26.0, 62.0),
-			"look_at": Vector3(84.0, 0.0, 88.0),
+			"name": "12_corsair_archipelago_bastion",
+			"cam_pos": Vector3(-135.0, 14.0, 110.0),
+			"look_at": Vector3(-170.0, 4.0, 135.0),
+			"fov": 55.0
+		},
+		{
+			"name": "13_crimson_siege_encampment_trebuchets",
+			"cam_pos": Vector3(0.0, 7.5, 64.0),
+			"look_at": Vector3(0.0, 3.2, 80.0),
+			"fov": 54.0
+		},
+		{
+			"name": "14_blackwood_forest_lumbermill",
+			"cam_pos": Vector3(-22.0, 6.5, 32.0),
+			"look_at": Vector3(-36.0, 2.0, 38.0),
+			"fov": 52.0
+		},
+		{
+			"name": "15_whisperwood_druid_altar",
+			"cam_pos": Vector3(-62.0, 7.5, -45.0),
+			"look_at": Vector3(-78.0, 2.0, -60.0),
+			"fov": 52.0
+		},
+		{
+			"name": "16_khar_drakken_crags_mines",
+			"cam_pos": Vector3(55.0, 9.0, -42.0),
+			"look_at": Vector3(78.0, 3.0, -65.0),
+			"fov": 55.0
+		},
+		{
+			"name": "17_weeping_fen_swamp",
+			"cam_pos": Vector3(58.0, 8.0, 65.0),
+			"look_at": Vector3(84.0, 1.5, 88.0),
 			"fov": 52.0
 		}
 	]
@@ -112,6 +150,8 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 		var img = main_node.get_viewport().get_texture().get_image()
 		var file_path = out_dir + "/" + out_prefix + "_" + v["name"] + ".png"
 		var err = img.save_png(file_path)
+		var local_path = local_dir + "/" + out_prefix + "_" + v["name"] + ".png"
+		img.save_png(local_path)
 		print(" -> Saved screenshot: ", file_path, " (err=", err, ")")
 
 	camera.fov = orig_fov

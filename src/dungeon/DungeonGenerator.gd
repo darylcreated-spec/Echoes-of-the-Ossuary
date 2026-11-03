@@ -814,7 +814,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	parent.add_child(archer)
 
 	# 5. East Granary & Flour Mill Warehouse (X = 43.5, Z = 4.5, facing West -90°)
-	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(43.5, 0.0, 4.5), Vector3.ONE * 5.6, -90.0)
+	_place_prop(parent, "res://assets/overworld/building_barracks_blue.gltf", Vector3(43.5, 0.0, 4.5), Vector3.ONE * 4.8, -90.0)
 	_add_static_box(parent, Vector3(43.5, 3.5, 4.5), Vector3(6.5, 6.5, 6.5))
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(39.0, 0.0, 3.2), Vector3.ONE * 1.3)
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(39.0, 0.0, 5.8), Vector3.ONE * 1.5)
@@ -863,7 +863,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"Fresh bread for your journeys, champion!",
 		"Flour sacks fresh from Miller Bronn's wheel!"
 	]
-	harlan.position = Vector3(-4.5, 0.0, 3.5)
+	harlan.position = Vector3(-8.5, 0.0, 8.5)
 	parent.add_child(harlan)
 
 	var maeve = TownspersonNPCScript.new()
@@ -878,7 +878,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"A drop of elderflower for the weary traveler!",
 		"Cleanse the tomb miasma with fresh feverfew!"
 	]
-	maeve.position = Vector3(4.5, 0.0, 3.5)
+	maeve.position = Vector3(8.5, 0.0, 8.5)
 	parent.add_child(maeve)
 
 	var cedric = TownspersonNPCScript.new()
@@ -892,7 +892,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"Salted herring straight from Port Blackwater!",
 		"Caught this morning at the river weir!"
 	]
-	cedric.position = Vector3(-6.2, 0.0, 7.5)
+	cedric.position = Vector3(-6.2, 0.0, 9.5)
 	parent.add_child(cedric)
 
 	var oestred = TownspersonNPCScript.new()
@@ -908,11 +908,11 @@ func _build_town_population(parent: Node3D) -> void:
 		"Long live the High King and the Light of Oakhaven!"
 	]
 	oestred.waypoints = [
-		Vector3(0.0, 0.0, 1.0),
-		Vector3(3.5, 0.0, 5.0),
-		Vector3(-3.5, 0.0, 5.0)
+		Vector3(0.0, 0.0, 6.0),
+		Vector3(3.0, 0.0, 9.0),
+		Vector3(-3.0, 0.0, 9.0)
 	]
-	oestred.position = Vector3(0.0, 0.0, 1.0)
+	oestred.position = Vector3(0.0, 0.0, 6.5)
 	parent.add_child(oestred)
 
 	var ronald = TownspersonNPCScript.new()
@@ -926,7 +926,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"A copper coin for a verse of the Dragon of Drakken!",
 		"Sing high, sing low, wherever brave adventurers go!"
 	]
-	ronald.position = Vector3(2.5, 0.0, -1.5)
+	ronald.position = Vector3(10.5, 0.0, 2.5)
 	parent.add_child(ronald)
 
 	var pip = TownspersonNPCScript.new()
@@ -938,11 +938,11 @@ func _build_town_population(parent: Node3D) -> void:
 	pip.icon = "🏃"
 	pip.speech_barks = ["Tag! You're it!", "Look at the champion's sword!", "Bet you can't catch me!"]
 	pip.waypoints = [
-		Vector3(-3.0, 0.0, 2.0),
-		Vector3(1.0, 0.0, 6.0),
-		Vector3(-1.0, 0.0, -2.0)
+		Vector3(-3.0, 0.0, 7.5),
+		Vector3(1.0, 0.0, 10.5),
+		Vector3(-2.0, 0.0, 8.5)
 	]
-	pip.position = Vector3(-3.0, 0.0, 2.0)
+	pip.position = Vector3(-3.0, 0.0, 7.5)
 	parent.add_child(pip)
 
 	var tommy = TownspersonNPCScript.new()
@@ -954,11 +954,11 @@ func _build_town_population(parent: Node3D) -> void:
 	tommy.icon = "🏃"
 	tommy.speech_barks = ["Wait for me, Pip!", "I'm gonna be a knight one day!", "Did you see that warhorse?"]
 	tommy.waypoints = [
-		Vector3(2.0, 0.0, 2.5),
-		Vector3(-2.0, 0.0, 6.5),
-		Vector3(2.0, 0.0, -1.5)
+		Vector3(2.5, 0.0, 7.5),
+		Vector3(-1.5, 0.0, 10.5),
+		Vector3(3.0, 0.0, 8.5)
 	]
-	tommy.position = Vector3(2.0, 0.0, 2.5)
+	tommy.position = Vector3(2.5, 0.0, 7.5)
 	parent.add_child(tommy)
 
 	var barnaby_beggar = TownspersonNPCScript.new()
@@ -972,7 +972,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"May the Light shield you when night falls, champion.",
 		"I took a spear in the shoulder so this realm could stand."
 	]
-	barnaby_beggar.position = Vector3(-1.5, 0.0, 6.0)
+	barnaby_beggar.position = Vector3(-5.5, 0.0, 8.0)
 	parent.add_child(barnaby_beggar)
 
 	var genevieve = TownspersonNPCScript.new()
@@ -1374,9 +1374,9 @@ func _build_river_and_bridges(parent: Node3D) -> void:
 	# Water lilies and river reeds in the water
 	_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", Vector3(-8.0, -0.10, 23.5), Vector3.ONE * 1.5)
 	_place_prop(parent, "res://assets/overworld/waterlily_B.gltf", Vector3(6.0, -0.10, 24.5), Vector3.ONE * 1.5)
-	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-5.0, -0.12, 21.2), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(10.0, -0.12, 26.8), Vector3.ONE * 1.6)
-	_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", Vector3(-25.0, -0.12, 22.5), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/waterlily_A.gltf", Vector3(-5.0, -0.10, 21.2), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(10.0, 0.02, 26.8), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/waterplant_C.gltf", Vector3(-25.0, 0.02, 22.5), Vector3.ONE * 1.6)
 
 	# Main Highway Stone Arch Bridge (Smoothly Walkable Arched Highway at X = 0.0)
 	_build_walkable_stone_bridge(parent, Vector3(0.0, 0.0, 24.0), Vector3(4.0, 3.2, 7.5))
@@ -1388,7 +1388,23 @@ func _build_river_and_bridges(parent: Node3D) -> void:
 	_build_watermill_and_canal(parent, Vector3(24.5, -0.38, 20.8))
 
 func _build_walkable_stone_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> void:
-	_place_prop(parent, "res://assets/overworld/building_bridge_A.gltf", pos, sc)
+	var bridge_prop = _place_prop(parent, "res://assets/overworld/building_bridge_A.gltf", pos, sc)
+	var stone_mat = StandardMaterial3D.new()
+	stone_mat.albedo_color = Color(0.68, 0.65, 0.62)
+	stone_mat.roughness = 0.88
+	var b_tex = load("res://assets/village/T_UnevenBrick_BaseColor.png")
+	if b_tex:
+		stone_mat.albedo_texture = b_tex
+		stone_mat.uv1_scale = Vector3(4.0, 4.0, 4.0)
+	var n_tex = load("res://assets/village/T_UnevenBrick_Normal.png")
+	if n_tex:
+		stone_mat.normal_enabled = true
+		stone_mat.normal_texture = n_tex
+	var r_tex = load("res://assets/village/T_UnevenBrick_Roughness.png")
+	if r_tex:
+		stone_mat.roughness_texture = r_tex
+	for mi in bridge_prop.find_children("*", "MeshInstance3D", true, false):
+		mi.material_override = stone_mat
 	
 	var sb = StaticBody3D.new()
 	sb.name = "StoneBridgeRamps"
@@ -1440,7 +1456,12 @@ func _build_walkable_stone_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> 
 	parent.add_child(sb)
 
 func _build_walkable_wooden_bridge(parent: Node3D, pos: Vector3, sc: Vector3) -> void:
-	_place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", pos, sc)
+	var bridge_prop = _place_prop(parent, "res://assets/overworld/building_bridge_B.gltf", pos, sc)
+	var wood_mat = StandardMaterial3D.new()
+	wood_mat.albedo_color = Color(0.38, 0.25, 0.16)
+	wood_mat.roughness = 0.86
+	for mi in bridge_prop.find_children("*", "MeshInstance3D", true, false):
+		mi.material_override = wood_mat
 	
 	var sb = StaticBody3D.new()
 	sb.name = "WoodBridgeRamps"
@@ -1599,12 +1620,32 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	giles.position = Vector3(31.8, 0.0, 33.5)
 	parent.add_child(giles)
 
-	# 4. Cultivated Wheat & Pumpkin Patch (East of Farmhouse: X in [46, 52], Z in [29, 33])
-	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(47.5, 0.0, 30.0), Vector3.ONE * 3.2)
-	_place_prop(parent, "res://assets/overworld/building_grain.gltf", Vector3(51.0, 0.0, 30.0), Vector3.ONE * 3.2)
-	for px in [46.5, 48.0, 49.5, 51.0]:
-		for pz in [32.2, 33.4]:
-			_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(px, 0.0, pz), Vector3.ONE * 0.42)
+	# 4. Cultivated Loam Soil Farm Bed, Wheat Crops & Pumpkin Patch (East of Farmhouse: X in [46, 53], Z in [28, 34])
+	var soil_bed = MeshInstance3D.new()
+	soil_bed.name = "FarmlandLoamSoil"
+	var soil_mesh = PlaneMesh.new()
+	soil_mesh.size = Vector2(8.8, 6.4)
+	var soil_mat = StandardMaterial3D.new()
+	soil_mat.albedo_color = Color(0.24, 0.17, 0.11) # Rich dark tilled loam
+	soil_mat.roughness = 0.95
+	soil_bed.mesh = soil_mesh
+	soil_bed.position = Vector3(49.2, 0.02, 31.0)
+	parent.add_child(soil_bed)
+
+	# Split-rail timber fences framing the crop field
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(49.2, 0.0, 27.8), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(45.0, 0.0, 31.0), Vector3.ONE * 1.8, 0.0)
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(53.4, 0.0, 31.0), Vector3.ONE * 1.8, 0.0)
+
+	# Golden harvest wheat sheaves, grain sacks and pumpkins
+	for wx in [47.0, 49.0, 51.2]:
+		for wz in [29.2, 30.8]:
+			_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(wx, 0.0, wz), Vector3(0.9, 1.4, 0.9), randf_range(0.0, 180.0))
+	for px in [46.8, 48.6, 50.4, 52.0]:
+		for pz in [32.4, 33.6]:
+			_place_prop(parent, "res://assets/overworld/pumpkin_orange.gltf", Vector3(px, 0.0, pz), Vector3.ONE * randf_range(0.38, 0.46), randf_range(0.0, 360.0))
+	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(46.0, 0.0, 28.5), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/crate_A_small.gltf", Vector3(46.2, 0.0, 29.6), Vector3.ONE * 1.2)
 
 	# 5. Grand Windmill on the Eastern Knoll (Cleanly OUTSIDE the fenced animal pasture!)
 	var windmill = _place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(52.0, 0.0, 40.0), Vector3.ONE * 9.5, -35.0)
@@ -3252,11 +3293,30 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(16.0, 0.0, 88.0), Vector3.ONE * 4.8, 180.0)
 	_add_static_box(parent, Vector3(16.0, 4.0, 88.0), Vector3(7.0, 7.0, 7.5))
 
+	# Dirt earthwork grounds beneath battery positions
+	for ep in [Vector3(-14.0, 0.01, 74.0), Vector3(14.0, 0.01, 74.0), Vector3(0.0, 0.01, 74.0), Vector3(0.0, 0.01, 84.0)]:
+		_place_prop(parent, "res://assets/overworld/floor_dirt.gltf", ep, Vector3(3.4, 1.0, 3.4))
+
+	# Crimson Vanguard Military Pavilions & Command Tents
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-8.2, 0.0, 77.0), Vector3.ONE * 2.2, 35.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(8.2, 0.0, 77.0), Vector3.ONE * 2.2, -35.0)
+
+	# Supply Munition Wagons and Ammunition Stacks
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-8.5, 0.0, 81.5), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-8.5, 0.0, 81.5), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-7.2, 0.0, 82.0), Vector3.ONE * 1.3)
+	_place_prop(parent, "res://assets/overworld/wheelbarrow.gltf", Vector3(8.5, 0.0, 80.5), Vector3.ONE * 1.4, -45.0)
+
 	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 65, Destructible props!)
 	for bar_x in [-16.0, -10.5, -5.0, 5.0, 10.5, 16.0]:
 		_place_destructible_prop(parent, DestructibleProp3DScript.PropType.WOODEN_FENCE, "res://assets/overworld/fence_wood_straight.gltf", Vector3(bar_x, 0.0, 65.0), Vector3.ONE * 2.0, 90.0, "arrows")
 	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_A_big.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.5, 0.0, "arrows")
-	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 79.0), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(-10.5, 0.0, 71.0), Vector3.ONE * 1.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(10.5, 0.0, 71.0), Vector3.ONE * 1.8, -90.0)
+
+	# Crimson War Banners
+	for fx in [-19.0, -6.5, 6.5, 19.0]:
+		_place_prop(parent, "res://assets/overworld/flag_red.gltf", Vector3(fx, 0.0, 65.5), Vector3.ONE * 2.2)
 
 	# Encampment Soldier Hearth & Rest Site
 	var siege_campfire = CampfireRestSite3DScript.new()

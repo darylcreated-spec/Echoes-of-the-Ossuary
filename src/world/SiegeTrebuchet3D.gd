@@ -307,10 +307,12 @@ func _process(delta: float) -> void:
 		_active_projectile.rotation.x += delta * 6.0
 		if p.y <= 0.2 and _proj_time > 0.3:
 			var impact_pos = Vector3(p.x, 0.15, p.z)
+			var proj_to_free = _active_projectile
+			_active_projectile = null
+			if is_instance_valid(proj_to_free):
+				proj_to_free.queue_free()
 			_spawn_impact_explosion(impact_pos)
 			AudioManager.play_sfx_at_position("boulder_explosion", impact_pos, 48.0, 0.08, 0.0)
-			_active_projectile.queue_free()
-			_active_projectile = null
 
 func _launch_boulder() -> void:
 	if _loaded_boulder:
@@ -337,30 +339,30 @@ func _launch_boulder() -> void:
 	# 1. Flame Particle Trail using Kenney CC0 flame_02.png
 	var flame_trail = CPUParticles3D.new()
 	flame_trail.name = "FlameTrail"
-	flame_trail.amount = 28
-	flame_trail.lifetime = 0.45
+	flame_trail.amount = 16
+	flame_trail.lifetime = 0.38
 	flame_trail.local_coords = false
 	flame_trail.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	flame_trail.emission_sphere_radius = 0.35
+	flame_trail.emission_sphere_radius = 0.25
 	flame_trail.direction = Vector3.UP
-	flame_trail.spread = 24.0
-	flame_trail.gravity = Vector3(0.0, 3.2, 0.0)
-	flame_trail.initial_velocity_min = 0.6
-	flame_trail.initial_velocity_max = 2.2
-	flame_trail.scale_amount_min = 0.8
-	flame_trail.scale_amount_max = 1.8
-	flame_trail.color = Color(1.0, 0.72, 0.22, 0.95)
+	flame_trail.spread = 20.0
+	flame_trail.gravity = Vector3(0.0, 2.5, 0.0)
+	flame_trail.initial_velocity_min = 0.4
+	flame_trail.initial_velocity_max = 1.4
+	flame_trail.scale_amount_min = 0.35
+	flame_trail.scale_amount_max = 0.85
+	flame_trail.color = Color(1.0, 0.58, 0.16, 0.85)
 
 	var flame_mat = StandardMaterial3D.new()
 	flame_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	flame_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	flame_mat.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
 	flame_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	flame_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	var flame_tex = load("res://assets/particles/flame_02.png")
 	if flame_tex:
 		flame_mat.albedo_texture = flame_tex
 	var f_mesh = QuadMesh.new()
-	f_mesh.size = Vector2(0.9, 0.9)
+	f_mesh.size = Vector2(0.55, 0.55)
 	f_mesh.material = flame_mat
 	flame_trail.mesh = f_mesh
 	_active_projectile.add_child(flame_trail)
@@ -401,6 +403,14 @@ func _launch_boulder() -> void:
 	var dir = -global_transform.basis.z.normalized()
 	_proj_vel = dir * 24.0 + Vector3(0.0, 15.0, 0.0)
 	_proj_time = 0.0
+
+	var proj_ref = _active_projectile
+	get_tree().create_timer(4.5).timeout.connect(func():
+		if is_instance_valid(proj_ref):
+			if _active_projectile == proj_ref:
+				_active_projectile = null
+			proj_ref.queue_free()
+	)
 
 func _create_stone_boulder() -> Node3D:
 	var b = MeshInstance3D.new()
@@ -499,7 +509,11 @@ func _spawn_impact_explosion(pos: Vector3) -> void:
 		if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
 			if prop.global_position.distance_to(pos) < 8.0:
 				if prop.has_method("take_damage"):
-					prop.take_damage(140.0, "siege", pos)
+					if "wood_yield" in prop or "prop_type" in prop:
+						prop.take_damage(140.0, "siege", pos)
+					else:
+						var kb_dir = (prop.global_position - pos).normalized() * 4.0
+						prop.take_damage(140.0, kb_dir, true, self)
 
 	# 1. Expanding Ground Shockwave Ring using circle_05.png
 	var shockwave = MeshInstance3D.new()

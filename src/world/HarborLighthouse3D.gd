@@ -25,15 +25,11 @@ func _ready() -> void:
 
 func _build_lighthouse_structure() -> void:
 	# 1. Base Tower GLB or procedural cylindrical tower
-	var tower_model = null
-	if ResourceLoader.exists("res://assets/ships/tower-complete-large.glb"):
-		var scene = load("res://assets/ships/tower-complete-large.glb")
-		if scene:
-			tower_model = scene.instantiate()
-			tower_model.scale = Vector3(2.0, 2.8, 2.0)
-			add_child(tower_model)
-	
-	if not tower_model:
+	var tower_model = AssetLoader.load_or_generate_model("res://assets/ships/tower-complete-large.glb", "prop", "lighthouse_tower")
+	if tower_model:
+		tower_model.scale = Vector3(2.0, 2.8, 2.0)
+		add_child(tower_model)
+	else:
 		# Fallback procedural stone tower
 		var body_mesh = MeshInstance3D.new()
 		var cyl = CylinderMesh.new()
