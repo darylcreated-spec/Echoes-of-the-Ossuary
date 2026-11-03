@@ -1041,6 +1041,14 @@ func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3, dmg: float = 40.0
 		CombatJuice.spawn_hit_spark(target_dest, Color(1.0, 0.65, 0.2))
 		if hit_enemy and is_instance_valid(hit_enemy) and hit_enemy.has_method("take_naval_damage"):
 			hit_enemy.take_naval_damage(dmg, self)
+
+		# Blast nearby destructibles
+		var destructibles = get_tree().get_nodes_in_group("destructible")
+		for prop in destructibles:
+			if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
+				if prop.global_position.distance_to(target_dest) < 6.0:
+					if prop.has_method("take_damage"):
+						prop.take_damage(dmg, "cannon", target_dest)
 	)
 
 func _spawn_flaming_arrow(start_pos: Vector3, dest_pos: Vector3) -> void:

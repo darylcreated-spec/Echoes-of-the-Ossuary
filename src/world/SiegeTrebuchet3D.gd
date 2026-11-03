@@ -493,6 +493,14 @@ func _spawn_impact_explosion(pos: Vector3) -> void:
 	if not get_parent():
 		return
 
+	# Damage nearby destructible structures and props
+	var destructibles = get_tree().get_nodes_in_group("destructible")
+	for prop in destructibles:
+		if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
+			if prop.global_position.distance_to(pos) < 8.0:
+				if prop.has_method("take_damage"):
+					prop.take_damage(140.0, "siege", pos)
+
 	# 1. Expanding Ground Shockwave Ring using circle_05.png
 	var shockwave = MeshInstance3D.new()
 	var ring_mesh = PlaneMesh.new()

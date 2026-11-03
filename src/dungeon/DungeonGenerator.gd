@@ -28,6 +28,10 @@ const ShipwrightDrydock3DScript = preload("res://src/world/ShipwrightDrydock3D.g
 const HarborTavernTerrace3DScript = preload("res://src/world/HarborTavernTerrace3D.gd")
 const HarborFishingSpot3DScript = preload("res://src/world/HarborFishingSpot3D.gd")
 const DockworkerNPCScript = preload("res://src/actors/DockworkerNPC.gd")
+const DestructibleProp3DScript = preload("res://src/world/DestructibleProp3D.gd")
+const ChoppableTree3DScript = preload("res://src/world/ChoppableTree3D.gd")
+const TownspersonNPCScript = preload("res://src/actors/TownspersonNPC.gd")
+const EnemyShipAI3DScript = preload("res://src/actors/EnemyShipAI3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -328,8 +332,8 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	add_f_col.call(Vector3(199.0, 1.2, 109.0), Vector3(37.5, -0.6, 82.5))
 	# South-West Coastal Headland Floor (X: -137.0 to -62.0, Z: 28.0 to 46.0)
 	add_f_col.call(Vector3(75.0, 1.2, 18.0), Vector3(-99.5, -0.6, 37.0))
-	# Sunken Ocean Harbor Seabed Floor (X: -137.0 to -62.0, Z: 46.0 to 137.0 at Y = -1.20m)
-	add_f_col.call(Vector3(75.0, 1.2, 91.0), Vector3(-99.5, -1.80, 91.5))
+	# Sunken Ocean Harbor Seabed Floor (Expanded open sea X: -210.0 to -62.0, Z: 46.0 to 210.0 at Y = -1.20m)
+	add_f_col.call(Vector3(148.0, 1.2, 164.0), Vector3(-136.0, -1.80, 128.0))
 	# Sunken Riverbed Floor (X: -137 to 137, Z: 20.0 to 28.0 at Y = -0.50m)
 	add_f_col.call(Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
 
@@ -374,13 +378,17 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	add_grass_plane.call("SouthBank_Grass", Vector2(199.0, 109.0), Vector3(37.5, 0.0, 82.5))
 	add_grass_plane.call("WestHeadland_Grass", Vector2(75.0, 18.0), Vector3(-99.5, 0.0, 37.0))
 	
-	# Outer world perimeter boundary collision barriers (North, South, East, West at +-130m)
+	# Outer world perimeter boundary collision barriers (Expanded SW naval theater)
 	var wall_h = 18.0
 	var thick = 4.0
 	_add_static_box(parent, Vector3(0, wall_h * 0.5, -half_s - thick * 0.5), Vector3(ground_size + thick * 2, wall_h, thick))
-	_add_static_box(parent, Vector3(0, wall_h * 0.5, half_s + thick * 0.5), Vector3(ground_size + thick * 2, wall_h, thick))
+	# South boundary: land segment on East (X from -62 to 137), Ocean segment pushed out to Z = 210 (X from -210 to -62)
+	_add_static_box(parent, Vector3(37.5, wall_h * 0.5, half_s + thick * 0.5), Vector3(199.0 + thick * 2, wall_h, thick))
+	_add_static_box(parent, Vector3(-136.0, wall_h * 0.5, 210.0 + thick * 0.5), Vector3(148.0 + thick * 2, wall_h, thick))
 	_add_static_box(parent, Vector3(half_s + thick * 0.5, wall_h * 0.5, 0), Vector3(thick, wall_h, ground_size))
-	_add_static_box(parent, Vector3(-half_s - thick * 0.5, wall_h * 0.5, 0), Vector3(thick, wall_h, ground_size))
+	# West boundary: North segment on Land (Z from -137 to 46), Ocean segment pushed out to X = -210 (Z from 46 to 210)
+	_add_static_box(parent, Vector3(-half_s - thick * 0.5, wall_h * 0.5, -45.5), Vector3(thick, wall_h, 183.0))
+	_add_static_box(parent, Vector3(-210.0 - thick * 0.5, wall_h * 0.5, 128.0), Vector3(thick, wall_h, 164.0))
 
 	# Encircling Natural Perimeter Mountain Ridges (Spaced cleanly at 20m intervals, open at SW Ocean Coast)
 	for perim_idx in range(-6, 7):
@@ -614,15 +622,16 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	]
 	parent.add_child(guard_cross)
 
-	# Merchant Supply Caches in South-West Courtyard Corner
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-10.5, 0.0, 10.5), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-9.5, 0.0, 10.8), Vector3.ONE * 1.3)
+	# Merchant Supply Caches in South-West Courtyard Corner (Destructible with loot drops)
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_A_big.gltf", Vector3(-10.5, 0.0, 10.5), Vector3.ONE * 1.4, 0.0, "gold")
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.WOODEN_BARREL, "res://assets/overworld/barrel.gltf", Vector3(-9.5, 0.0, 10.8), Vector3.ONE * 1.3, 0.0, "bread")
 	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_long_A.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.2)
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_long_A.gltf", Vector3(-12.5, 0.0, 10.5), Vector3.ONE * 1.2, 0.0, "arrows")
 
 	# 7. EXPANDED OPEN WORLD MEDIEVAL REALM
 	_build_road_network(parent)
 	_build_town_quarter(parent)
+	_build_town_population(parent)
 	_build_river_and_bridges(parent)
 	_build_riverside_meadow_and_props(parent)
 	_build_farmlands_hamlet(parent)
@@ -696,8 +705,8 @@ func _build_town_quarter(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-23.0, 0.0, 12.8), Vector3.ONE * 1.5, 0.0)
 	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-22.0, 0.0, 12.8), Vector3.ONE * 1.4)
 	_place_prop(parent, "res://assets/furniture/chair_stool_wood.gltf", Vector3(-24.0, 0.0, 12.8), Vector3.ONE * 1.4)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-29.2, 0.0, 12.2), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-28.4, 0.0, 12.5), Vector3.ONE * 1.1)
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.WOODEN_BARREL, "res://assets/overworld/barrel.gltf", Vector3(-29.2, 0.0, 12.2), Vector3.ONE * 1.3, 0.0, "bread")
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.WOODEN_BARREL, "res://assets/overworld/barrel.gltf", Vector3(-28.4, 0.0, 12.5), Vector3.ONE * 1.1, 0.0, "gold")
 
 	# NPC: Barnaby the Barkeep
 	var barkeep = TownNPCScript.new()
@@ -728,8 +737,8 @@ func _build_town_quarter(parent: Node3D) -> void:
 	# 2. Sanctuary Marketplace (Beside Tavern at X = -36.0, Z = 9.5, facing South 0° onto Street)
 	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(-36.0, 0.0, 9.5), Vector3.ONE * 4.4, 0.0)
 	_add_static_box(parent, Vector3(-36.0, 2.5, 9.5), Vector3(7.4, 5.0, 5.8))
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-33.2, 0.0, 12.5), Vector3.ONE * 1.3)
-	_place_prop(parent, "res://assets/overworld/crate_open.gltf", Vector3(-38.8, 0.0, 12.5), Vector3.ONE * 1.2)
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_A_big.gltf", Vector3(-33.2, 0.0, 12.5), Vector3.ONE * 1.3, 0.0, "gold")
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_open.gltf", Vector3(-38.8, 0.0, 12.5), Vector3.ONE * 1.2, 0.0, "bread")
 	_place_prop(parent, "res://assets/overworld/sack.gltf", Vector3(-38.0, 0.0, 13.0), Vector3.ONE * 1.4)
 
 	# Interactive Oakhaven Provisions Market Stall
@@ -834,6 +843,428 @@ func _build_town_quarter(parent: Node3D) -> void:
 	_place_lantern_post(parent, Vector3(-21.5, 0.0, 15.0))
 	_place_lantern_post(parent, Vector3(-31.0, 0.0, 15.0))
 	_place_lantern_post(parent, Vector3(-40.5, 0.0, 15.0))
+
+# =========================================================================
+# 7B. DYNAMIC TOWN POPULATION & CITIZENRY (26 Lively NPCs across 4 Districts)
+# =========================================================================
+func _build_town_population(parent: Node3D) -> void:
+	# -------------------------------------------------------------------------
+	# DISTRICT 1: GRAND MARKET SQUARE (Sanctuary Plaza Courtyard)
+	# -------------------------------------------------------------------------
+	var harlan = TownspersonNPCScript.new()
+	harlan.citizen_name = "Harlan"
+	harlan.citizen_title = "Grain Merchant"
+	harlan.role = TownspersonNPCScript.NPCRole.VENDOR
+	harlan.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	harlan.icon = "🌾"
+	harlan.trade_items = [{"name": "Barley Bread", "cost": 4}, {"name": "Sack of Oats", "cost": 8}]
+	harlan.speech_barks = [
+		"Finest barley and rye from Greenhollow!",
+		"Fresh bread for your journeys, champion!",
+		"Flour sacks fresh from Miller Bronn's wheel!"
+	]
+	harlan.position = Vector3(-4.5, 0.0, 3.5)
+	parent.add_child(harlan)
+
+	var maeve = TownspersonNPCScript.new()
+	maeve.citizen_name = "Maeve"
+	maeve.citizen_title = "Sanctuary Herbalist"
+	maeve.role = TownspersonNPCScript.NPCRole.VENDOR
+	maeve.model_path = "res://assets/characters/adventurers/Mage.glb"
+	maeve.icon = "🌿"
+	maeve.trade_items = [{"name": "Mountain Herb Draught", "cost": 12}, {"name": "Bandage Bundle", "cost": 6}]
+	maeve.speech_barks = [
+		"Wild mountain herbs and dried lavender!",
+		"A drop of elderflower for the weary traveler!",
+		"Cleanse the tomb miasma with fresh feverfew!"
+	]
+	maeve.position = Vector3(4.5, 0.0, 3.5)
+	parent.add_child(maeve)
+
+	var cedric = TownspersonNPCScript.new()
+	cedric.citizen_name = "Cedric"
+	cedric.citizen_title = "Fishmonger"
+	cedric.role = TownspersonNPCScript.NPCRole.VENDOR
+	cedric.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	cedric.icon = "🐟"
+	cedric.speech_barks = [
+		"Fresh river trout and silver bream!",
+		"Salted herring straight from Port Blackwater!",
+		"Caught this morning at the river weir!"
+	]
+	cedric.position = Vector3(-6.2, 0.0, 7.5)
+	parent.add_child(cedric)
+
+	var oestred = TownspersonNPCScript.new()
+	oestred.citizen_name = "Town Crier Oestred"
+	oestred.citizen_title = "Voice of the Crown"
+	oestred.role = TownspersonNPCScript.NPCRole.TOWN_CRIER
+	oestred.model_path = "res://assets/characters/adventurers/Knight.glb"
+	oestred.icon = "📢"
+	oestred.speech_barks = [
+		"Hear ye, hear ye! By royal decree of King Aldric IV!",
+		"Beware! Red Skull Corsairs sighted in the outer shoals!",
+		"All able citizens to report suspicious tomb omens!",
+		"Long live the High King and the Light of Oakhaven!"
+	]
+	oestred.waypoints = [
+		Vector3(0.0, 0.0, 1.0),
+		Vector3(3.5, 0.0, 5.0),
+		Vector3(-3.5, 0.0, 5.0)
+	]
+	oestred.position = Vector3(0.0, 0.0, 1.0)
+	parent.add_child(oestred)
+
+	var ronald = TownspersonNPCScript.new()
+	ronald.citizen_name = "Ronald the Minstrel"
+	ronald.citizen_title = "Wandering Troubadour"
+	ronald.role = TownspersonNPCScript.NPCRole.MINSTREL
+	ronald.model_path = "res://assets/characters/adventurers/Mage.glb"
+	ronald.icon = "🎶"
+	ronald.speech_barks = [
+		"*Strums lute* In the ossuary dark, heroes leave their mark...",
+		"A copper coin for a verse of the Dragon of Drakken!",
+		"Sing high, sing low, wherever brave adventurers go!"
+	]
+	ronald.position = Vector3(2.5, 0.0, -1.5)
+	parent.add_child(ronald)
+
+	var pip = TownspersonNPCScript.new()
+	pip.citizen_name = "Pip"
+	pip.citizen_title = "Town Youth"
+	pip.role = TownspersonNPCScript.NPCRole.CHILD
+	pip.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	pip.model_scale = Vector3(0.35, 0.35, 0.35)
+	pip.icon = "🏃"
+	pip.speech_barks = ["Tag! You're it!", "Look at the champion's sword!", "Bet you can't catch me!"]
+	pip.waypoints = [
+		Vector3(-3.0, 0.0, 2.0),
+		Vector3(1.0, 0.0, 6.0),
+		Vector3(-1.0, 0.0, -2.0)
+	]
+	pip.position = Vector3(-3.0, 0.0, 2.0)
+	parent.add_child(pip)
+
+	var tommy = TownspersonNPCScript.new()
+	tommy.citizen_name = "Tommy"
+	tommy.citizen_title = "Town Youth"
+	tommy.role = TownspersonNPCScript.NPCRole.CHILD
+	tommy.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	tommy.model_scale = Vector3(0.35, 0.35, 0.35)
+	tommy.icon = "🏃"
+	tommy.speech_barks = ["Wait for me, Pip!", "I'm gonna be a knight one day!", "Did you see that warhorse?"]
+	tommy.waypoints = [
+		Vector3(2.0, 0.0, 2.5),
+		Vector3(-2.0, 0.0, 6.5),
+		Vector3(2.0, 0.0, -1.5)
+	]
+	tommy.position = Vector3(2.0, 0.0, 2.5)
+	parent.add_child(tommy)
+
+	var barnaby_beggar = TownspersonNPCScript.new()
+	barnaby_beggar.citizen_name = "Old Barnaby"
+	barnaby_beggar.citizen_title = "Fen War Veteran"
+	barnaby_beggar.role = TownspersonNPCScript.NPCRole.BEGGAR
+	barnaby_beggar.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	barnaby_beggar.icon = "🪙"
+	barnaby_beggar.speech_barks = [
+		"Spare a copper for an old soldier of the Fen Wars...",
+		"May the Light shield you when night falls, champion.",
+		"I took a spear in the shoulder so this realm could stand."
+	]
+	barnaby_beggar.position = Vector3(-1.5, 0.0, 6.0)
+	parent.add_child(barnaby_beggar)
+
+	var genevieve = TownspersonNPCScript.new()
+	genevieve.citizen_name = "Lady Genevieve"
+	genevieve.citizen_title = "Noble Patron"
+	genevieve.role = TownspersonNPCScript.NPCRole.CITIZEN
+	genevieve.model_path = "res://assets/characters/adventurers/Mage.glb"
+	genevieve.icon = "👒"
+	genevieve.speech_barks = [
+		"The market looks lively today, thank the heavens.",
+		"Let us hope the Citadel guards keep the roads safe.",
+		"Splendid morning for a stroll across the sanctuary."
+	]
+	genevieve.waypoints = [
+		Vector3(5.0, 0.0, 0.5),
+		Vector3(5.0, 0.0, 7.5),
+		Vector3(1.0, 0.0, 7.5)
+	]
+	genevieve.position = Vector3(5.0, 0.0, 0.5)
+	parent.add_child(genevieve)
+
+	var silas_vendor = TownspersonNPCScript.new()
+	silas_vendor.citizen_name = "Silas"
+	silas_vendor.citizen_title = "Tool Chandler"
+	silas_vendor.role = TownspersonNPCScript.NPCRole.VENDOR
+	silas_vendor.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+	silas_vendor.icon = "🔧"
+	silas_vendor.trade_items = [{"name": "Iron Nails & Tacks", "cost": 3}, {"name": "Lumber Plank", "cost": 5}]
+	silas_vendor.speech_barks = [
+		"Sturdy nails, hempen rope, and forged tools!",
+		"Everything needed to mend wagons and palisades!"
+	]
+	silas_vendor.position = Vector3(6.5, 0.0, 7.0)
+	parent.add_child(silas_vendor)
+
+	# -------------------------------------------------------------------------
+	# DISTRICT 2: CRAFTSMAN ROW & FORGE QUARTER (West Sector)
+	# -------------------------------------------------------------------------
+	var bram = TownspersonNPCScript.new()
+	bram.citizen_name = "Bram"
+	bram.citizen_title = "Armorer"
+	bram.role = TownspersonNPCScript.NPCRole.VENDOR
+	bram.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	bram.icon = "🛡️"
+	bram.trade_items = [{"name": "Riveted Buckler", "cost": 25}, {"name": "Reinforced Bracers", "cost": 18}]
+	bram.speech_barks = [
+		"Steel shields, banded mail, and iron rivets!",
+		"No monster claw breaches Oakhaven iron!",
+		"Master Torval forged the blades; I craft the shields!"
+	]
+	bram.position = Vector3(-14.5, 0.0, 1.5)
+	parent.add_child(bram)
+
+	var eamon = TownspersonNPCScript.new()
+	eamon.citizen_name = "Eamon"
+	eamon.citizen_title = "Forge Apprentice"
+	eamon.role = TownspersonNPCScript.NPCRole.CITIZEN
+	eamon.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	eamon.icon = "🔨"
+	eamon.speech_barks = [
+		"More charcoal for Master Torval's bellows!",
+		"Watch out for the flying anvil sparks!",
+		"Tempering eighty spearheads by nightfall!"
+	]
+	eamon.waypoints = [
+		Vector3(-13.5, 0.0, -3.5),
+		Vector3(-16.0, 0.0, -1.0)
+	]
+	eamon.position = Vector3(-13.5, 0.0, -3.5)
+	parent.add_child(eamon)
+
+	var orson = TownspersonNPCScript.new()
+	orson.citizen_name = "Orson"
+	orson.citizen_title = "Master Carpenter"
+	orson.role = TownspersonNPCScript.NPCRole.CITIZEN
+	orson.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	orson.icon = "🪓"
+	orson.speech_barks = [
+		"Solid oak timber for the fortress gates!",
+		"Carts, wagons, and siege beams crafted true.",
+		"The Blackwood timber makes the strongest hafts."
+	]
+	orson.position = Vector3(-15.5, 0.0, -5.5)
+	parent.add_child(orson)
+
+	var gareth = TownspersonNPCScript.new()
+	gareth.citizen_name = "Gareth"
+	gareth.citizen_title = "Leather Tanner"
+	gareth.role = TownspersonNPCScript.NPCRole.CITIZEN
+	gareth.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	gareth.icon = "👞"
+	gareth.speech_barks = [
+		"Sturdy oxhide boots and boiled leather cuirasses!",
+		"Salted cured hides ready for the cobbler."
+	]
+	gareth.position = Vector3(-19.0, 0.0, 4.0)
+	parent.add_child(gareth)
+
+	# -------------------------------------------------------------------------
+	# DISTRICT 3: CATHEDRAL PLAZA & CLOISTERS (East Sector)
+	# -------------------------------------------------------------------------
+	var austin = TownspersonNPCScript.new()
+	austin.citizen_name = "Brother Austin"
+	austin.citizen_title = "Monastic Caretaker"
+	austin.role = TownspersonNPCScript.NPCRole.MONK
+	austin.model_path = "res://assets/characters/adventurers/Mage.glb"
+	austin.icon = "📜"
+	austin.speech_barks = [
+		"Peace be upon your path, child of light.",
+		"The dawn shall always overcome the deep shadows.",
+		"Lighting the tallow candles for those departed."
+	]
+	austin.waypoints = [
+		Vector3(14.0, 0.0, -3.0),
+		Vector3(17.0, 0.0, -6.0)
+	]
+	austin.position = Vector3(14.0, 0.0, -3.0)
+	parent.add_child(austin)
+
+	var beatrice = TownspersonNPCScript.new()
+	beatrice.citizen_name = "Sister Beatrice"
+	beatrice.citizen_title = "Sanctuary Acolyte"
+	beatrice.role = TownspersonNPCScript.NPCRole.MONK
+	beatrice.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	beatrice.icon = "✨"
+	beatrice.speech_barks = [
+		"Holy water vials blessed at the Altar of Dawn.",
+		"Prayers for the valiant souls fallen in the crypts.",
+		"May the sacred light preserve your heart from malice."
+	]
+	beatrice.position = Vector3(14.5, 0.0, 1.0)
+	parent.add_child(beatrice)
+
+	var galahad = TownspersonNPCScript.new()
+	galahad.citizen_name = "Pilgrim Galahad"
+	galahad.citizen_title = "Devout Traveler"
+	galahad.role = TownspersonNPCScript.NPCRole.CITIZEN
+	galahad.model_path = "res://assets/characters/adventurers/Knight.glb"
+	galahad.icon = "🚶"
+	galahad.speech_barks = [
+		"I journeyed from the border marches to seek the cathedral's grace.",
+		"The road was perilous, but faith carried my stride."
+	]
+	galahad.position = Vector3(16.5, 0.0, 5.0)
+	parent.add_child(galahad)
+
+	var matthew = TownspersonNPCScript.new()
+	matthew.citizen_name = "Scholar Matthew"
+	matthew.citizen_title = "Antiquarian"
+	matthew.role = TownspersonNPCScript.NPCRole.CITIZEN
+	matthew.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
+	matthew.icon = "📖"
+	matthew.speech_barks = [
+		"The runic script upon the north crypt predates our realm by centuries!",
+		"Ancient High Kings sealed a terrifying terror below..."
+	]
+	matthew.position = Vector3(15.0, 0.0, -8.0)
+	parent.add_child(matthew)
+
+	# -------------------------------------------------------------------------
+	# DISTRICT 4: HARBOR QUAY & WATERFRONT PROMENADE (Port Blackwater)
+	# -------------------------------------------------------------------------
+	var kren = TownspersonNPCScript.new()
+	kren.citizen_name = "Dockmaster Kren"
+	kren.citizen_title = "Port Master"
+	kren.role = TownspersonNPCScript.NPCRole.VENDOR
+	kren.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	kren.icon = "🧭"
+	kren.trade_items = [{"name": "Naval Compass", "cost": 15}, {"name": "Sea Biscuit", "cost": 2}]
+	kren.speech_barks = [
+		"Charts of the outer reefs and naval tides!",
+		"All ship manifests must be stamped before mooring!",
+		"Keep clear of the outer shoals—pirate cogs roam free!"
+	]
+	kren.position = Vector3(-55.0, 0.04, 60.0)
+	parent.add_child(kren)
+
+	var jax = TownspersonNPCScript.new()
+	jax.citizen_name = "Sailor Jax"
+	jax.citizen_title = "Able Seaman"
+	jax.role = TownspersonNPCScript.NPCRole.CITIZEN
+	jax.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	jax.icon = "⚓"
+	jax.speech_barks = [
+		"Aye, the Red Skull cog was spotted off the barrier arch!",
+		"Tie fast the bow hawsers before the tide turns!",
+		"Nothing like salt spray in the morning to clear the head!"
+	]
+	jax.position = Vector3(-60.5, 0.04, 64.0)
+	parent.add_child(jax)
+
+	var boros = TownspersonNPCScript.new()
+	boros.citizen_name = "Stevedore Boros"
+	boros.citizen_title = "Harbor Porter"
+	boros.role = TownspersonNPCScript.NPCRole.CITIZEN
+	boros.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	boros.icon = "📦"
+	boros.speech_barks = [
+		"Heave! Another barrel of spiced rum for the tavern!",
+		"Watch your boots on the slick deck timbers!",
+		"Heavy cargo moving through, make way!"
+	]
+	boros.waypoints = [
+		Vector3(-58.0, 0.04, 68.0),
+		Vector3(-58.0, 0.04, 78.0)
+	]
+	boros.position = Vector3(-58.0, 0.04, 68.0)
+	parent.add_child(boros)
+
+	var greta = TownspersonNPCScript.new()
+	greta.citizen_name = "Fishwife Greta"
+	greta.citizen_title = "Fishmonger"
+	greta.role = TownspersonNPCScript.NPCRole.CITIZEN
+	greta.model_path = "res://assets/characters/adventurers/Mage.glb"
+	greta.icon = "🐟"
+	greta.speech_barks = [
+		"Fresh crabs and rock cod from the deep bay!",
+		"Smoked mackerel that will keep all winter!"
+	]
+	greta.position = Vector3(-54.5, 0.04, 80.0)
+	parent.add_child(greta)
+
+	var drake = TownspersonNPCScript.new()
+	drake.citizen_name = "Watchman Drake"
+	drake.citizen_title = "Harbor Guard"
+	drake.role = TownspersonNPCScript.NPCRole.WATCH_PATROL
+	drake.model_path = "res://assets/characters/adventurers/Knight.glb"
+	drake.icon = "🛡️"
+	drake.speech_barks = [
+		"Keep the quay clear! Watch the outer horizon for raiders!",
+		"Port Blackwater stands garrisoned and watchful!",
+		"No unauthorized skiffs near the military docks!"
+	]
+	drake.waypoints = [
+		Vector3(-60.0, 0.04, 52.0),
+		Vector3(-60.0, 0.04, 84.0)
+	]
+	drake.position = Vector3(-60.0, 0.04, 52.0)
+	parent.add_child(drake)
+
+	var ned = TownspersonNPCScript.new()
+	ned.citizen_name = "Ned"
+	ned.citizen_title = "Harbor Lad"
+	ned.role = TownspersonNPCScript.NPCRole.CHILD
+	ned.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	ned.model_scale = Vector3(0.35, 0.35, 0.35)
+	ned.icon = "⛵"
+	ned.speech_barks = [
+		"Look at the big warship with the crimson sails!",
+		"I saw a sea turtle by the lighthouse rock!",
+		"Can I skip stones into the ocean?"
+	]
+	ned.position = Vector3(-52.0, 0.04, 75.0)
+	parent.add_child(ned)
+
+	# -------------------------------------------------------------------------
+	# CITY WATCH & PERIMETER SENTINELS
+	# -------------------------------------------------------------------------
+	var captain_ronald = TownspersonNPCScript.new()
+	captain_ronald.citizen_name = "Watch Captain Ronald"
+	captain_ronald.citizen_title = "West Gate Commander"
+	captain_ronald.role = TownspersonNPCScript.NPCRole.WATCH_PATROL
+	captain_ronald.model_path = "res://assets/characters/adventurers/Knight.glb"
+	captain_ronald.icon = "⚔️"
+	captain_ronald.speech_barks = [
+		"All clear along West Market Street! Stay vigilant!",
+		"Keep your blades sheathed in town, travelers!",
+		"Citadel sentries report all quiet on the highroad."
+	]
+	captain_ronald.waypoints = [
+		Vector3(-4.0, 0.0, 16.0),
+		Vector3(-18.0, 0.0, 16.0)
+	]
+	captain_ronald.position = Vector3(-4.0, 0.0, 16.0)
+	parent.add_child(captain_ronald)
+
+	var sergeant_wayne = TownspersonNPCScript.new()
+	sergeant_wayne.citizen_name = "Sergeant Wayne"
+	sergeant_wayne.citizen_title = "East Rampart Warden"
+	sergeant_wayne.role = TownspersonNPCScript.NPCRole.WATCH_PATROL
+	sergeant_wayne.model_path = "res://assets/characters/adventurers/Knight.glb"
+	sergeant_wayne.icon = "⚔️"
+	sergeant_wayne.speech_barks = [
+		"East boundary secure! Eyes peeled on the mountain crags!",
+		"Patrol rotation on schedule. Stand firm!"
+	]
+	sergeant_wayne.waypoints = [
+		Vector3(2.0, 0.0, 16.0),
+		Vector3(20.0, 0.0, 16.0)
+	]
+	sergeant_wayne.position = Vector3(2.0, 0.0, 16.0)
+	parent.add_child(sergeant_wayne)
 
 func _place_lantern_post(parent: Node3D, pos: Vector3, rot_y: float = 0.0) -> Node3D:
 	var post = _place_prop(parent, "res://assets/overworld/post_lantern.gltf", pos, Vector3.ONE * 1.1, rot_y)
@@ -1393,8 +1824,7 @@ func _build_blackwood_forest(parent: Node3D) -> void:
 	for i in range(forest_locs.size()):
 		var lp = forest_locs[i]
 		var tm = f_trees[i % f_trees.size()]
-		_place_prop(parent, tm, lp, Vector3.ONE * 2.2, float((i * 53) % 360))
-		_add_static_cyl(parent, lp, 0.9, 6.5)
+		_place_choppable_tree(parent, tm, lp, Vector3.ONE * 2.2, float((i * 53) % 360))
 
 	# Boulders
 	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-28.0, 0.0, 30.0), Vector3.ONE * 1.8)
@@ -1502,6 +1932,48 @@ func _place_prop(parent: Node3D, path: String, pos: Vector3, sc: Vector3 = Vecto
 		_apply_flag_shader(prop, path)
 		
 	return prop
+
+func _place_destructible_prop(parent: Node3D, p_type: int, path: String, pos: Vector3, sc: Vector3 = Vector3.ONE, rot_y_deg: float = 0.0, loot: String = "random") -> Node3D:
+	var prop = DestructibleProp3DScript.new()
+	prop.prop_type = p_type
+	prop.drop_loot = loot
+	prop.position = pos
+	if rot_y_deg != 0.0:
+		prop.rotation_degrees.y = rot_y_deg
+
+	var vis = AssetLoader.load_or_generate_model(path, "dungeon", "destructible")
+	vis.scale = sc
+	prop.add_child(vis)
+	prop.visual_node = vis
+
+	if p_type == DestructibleProp3DScript.PropType.WOODEN_FENCE:
+		prop.collider_size = Vector3(2.4 * sc.x, 1.2 * sc.y, 0.4 * sc.z)
+		prop.max_health = 30.0
+	elif p_type == DestructibleProp3DScript.PropType.CARGO_CRATE:
+		prop.collider_size = Vector3(1.2 * sc.x, 1.2 * sc.y, 1.2 * sc.z)
+		prop.max_health = 25.0
+	elif p_type == DestructibleProp3DScript.PropType.WOODEN_BARREL:
+		prop.collider_size = Vector3(0.9 * sc.x, 1.2 * sc.y, 0.9 * sc.z)
+		prop.max_health = 20.0
+	elif p_type == DestructibleProp3DScript.PropType.SIEGE_BARRICADE:
+		prop.collider_size = Vector3(2.5 * sc.x, 1.5 * sc.y, 0.8 * sc.z)
+		prop.max_health = 45.0
+
+	parent.add_child(prop)
+	return prop
+
+func _place_choppable_tree(parent: Node3D, path: String, pos: Vector3, sc: Vector3 = Vector3.ONE, rot_y_deg: float = 0.0) -> Node3D:
+	var tree = ChoppableTree3DScript.new()
+	tree.position = pos
+	if rot_y_deg != 0.0:
+		tree.rotation_degrees.y = rot_y_deg
+
+	var vis = AssetLoader.load_or_generate_model(path, "dungeon", "tree")
+	vis.scale = sc
+	tree.add_child(vis)
+
+	parent.add_child(tree)
+	return tree
 
 func _apply_flag_shader(node: Node3D, path: String = "") -> void:
 	var flag_shader = load("res://shaders/waving_flag.gdshader")
@@ -1632,18 +2104,18 @@ func _spawn_enemy(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -
 # REGION 1: PORT BLACKWATER & THE SOUTH-WEST OCEAN COAST
 # =========================================================================
 func _build_port_blackwater_region(parent: Node3D) -> void:
-	# 1. Sunken Ocean Harbor Basin & Seabed (X in [-137, -62], Z in [46, 137])
+	# 1. Sunken Ocean Harbor Basin & Seabed (Expanded open sea X in [-210, -62], Z in [46, 210])
 	#    Uncovered by the SouthBank_Grass cutout so true ocean water is 100% visible!
 	var seabed_inst = MeshInstance3D.new()
 	seabed_inst.name = "OceanSeabedVisual"
 	var sb_mesh = PlaneMesh.new()
-	sb_mesh.size = Vector2(76.0, 92.0)
+	sb_mesh.size = Vector2(148.0, 164.0)
 	seabed_inst.mesh = sb_mesh
 	var sb_mat = StandardMaterial3D.new()
 	sb_mat.albedo_color = Color(0.08, 0.14, 0.18) # Deep ocean sand & silt
 	sb_mat.roughness = 0.95
 	seabed_inst.material_override = sb_mat
-	seabed_inst.position = Vector3(-99.5, -1.20, 91.5)
+	seabed_inst.position = Vector3(-136.0, -1.20, 128.0)
 	parent.add_child(seabed_inst)
 
 	# Shallow Seabed Safety Collider so amphibious enemies or players wading off the beach don't fall into the void
@@ -1652,22 +2124,22 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	seabed_col_body.collision_layer = 1
 	var seabed_col = CollisionShape3D.new()
 	var seabed_box = BoxShape3D.new()
-	seabed_box.size = Vector3(76.0, 0.5, 92.0)
+	seabed_box.size = Vector3(148.0, 0.5, 164.0)
 	seabed_col.shape = seabed_box
-	seabed_col.position = Vector3(-99.5, -0.60, 91.5)
+	seabed_col.position = Vector3(-136.0, -0.60, 128.0)
 	seabed_col_body.add_child(seabed_col)
 	parent.add_child(seabed_col_body)
 
-	# 2. Open Ocean Water Surface (Y = -0.15m, X in [-137, -62], Z in [46, 137])
+	# 2. Open Ocean Water Surface (Y = -0.15m, X in [-210, -62], Z in [46, 210])
 	var ocean_basin = MeshInstance3D.new()
 	ocean_basin.name = "OceanWaterSurface"
 	var oc_mesh = PlaneMesh.new()
-	oc_mesh.size = Vector2(76.0, 92.0)
+	oc_mesh.size = Vector2(148.0, 164.0)
 	ocean_basin.mesh = oc_mesh
 	var ocean_mat = ShaderMaterial.new()
 	ocean_mat.shader = load("res://shaders/river_flow.gdshader")
 	ocean_basin.material_override = ocean_mat
-	ocean_basin.position = Vector3(-99.5, -0.15, 91.5)
+	ocean_basin.position = Vector3(-136.0, -0.15, 128.0)
 	parent.add_child(ocean_basin)
 
 	# 3. Stone Harbor Quay Wall & Paved Waterfront Promenade (X in [-62, -46], Z in [46, 86])
@@ -2088,6 +2560,40 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	var dockworker = DockworkerNPCScript.new()
 	dockworker.position = Vector3(-58.0, 0.04, 76.0)
 	parent.add_child(dockworker)
+
+	# 14. Corsair Archipelago & Red Skull Bastion Offshore Fortress
+	# Barrier rocky islets and natural sea crags in open ocean
+	_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(-150.0, -0.6, 75.0), Vector3(6.5, 4.0, 6.5))
+	_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(-170.0, -0.4, 135.0), Vector3(8.5, 5.0, 8.5))
+	_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(-135.0, -0.6, 175.0), Vector3(7.0, 4.5, 7.0))
+
+	# Red Skull Bastion offshore fort on the largest islet
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-170.0, 1.8, 135.0), Vector3.ONE * 5.5)
+	_add_static_box(parent, Vector3(-170.0, 4.5, 135.0), Vector3(5.0, 9.0, 5.0))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-166.0, 1.8, 134.0), Vector3.ONE * 1.8)
+
+	# 15. Autonomous Hostile Pirate Warships (EnemyShipAI3D) with broadside cannons, ramming & loot drops
+	var corsair_cog_1 = EnemyShipAI3DScript.new()
+	corsair_cog_1.ship_name = "Crimson Skull Cog"
+	corsair_cog_1.position = Vector3(-145.0, -0.22, 110.0)
+	corsair_cog_1.patrol_waypoints = [
+		Vector3(-145.0, -0.22, 110.0),
+		Vector3(-165.0, -0.22, 85.0),
+		Vector3(-140.0, -0.22, 60.0),
+		Vector3(-125.0, -0.22, 95.0)
+	]
+	parent.add_child(corsair_cog_1)
+
+	var corsair_cog_2 = EnemyShipAI3DScript.new()
+	corsair_cog_2.ship_name = "Dread Serpent Cog"
+	corsair_cog_2.position = Vector3(-150.0, -0.22, 160.0)
+	corsair_cog_2.patrol_waypoints = [
+		Vector3(-150.0, -0.22, 160.0),
+		Vector3(-175.0, -0.22, 140.0),
+		Vector3(-160.0, -0.22, 175.0),
+		Vector3(-130.0, -0.22, 180.0)
+	]
+	parent.add_child(corsair_cog_2)
 
 func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float, x_end: float, z_center: float, width: float) -> void:
 	var pier_root = Node3D.new()
@@ -2746,10 +3252,10 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(16.0, 0.0, 88.0), Vector3.ONE * 4.8, 180.0)
 	_add_static_box(parent, Vector3(16.0, 4.0, 88.0), Vector3(7.0, 7.0, 7.5))
 
-	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 65)
+	# Defensive Wooden Barricade Line (X from -16 to +16 at Z = 65, Destructible props!)
 	for bar_x in [-16.0, -10.5, -5.0, 5.0, 10.5, 16.0]:
-		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(bar_x, 0.0, 65.0), Vector3.ONE * 2.0, 90.0)
-	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.5)
+		_place_destructible_prop(parent, DestructibleProp3DScript.PropType.WOODEN_FENCE, "res://assets/overworld/fence_wood_straight.gltf", Vector3(bar_x, 0.0, 65.0), Vector3.ONE * 2.0, 90.0, "arrows")
+	_place_destructible_prop(parent, DestructibleProp3DScript.PropType.CARGO_CRATE, "res://assets/overworld/crate_A_big.gltf", Vector3(-6.0, 0.0, 79.0), Vector3.ONE * 1.5, 0.0, "arrows")
 	_place_prop(parent, "res://assets/overworld/weaponrack.gltf", Vector3(6.0, 0.0, 79.0), Vector3.ONE * 1.8)
 
 	# Encampment Soldier Hearth & Rest Site

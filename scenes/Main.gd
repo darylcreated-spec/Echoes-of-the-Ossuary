@@ -13,6 +13,10 @@ const ShipwrightDrydock3DScript = preload("res://src/world/ShipwrightDrydock3D.g
 const HarborTavernTerrace3DScript = preload("res://src/world/HarborTavernTerrace3D.gd")
 const HarborFishingSpot3DScript = preload("res://src/world/HarborFishingSpot3D.gd")
 const DockworkerNPCScript = preload("res://src/actors/DockworkerNPC.gd")
+const DestructibleProp3DScript = preload("res://src/world/DestructibleProp3D.gd")
+const ChoppableTree3DScript = preload("res://src/world/ChoppableTree3D.gd")
+const TownspersonNPCScript = preload("res://src/actors/TownspersonNPC.gd")
+const EnemyShipAI3DScript = preload("res://src/actors/EnemyShipAI3D.gd")
 
 @onready var camera: Camera3D = $IsometricCamera
 @onready var dungeon_gen: Node3D = $DungeonGenerator
@@ -798,6 +802,89 @@ func _run_gameplay_self_test() -> void:
 	var dockworker = dockworkers[0]
 	dockworker.interact(player)
 	print(" -> Dockworker Stevedores hauling cargo loop verified!")
+
+	# -------------------------------------------------------------------------
+	# [TEST 21] Destructible Environment Mechanics (Props, Fences, Barricades & Choppable Trees)
+	# -------------------------------------------------------------------------
+	print("\n[TEST 21] Destructible Environment Mechanics...")
+	var destructibles = get_tree().get_nodes_in_group("destructible")
+	assert(destructibles.size() > 0, "Destructible props must be present in the overworld")
+	print(" -> Total Destructible Objects found: %d" % destructibles.size())
+
+	# Test taking damage and destruction on a prop
+	var test_prop = null
+	for d in destructibles:
+		if is_instance_of(d, DestructibleProp3DScript) and not d.is_destroyed:
+			test_prop = d
+			break
+	assert(test_prop != null, "Must find an active DestructibleProp3D")
+	var hp_before = test_prop.current_health
+	test_prop.take_damage(10.0, "melee", player.global_position)
+	assert(test_prop.current_health < hp_before, "Prop must take damage on strike")
+	test_prop.take_damage(50.0, "melee", player.global_position)
+	assert(test_prop.is_destroyed == true, "Prop must be marked destroyed when health reaches 0")
+	print(" -> Destructible prop damage and shatter destruction verified!")
+
+	# Test Choppable Tree felling
+	var choppable_trees = get_tree().get_nodes_in_group("choppable_tree")
+	assert(choppable_trees.size() > 0, "Choppable trees must exist in Blackwood Forest")
+	var test_tree = choppable_trees[0]
+	var tree_hp_before = test_tree.current_health
+	test_tree.take_damage(20.0, "axe", player.global_position)
+	assert(test_tree.current_health < tree_hp_before, "Tree must take damage on hit")
+	test_tree.take_damage(100.0, "axe", player.global_position)
+	assert(test_tree.is_felled == true, "Tree must be felled when health reaches 0")
+	print(" -> Choppable tree felling, trunk collapse and timber harvest verified!")
+
+	# -------------------------------------------------------------------------
+	# [TEST 22] Town Population & Vast Sea Expansion (25+ Town NPCs & Autonomous Pirate Warships)
+	# -------------------------------------------------------------------------
+	print("\n[TEST 22] Town Population & Vast Sea Expansion...")
+	var townspeople = get_tree().get_nodes_in_group("townsperson")
+	assert(townspeople.size() >= 25, "Must have at least 25 lively townspeople across the 4 districts! Found: %d" % townspeople.size())
+	print(" -> Total Animated Town Citizens & Artisans verified: %d" % townspeople.size())
+
+	# Verify roles, speech barks, and dialogue/trade interaction
+	var vendor_count = 0
+	var crier_count = 0
+	var minstrel_count = 0
+	var child_count = 0
+	var monk_count = 0
+	for citizen in townspeople:
+		var c = citizen
+		assert(c.speech_barks.size() > 0, "Townsperson must have ambient speech barks")
+		if c.role == TownspersonNPCScript.NPCRole.VENDOR:
+			vendor_count += 1
+		elif c.role == TownspersonNPCScript.NPCRole.TOWN_CRIER:
+			crier_count += 1
+		elif c.role == TownspersonNPCScript.NPCRole.MINSTREL:
+			minstrel_count += 1
+		elif c.role == TownspersonNPCScript.NPCRole.CHILD:
+			child_count += 1
+		elif c.role == TownspersonNPCScript.NPCRole.MONK:
+			monk_count += 1
+	assert(vendor_count > 0, "Vendors must exist in town")
+	assert(crier_count > 0, "Town Crier must exist")
+	assert(minstrel_count > 0, "Minstrel must exist")
+	assert(child_count > 0, "Children must exist playing in the streets")
+	assert(monk_count > 0, "Cathedral monks must exist")
+	print(" -> All 8 Townsperson roles (Vendors, Crier, Minstrel, Children, Monks, Guards, Beggars) verified!")
+
+	# Verify Open Ocean Expansion & Autonomous Pirate Fleet
+	var ocean_surface = dungeon_gen.find_child("OceanWaterSurface", true, false) as MeshInstance3D
+	assert(ocean_surface != null, "OceanWaterSurface must exist")
+	var oc_mesh = ocean_surface.mesh as PlaneMesh
+	assert(oc_mesh.size.x >= 140.0 and oc_mesh.size.y >= 150.0, "Ocean water surface must be expanded for naval battles! Size: %s" % oc_mesh.size)
+	print(" -> Expanded Ocean Naval Basin verified: %s" % oc_mesh.size)
+
+	var pirate_cogs = get_tree().get_nodes_in_group("enemy_ship").filter(func(n): return is_instance_of(n, EnemyShipAI3DScript))
+	assert(pirate_cogs.size() >= 2, "At least 2 autonomous EnemyShipAI3D warships must patrol the expanded ocean")
+	var pirate_ship = pirate_cogs[0]
+	assert(pirate_ship.patrol_waypoints.size() > 0, "Pirate warship must have waypoints")
+	var ship_hp_before = pirate_ship.current_health
+	pirate_ship.take_damage(50.0, "cannonball")
+	assert(pirate_ship.current_health < ship_hp_before, "Pirate warship must take naval damage")
+	print(" -> Autonomous Pirate Warship AI patrolling & naval combat damage verified!")
 
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")

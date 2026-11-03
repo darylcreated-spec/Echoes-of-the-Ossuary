@@ -937,6 +937,16 @@ func _process_trample(delta: float) -> void:
 	var horiz_speed = Vector2(velocity.x, velocity.z).length()
 	if horiz_speed < 4.0 or _trample_cooldown > 0.0:
 		return
+
+	# Trample and break destructible props (fences, barrels, crates) on horseback charge
+	var destructibles = get_tree().get_nodes_in_group("destructible")
+	for prop in destructibles:
+		if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
+			if global_position.distance_to(prop.global_position) < 2.5:
+				if prop.has_method("take_damage"):
+					prop.take_damage(60.0, "trample", prop.global_position + Vector3(0, 0.6, 0))
+				_trample_cooldown = 0.25
+				break
 		
 	var enemies = get_tree().get_nodes_in_group("enemies")
 	for enemy in enemies:

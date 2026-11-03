@@ -68,7 +68,9 @@ const SFX_PATHS: Dictionary = {
 	"wood_hammering": "res://assets/audio/sfx_wood_hammering.wav",
 	"reel_splash": "res://assets/audio/sfx_reel_splash.wav",
 	"fog_horn": "res://assets/audio/sfx_fog_horn.wav",
-	"creaking_rigging": "res://assets/audio/sfx_creaking_rigging.wav"
+	"creaking_rigging": "res://assets/audio/sfx_creaking_rigging.wav",
+	"wood_break": "res://assets/audio/sfx_wood_break.wav",
+	"stone_break": "res://assets/audio/sfx_stone_break.wav"
 }
 
 # Weather audio
@@ -1039,6 +1041,36 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				var groaning = sin(2.0 * PI * strain_freq * t) * 0.5 + sin(2.0 * PI * (strain_freq * 2.1) * t) * 0.25
 				var rope_rub = (randf_range(-0.2, 0.2)) * sin(2.0 * PI * 8.0 * t)
 				var val = (groaning + rope_rub) * env * 0.55
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"wood_break":
+			# Splintering impact, snapping timber, and flying wooden debris
+			var duration: float = 0.42
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 14.0)
+				var crack = (randf_range(-1.0, 1.0) * exp(-t * 32.0)) * 0.85
+				var snap = sin(2.0 * PI * lerp(320.0, 80.0, t / duration) * t) * exp(-t * 22.0) * 0.65
+				var rattle = sin(2.0 * PI * (140.0 + randf_range(-20.0, 20.0)) * t) * env * 0.35
+				var val = (crack + snap + rattle) * 0.95
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"stone_break":
+			# Heavy stone crumbling, masonry fracture, and granite tumbling
+			var duration: float = 0.55
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var env = exp(-t * 9.0)
+				var low_rumble = sin(2.0 * PI * lerp(110.0, 45.0, t / duration) * t) * env * 0.8
+				var crunch = (randf_range(-0.8, 0.8)) * exp(-t * 26.0) * 0.7
+				var grit = (randf_range(-0.4, 0.4)) * env * 0.35
+				var val = (low_rumble + crunch + grit) * 0.95
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 
