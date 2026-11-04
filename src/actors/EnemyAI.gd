@@ -10,6 +10,7 @@ enum EnemyType {
 	MAGE,
 	ORC,
 	DEMON,
+	BLUE_DEMON,
 	CREEP,
 	PIRATE,
 	BANDIT
@@ -100,6 +101,14 @@ func _configure_type_stats() -> void:
 			telegraph_duration = 0.5
 			attack_cooldown = 1.4
 			defense = 5.0
+		EnemyType.BLUE_DEMON:
+			max_health = 185.0
+			move_speed = 4.2
+			attack_damage = 40.0
+			attack_range_threshold = 7.5 # Ranged Frost Demon
+			telegraph_duration = 0.55
+			attack_cooldown = 1.6
+			defense = 6.0
 		EnemyType.CREEP:
 			max_health = 85.0
 			move_speed = 6.0
@@ -162,6 +171,11 @@ func _setup_visuals() -> void:
 			type_name = "Demon"
 			weapon_name = ""
 			model_path = "res://assets/characters/monsters/Demon.gltf"
+			model_scale = Vector3(1.25, 1.25, 1.25)
+		EnemyType.BLUE_DEMON:
+			type_name = "BlueDemon"
+			weapon_name = ""
+			model_path = "res://assets/characters/monsters/BlueDemon.gltf"
 			model_scale = Vector3(1.25, 1.25, 1.25)
 		EnemyType.CREEP:
 			type_name = "CreepCreature"
@@ -337,21 +351,22 @@ func _execute_attack() -> void:
 			anim_name = "Spellcast_Shoot"
 		elif enemy_type == EnemyType.ROGUE:
 			anim_name = "1H_Melee_Attack_Stab"
-		elif enemy_type in [EnemyType.ORC, EnemyType.DEMON]:
+		elif enemy_type in [EnemyType.ORC, EnemyType.DEMON, EnemyType.BLUE_DEMON]:
 			anim_name = "Punch" if randf() < 0.5 else "Weapon"
 		elif enemy_type == EnemyType.CREEP:
 			anim_name = "Bite_Action"
 		play_anim(anim_name, 0.05, 1.8)
 		get_tree().create_timer(0.35).timeout.connect(func(): is_attacking = false)
 	
-	if enemy_type in [EnemyType.ROGUE, EnemyType.MAGE]:
-		# Fire bone projectile
+	if enemy_type in [EnemyType.ROGUE, EnemyType.MAGE, EnemyType.BLUE_DEMON]:
+		# Fire projectile (bone bolt or frost orb)
 		var proj = Projectile3DScript.new()
 		proj.damage = attack_damage
 		proj.is_enemy = true
 		proj.source_node = self
 		proj.direction = forward
 		proj.speed = 13.0
+		proj.projectile_color = Color(0.2, 0.75, 1.0) if enemy_type == EnemyType.BLUE_DEMON else Color(0.85, 0.9, 0.7)
 		proj.global_position = global_position + Vector3(0, 1.0, 0) + forward * 0.7
 		get_tree().current_scene.add_child(proj)
 		AudioManager.play_sfx("sword_swing", 0.15, -3.0)

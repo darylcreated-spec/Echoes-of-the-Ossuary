@@ -489,6 +489,19 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	torval.position = Vector3(-12.2, 0.0, -1.0)
 	parent.add_child(torval)
 
+	# NPC: Kragor Stoneforged - Journeyman Dwarf Smith
+	var kragor = TownNPCScript.new()
+	kragor.npc_id = "blacksmith_apprentice"
+	kragor.npc_name = "Kragor Stoneforged"
+	kragor.npc_title = "Journeyman Smith"
+	kragor.icon = "🔨"
+	kragor.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
+	kragor.model_scale = Vector3.ONE * 0.38
+	kragor.model_rotation_y = 75.0
+	kragor.dialogue_text = "By the Ancestors' anvil! Master Torval heats the hearth, and I temper the steel. Keep your blade sharp, champion—the deep catacombs have stone armor tough enough to turn common iron!"
+	kragor.position = Vector3(-13.5, 0.0, -3.2)
+	parent.add_child(kragor)
+
 	# Blacksmith forge outdoor workbench props (Neatly beside the forge, clear of the plaza)
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-14.0, 0.0, -4.8), Vector3.ONE * 1.4, 90.0)
 	_place_prop(parent, "res://assets/furniture/table_medium.gltf", Vector3(-12.5, 0.0, -4.5), Vector3.ONE * 1.4, 0.0)
@@ -502,6 +515,10 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	parent.add_child(church)
 	_add_static_box(parent, Vector3(18.5, 6.0, -1.0), Vector3(8.8, 12.0, 9.5))
 
+	# Cathedral Forecourt Grand Stone Columns
+	_place_prop(parent, "res://assets/dungeon/column.gltf.glb", Vector3(14.5, 0.0, -3.5), Vector3.ONE * 1.8)
+	_place_prop(parent, "res://assets/dungeon/column.gltf.glb", Vector3(14.5, 0.0, 1.5), Vector3.ONE * 1.8)
+
 	# Eldress Alyssa - High Priestess NPC
 	var alyssa = TownNPCScript.new()
 	alyssa.npc_id = "priestess"
@@ -514,6 +531,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	alyssa.dialogue_text = "May the Sacred Light guide your steps, champion. The dead stir restlessly in the Catacombs below. Inquire upon our Sanctuary Bounties—purge the wicked hordes to claim divine favour and rich reward!"
 	alyssa.position = Vector3(12.2, 0.0, -1.0)
 	parent.add_child(alyssa)
+
+	# Draught of the Living Light Sacred Potion
+	_spawn_material_node(parent, "priestess_elixir", "Draught of the Living Light", "🧪", "res://assets/items/quest_materials/Potion1_Filled.glb", Vector3(18.5, 0.0, 4.5), Color(0.2, 0.9, 1.0), 35, 30, Vector3(1.6, 1.6, 1.6))
 
 	# Cathedral forecourt benches (Symmetrical & aligned facing the Cathedral)
 	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(12.5, 0.0, -4.2), Vector3.ONE * 1.8, 90.0)
@@ -1742,6 +1762,8 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	# 1. Grand Citadel Arched Gateway (Aligned with the Royal Highway at X = 0.0, Z = 36.0)
 	var citadel_arch = _place_prop(parent, "res://assets/overworld/arch.gltf", Vector3(0.0, 0.0, 36.0), Vector3(2.5, 3.8, 2.5))
 	_place_prop(citadel_arch, "res://assets/overworld/flag_blue.gltf", Vector3(0.0, 4.0, 0.0), Vector3.ONE * 2.0)
+	_place_prop(parent, "res://assets/dungeon/banner_shield_gold.gltf.glb", Vector3(-2.6, 2.8, 35.8), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/dungeon/banner_shield_gold.gltf.glb", Vector3(2.6, 2.8, 35.8), Vector3.ONE * 1.6)
 
 	# 2. Stone Curtain Walls flanking the Arch (Z = 36.0)
 	_place_prop(parent, "res://assets/overworld/wall_straight.gltf", Vector3(-7.0, 0.0, 36.0), Vector3(3.4, 4.5, 2.8))
@@ -1936,7 +1958,10 @@ func _build_forgotten_ruins(parent: Node3D) -> void:
 	# Sacred Relic Material Nodes
 	_spawn_material_node(parent, "sacred_chalice", "Sacred Chalice of the First Kings", "🏆", "res://assets/items/quest_materials/Chalice.glb", Vector3(-36.5, 0.0, -5.5), Color(1.0, 0.8, 0.2), 50, 50, Vector3(2.0, 2.0, 2.0))
 	_spawn_material_node(parent, "ossuary_codex", "Forgotten Ossuary Codex", "📜", "res://assets/items/quest_materials/Scroll.glb", Vector3(-30.0, 0.0, -1.5), Color(0.9, 0.85, 0.6), 40, 40, Vector3(2.0, 2.0, 2.0))
+	_spawn_material_node(parent, "warden_crypt_key", "Crypt Warden's Ancient Key", "🗝️", "res://assets/items/quest_materials/Key1.glb", Vector3(-33.0, 0.0, -8.5), Color(0.9, 0.75, 0.2), 65, 50, Vector3(2.0, 2.0, 2.0))
 	_spawn_material_node(parent, "smugglers_chest", "Sunken Smuggler's Chest", "📦", "res://assets/items/quest_materials/Chest_Ingots.glb", Vector3(-26.0, 0.0, -12.0), Color(0.95, 0.75, 0.2), 60, 45, Vector3(1.5, 1.5, 1.5))
+	_place_prop(parent, "res://assets/dungeon/rubble.gltf.glb", Vector3(-35.0, 0.0, -7.0), Vector3.ONE * 1.5)
+	_place_prop(parent, "res://assets/dungeon/rubble.gltf.glb", Vector3(-29.0, 0.0, -4.0), Vector3.ONE * 1.5)
 
 func _spawn_animal(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -> Node3D:
 	var animal = AnimalAIScript.new()
@@ -2390,6 +2415,45 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/rock_single_C.gltf", Vector3(-92.0, -0.40, 74.0), Vector3.ONE * 3.5, 60.0)
 	_place_prop(parent, "res://assets/overworld/waterplant_A.gltf", Vector3(-65.0, -0.15, 55.0), Vector3.ONE * 1.8)
 	_place_prop(parent, "res://assets/overworld/waterplant_B.gltf", Vector3(-65.0, -0.15, 76.0), Vector3.ONE * 1.8)
+
+	# Authentic Maritime Props: Cargo Piles & Wheeled Defense Cannons
+	_place_prop(parent, "res://assets/ships/cargo-pile-a.glb", Vector3(-72.0, 0.25, 62.0), Vector3.ONE * 1.5, 0.0)
+	_place_prop(parent, "res://assets/ships/cargo-pile-b.glb", Vector3(-74.0, 0.25, 82.0), Vector3.ONE * 1.5, 90.0)
+	_place_prop(parent, "res://assets/ships/cannon-mobile.glb", Vector3(-61.2, 0.04, 50.0), Vector3.ONE * 1.4, -90.0)
+	_place_prop(parent, "res://assets/ships/cannon-mobile.glb", Vector3(-61.2, 0.04, 78.0), Vector3.ONE * 1.4, -90.0)
+
+	# Ocean Channel Navigational Buoys with Floating Signal Lights
+	var buoy_1 = _place_prop(parent, "res://assets/ships/buoy-flag.glb", Vector3(-96.0, -0.15, 52.0), Vector3.ONE * 1.6)
+	var b_light1 = OmniLight3D.new()
+	b_light1.light_color = Color(1.0, 0.72, 0.2)
+	b_light1.light_energy = 1.6
+	b_light1.omni_range = 6.0
+	b_light1.position.y = 1.2
+	buoy_1.add_child(b_light1)
+
+	var buoy_2 = _place_prop(parent, "res://assets/ships/buoy.glb", Vector3(-125.0, -0.15, 66.0), Vector3.ONE * 1.6)
+	var b_light2 = OmniLight3D.new()
+	b_light2.light_color = Color(1.0, 0.72, 0.2)
+	b_light2.light_energy = 1.6
+	b_light2.omni_range = 6.0
+	b_light2.position.y = 1.2
+	buoy_2.add_child(b_light2)
+
+	# Golden Beach Cove: Coastal Palm Trees & Beach Rocks
+	_place_prop(parent, "res://assets/ships/rocks-sand-a.glb", Vector3(-58.0, 0.0, 92.0), Vector3.ONE * 1.8, 35.0)
+	_place_prop(parent, "res://assets/ships/rocks-sand-b.glb", Vector3(-57.0, 0.0, 106.0), Vector3.ONE * 1.8, -40.0)
+	_place_prop(parent, "res://assets/ships/palm-bend.glb", Vector3(-50.0, 0.0, 95.0), Vector3.ONE * 1.6, 60.0)
+	_place_prop(parent, "res://assets/ships/palm-detailed-bend.glb", Vector3(-49.0, 0.0, 108.0), Vector3.ONE * 1.6, -75.0)
+
+	# Cursed Spectral Galleon "The Ghost of Blackwater" anchored in the far western sea
+	var ghost_ship = _place_prop(parent, "res://assets/ships/ship-ghost.glb", Vector3(-150.0, -0.22, 98.0), Vector3.ONE * 1.45, -30.0)
+	AssetLoader.apply_ship_materials(ghost_ship)
+	var g_light = OmniLight3D.new()
+	g_light.light_color = Color(0.25, 0.95, 0.85)
+	g_light.light_energy = 2.4
+	g_light.omni_range = 14.0
+	g_light.position = Vector3(0.0, 3.5, 0.0)
+	ghost_ship.add_child(g_light)
 
 	# 6. Naval Harbor Fleet: Moored Medieval Cogs & Rowboats Floating in the Ocean Basin!
 	#    Rotated 90° so their hulls lie parallel to the piers in deep water (X in [-86, -66])
@@ -3043,6 +3107,7 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	_spawn_enemy(parent, EnemyAI.EnemyType.ORC, Vector3(104.0, 0.0, -103.0), 120.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.DEMON, Vector3(90.0, 0.0, -96.0), 30.0)
 	_spawn_enemy(parent, EnemyAI.EnemyType.DEMON, Vector3(104.0, 0.0, -88.0), -110.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.BLUE_DEMON, Vector3(108.0, 0.0, -112.0), -135.0)
 
 	_spawn_material_node(parent, "runebound_core", "Runebound Mountain Core", "⛰️", "res://assets/items/quest_materials/Crystal1.glb", Vector3(105.0, 0.0, -106.0), Color(1.0, 0.55, 0.15), 100, 75, Vector3(2.2, 2.2, 2.2))
 	_spawn_material_node(parent, "gold_vein", "High Crag Gold Vein", "🪙", "res://assets/items/quest_materials/Gold_Ingots.glb", Vector3(76.0, 0.0, -66.0), Color(1.0, 0.85, 0.2), 40, 35, Vector3(1.5, 1.5, 1.5))

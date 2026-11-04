@@ -99,15 +99,15 @@ func _start_wave() -> void:
 		# Determine enemy type distribution based on floor
 		if floor_num >= 4:
 			if i == 0:
-				enemy.enemy_type = EnemyAIScript.EnemyType.DEMON
+				enemy.enemy_type = EnemyAIScript.EnemyType.BLUE_DEMON
 			elif i == 1:
-				enemy.enemy_type = EnemyAIScript.EnemyType.ORC
+				enemy.enemy_type = EnemyAIScript.EnemyType.DEMON
 			elif i == 2:
-				enemy.enemy_type = EnemyAIScript.EnemyType.MAGE
+				enemy.enemy_type = EnemyAIScript.EnemyType.ORC
 			elif i % 2 == 0:
 				enemy.enemy_type = EnemyAIScript.EnemyType.CREEP
 			else:
-				enemy.enemy_type = EnemyAIScript.EnemyType.WARRIOR
+				enemy.enemy_type = EnemyAIScript.EnemyType.MAGE
 		elif floor_num >= 3:
 			if i == 0:
 				enemy.enemy_type = EnemyAIScript.EnemyType.ORC
