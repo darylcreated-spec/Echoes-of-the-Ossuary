@@ -916,6 +916,36 @@ func record_material_gathered(mat_id: String) -> void:
 		progress_mission("tri_seal_quest", 1)
 
 # --- SAVE / LOAD SYSTEM ---
+func has_saved_game() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+func reset_for_new_campaign(chosen_class: HeroClass = HeroClass.KNIGHT) -> void:
+	selected_class = chosen_class
+	gold = 100
+	soul_echoes = 150
+	hero_level = 1
+	hero_xp = 0
+	xp_to_next_level = 100
+	hero_title = "King's Vanguard Squire"
+	bonus_max_hp = 0.0
+	bonus_attack_damage = 0.0
+	bonus_armor_defense = 0.0
+	unlocked_weapon_tier = 1
+	unlocked_armor_tier = 1
+	current_campaign_step = 0
+	current_story_act = 0
+	current_floor = 0
+	for q in campaign_quests:
+		q["completed"] = false
+	for k in world_repairs.keys():
+		world_repairs[k] = false
+	set_hero_class(chosen_class)
+	gold_changed.emit(gold, 0)
+	echoes_changed.emit(soul_echoes, 0)
+	player_stats_changed.emit()
+	campaign_step_changed.emit(current_campaign_step, get_current_campaign_quest())
+	save_game()
+
 func save_game() -> void:
 	var missions_data: Array = []
 	for m in missions:
@@ -926,8 +956,25 @@ func save_game() -> void:
 			"claimed": m["claimed"]
 		})
 
+	var campaign_completed: Array = []
+	for q in campaign_quests:
+		campaign_completed.append(bool(q.get("completed", false)))
+
 	var data: Dictionary = {
+		"gold": gold,
 		"soul_echoes": soul_echoes,
+		"hero_level": hero_level,
+		"hero_xp": hero_xp,
+		"xp_to_next_level": xp_to_next_level,
+		"hero_title": hero_title,
+		"bonus_max_hp": bonus_max_hp,
+		"bonus_attack_damage": bonus_attack_damage,
+		"bonus_armor_defense": bonus_armor_defense,
+		"unlocked_weapon_tier": unlocked_weapon_tier,
+		"unlocked_armor_tier": unlocked_armor_tier,
+		"current_campaign_step": current_campaign_step,
+		"story_guide_enabled": story_guide_enabled,
+		"campaign_completed": campaign_completed,
 		"upgrade_max_hp_level": upgrade_max_hp_level,
 		"upgrade_attack_power_level": upgrade_attack_power_level,
 		"upgrade_dash_cooldown_level": upgrade_dash_cooldown_level,
@@ -949,7 +996,23 @@ func load_game() -> void:
 	if file:
 		var parsed = JSON.parse_string(file.get_as_text())
 		if parsed is Dictionary:
-			soul_echoes = parsed.get("soul_echoes", 150)
+			gold = int(parsed.get("gold", gold))
+			soul_echoes = int(parsed.get("soul_echoes", 150))
+			hero_level = int(parsed.get("hero_level", 1))
+			hero_xp = int(parsed.get("hero_xp", 0))
+			xp_to_next_level = int(parsed.get("xp_to_next_level", 100))
+			hero_title = str(parsed.get("hero_title", "King's Vanguard Squire"))
+			bonus_max_hp = float(parsed.get("bonus_max_hp", 0.0))
+			bonus_attack_damage = float(parsed.get("bonus_attack_damage", 0.0))
+			bonus_armor_defense = float(parsed.get("bonus_armor_defense", 0.0))
+			unlocked_weapon_tier = int(parsed.get("unlocked_weapon_tier", 1))
+			unlocked_armor_tier = int(parsed.get("unlocked_armor_tier", 1))
+			current_campaign_step = clampi(int(parsed.get("current_campaign_step", 0)), 0, max(0, campaign_quests.size() - 1))
+			story_guide_enabled = bool(parsed.get("story_guide_enabled", true))
+			var saved_camp = parsed.get("campaign_completed", [])
+			if saved_camp is Array:
+				for i in range(min(saved_camp.size(), campaign_quests.size())):
+					campaign_quests[i]["completed"] = bool(saved_camp[i])
 			upgrade_max_hp_level = parsed.get("upgrade_max_hp_level", 0)
 			upgrade_attack_power_level = parsed.get("upgrade_attack_power_level", 0)
 			upgrade_dash_cooldown_level = parsed.get("upgrade_dash_cooldown_level", 0)

@@ -75,6 +75,7 @@ var camera_style_button: Button = null
 
 var current_room: Node3D = null
 var weather_manager = null
+var is_title_screen_active: bool = false
 
 func _ready() -> void:
 	add_to_group("main")
@@ -110,6 +111,10 @@ func _ready() -> void:
 	elif "--capture-aerial-grid" in OS.get_cmdline_args() or "--capture-aerial-grid" in OS.get_cmdline_user_args():
 		var mapper_script = load("res://tools/aerial_world_mapper.gd")
 		mapper_script.run_mapping(self)
+	else:
+		# Interactive launch: show Opening Title Screen with live 3D kingdom vista & creator credit
+		if hud and hud.has_method("open_opening_title_screen"):
+			hud.open_opening_title_screen()
 
 func _run_gameplay_self_test() -> void:
 	print("==================================================")
@@ -1065,6 +1070,28 @@ func _run_gameplay_self_test() -> void:
 	])
 	assert(world_labels.size() >= 140, "Must have >= 140 enlarged Label3D nodes across NPCs, troops, shrines, stalls, campfires, and structures")
 
+	# =========================================================
+	# TEST 29: OPENING TITLE SCREEN, CREATOR ATTRIBUTION & [ESC] PAUSE MENU
+	# =========================================================
+	print("\n[TEST 29] Verifying Opening Title Screen, Creator Credit ('daryl.created@gmail.com') & [ESC] Pause Menu...")
+	assert(hud.main_menu != null, "HUD must have an initialized MainMenu instance")
+	assert(hud.creator_hud_badge != null and "daryl.created@gmail.com" in hud.creator_hud_badge.text, "HUD must display 'Created by daryl.created@gmail.com'")
+	assert(hud.main_menu.creator_credit_label != null and "daryl.created@gmail.com" in hud.main_menu.creator_credit_label.text, "Opening Title Screen header must display 'Created by daryl.created@gmail.com'")
+	assert(hud.main_menu.footer_credit_label != null and "daryl.created@gmail.com" in hud.main_menu.footer_credit_label.text, "Opening Title Screen footer must display 'Created by daryl.created@gmail.com'")
+
+	hud.open_opening_title_screen()
+	assert(hud.main_menu.visible == true and hud.main_menu.is_pause_mode == false, "Opening Title Screen must open in title mode")
+	hud.main_menu._select_hero_class(0) # Knight
+	hud.main_menu._on_continue_pressed()
+	assert(hud.main_menu.visible == false, "Clicking Continue Campaign must dismiss Opening Title Screen and enter gameplay")
+
+	hud.open_pause_menu()
+	assert(hud.main_menu.visible == true and hud.main_menu.is_pause_mode == true, "[ESC] Pause Menu must open in pause mode")
+	assert(get_tree().paused == true, "Game tree must pause while Pause Menu is open")
+	hud.close_pause_menu()
+	assert(hud.main_menu.visible == false and get_tree().paused == false, "Closing Pause Menu must unpause and resume gameplay")
+	print(" -> Opening Title Screen, Creator Attribution ('Created by daryl.created@gmail.com') & [ESC] Pause Menu verified!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
@@ -1214,6 +1241,11 @@ func _physics_process(delta: float) -> void:
 func _process_follow_camera(delta: float) -> void:
 	if not player or not is_instance_valid(player) or not camera:
 		return
+
+	if is_title_screen_active:
+		target_cam_yaw = fmod(target_cam_yaw + delta * 8.5, 360.0)
+		target_cam_pitch = 32.0
+		target_cam_distance = 18.0
 		
 	# Keyboard Orbit Controls (Arrow keys, [/])
 	var orbit_input = 0.0

@@ -361,6 +361,27 @@ static func run_mapping(main_node: Node3D) -> void:
 		await tree.process_frame
 	_save_viewport_image(tree, out_dir + "/sector_d4_southern_fenlands_keep.png", local_dir + "/sector_d4_southern_fenlands_keep.png")
 
+	# Shot 6K: Opening Title Screen with Live 3D Kingdom Panorama & "Created by daryl.created@gmail.com"
+	if player:
+		player.global_position = Vector3(0.0, 0.0, 4.0)
+	main_node.call("apply_camera_preset", 0, true)
+	if hud and hud.has_method("open_opening_title_screen"):
+		hud.call("open_opening_title_screen")
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/opening_title_screen.png", local_dir + "/opening_title_screen.png")
+
+	# Shot 6L: In-Game [ESC] Pause & Settings Menu
+	if hud and hud.get("main_menu"):
+		hud.main_menu.call("_on_continue_pressed")
+		hud.main_menu.call("_toggle_settings_subpanel")
+		hud.call("open_pause_menu")
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/pause_settings_menu.png", local_dir + "/pause_settings_menu.png")
+	if hud and hud.has_method("close_pause_menu"):
+		hud.call("close_pause_menu")
+
 	overlay_layer.queue_free()
 	print("==================================================================")
 	print("   AERIAL MAPPING COMPLETE: ALL SECTOR MAPS GENERATED   ")

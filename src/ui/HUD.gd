@@ -7,6 +7,7 @@ const MissionMenuScript = preload("res://src/ui/MissionMenu.gd")
 const DialogueModalScript = preload("res://src/ui/DialogueModal.gd")
 const JournalModalScript = preload("res://src/ui/JournalModal.gd")
 const RealmMapModalScript = preload("res://src/ui/RealmMapModal.gd")
+const MainMenuScript = preload("res://src/ui/MainMenu.gd")
 
 # Health Bar references
 var hp_bar: ProgressBar = null
@@ -40,6 +41,9 @@ var journal_modal: Control = null
 var realm_map_modal: Control = null
 var compass_bar: Control = null
 var dialogue_modal: DialogueModal = null
+var main_menu: MainMenu = null
+var hud_root_control: Control = null
+var creator_hud_badge: Label = null
 var fade_curtain: ColorRect = null
 
 # Naval Captaincy HUD
@@ -110,6 +114,7 @@ func _build_ui_tree() -> void:
 	root_control.anchor_bottom = 1.0
 	root_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root_control)
+	hud_root_control = root_control
 	
 	# Top Left: Health & Status
 	var top_left = VBoxContainer.new()
@@ -151,12 +156,22 @@ func _build_ui_tree() -> void:
 	hero_level_label.add_theme_font_size_override("font_size", 13)
 	hero_level_label.modulate = Color(1.0, 0.90, 0.55)
 	top_left.add_child(hero_level_label)
+
+	creator_hud_badge = Label.new()
+	creator_hud_badge.text = "👑 Created by daryl.created@gmail.com"
+	creator_hud_badge.add_theme_font_size_override("font_size", 12)
+	creator_hud_badge.add_theme_constant_override("outline_size", 4)
+	creator_hud_badge.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.04, 0.95))
+	creator_hud_badge.modulate = Color(1.0, 0.90, 0.48, 0.92)
+	top_left.add_child(creator_hud_badge)
 	
 	# Top Right: Currencies & Floor
 	var top_right = VBoxContainer.new()
 	top_right.anchor_left = 1.0
 	top_right.anchor_right = 1.0
-	top_right.position = Vector2(-430, 20)
+	top_right.offset_left = -520
+	top_right.offset_right = -16
+	top_right.offset_top = 18
 	root_control.add_child(top_right)
 	
 	floor_label = Label.new()
@@ -216,6 +231,13 @@ func _build_ui_tree() -> void:
 	journal_btn.focus_mode = Control.FOCUS_NONE
 	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
 	btn_box.add_child(journal_btn)
+
+	var menu_btn = Button.new()
+	menu_btn.text = "⚙️ Menu [Esc]"
+	menu_btn.custom_minimum_size = Vector2(96, 26)
+	menu_btn.focus_mode = Control.FOCUS_NONE
+	menu_btn.pressed.connect(func(): toggle_pause_menu())
+	btn_box.add_child(menu_btn)
 
 	_setup_story_guide_popup(root_control)
 
@@ -330,6 +352,13 @@ func _build_ui_tree() -> void:
 	dialogue_modal = DialogueModalScript.new()
 	dialogue_modal.action_triggered.connect(_on_dialogue_action)
 	add_child(dialogue_modal)
+
+	main_menu = MainMenuScript.new()
+	main_menu.visible = false
+	main_menu.campaign_started.connect(_on_main_menu_campaign_started)
+	main_menu.resume_requested.connect(_on_main_menu_resumed)
+	main_menu.return_to_title_requested.connect(_on_main_menu_return_to_title)
+	add_child(main_menu)
 
 	# Full-screen transition curtain for building doorways & floor transitions
 	fade_curtain = ColorRect.new()
@@ -518,7 +547,7 @@ func _process(_delta: float) -> void:
 func _setup_story_guide_popup(parent: Control) -> void:
 	story_guide_panel = PanelContainer.new()
 	story_guide_panel.name = "StoryGuidePopUp"
-	story_guide_panel.position = Vector2(20, 74)
+	story_guide_panel.position = Vector2(20, 96)
 	story_guide_panel.custom_minimum_size = Vector2(340, 0)
 
 	var sb = StyleBoxFlat.new()
@@ -1486,7 +1515,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			mission_menu.toggle_menu()
 			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE):
-		if realm_map_modal and realm_map_modal.visible:
+		if main_menu and main_menu.visible:
+			if main_menu.is_pause_mode:
+				close_pause_menu()
+				get_viewport().set_input_as_handled()
+		elif realm_map_modal and realm_map_modal.visible:
 			realm_map_modal.close_map()
 			get_viewport().set_input_as_handled()
 		elif journal_modal and journal_modal.visible:
@@ -1495,6 +1528,80 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mission_menu and mission_menu.visible:
 			mission_menu.close_menu()
 			get_viewport().set_input_as_handled()
+		else:
+			open_pause_menu()
+			get_viewport().set_input_as_handled()
+
+func open_opening_title_screen() -> void:
+	if not main_menu:
+		return
+	if hud_root_control:
+		hud_root_control.visible = false
+	get_tree().paused = false
+	var player = get_tree().get_first_node_in_group("player")
+	if player and "is_input_locked" in player:
+		player.is_input_locked = true
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node and "is_title_screen_active" in main_node:
+		main_node.is_title_screen_active = true
+		if main_node.camera_ui_container:
+			main_node.camera_ui_container.visible = false
+	main_menu.open_title_screen()
+
+func open_pause_menu() -> void:
+	if not main_menu:
+		return
+	get_tree().paused = true
+	main_menu.open_pause_menu()
+
+func close_pause_menu() -> void:
+	if not main_menu:
+		return
+	main_menu.hide()
+	get_tree().paused = false
+	var player = get_tree().get_first_node_in_group("player")
+	if player and "is_input_locked" in player:
+		player.is_input_locked = false
+
+func toggle_pause_menu() -> void:
+	if not main_menu:
+		return
+	if main_menu.visible and main_menu.is_pause_mode:
+		close_pause_menu()
+	elif not main_menu.visible:
+		open_pause_menu()
+
+func _on_main_menu_campaign_started(is_new_campaign: bool, _chosen_class: int, use_top_down: bool) -> void:
+	get_tree().paused = false
+	if hud_root_control:
+		hud_root_control.visible = true
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		if "is_input_locked" in player:
+			player.is_input_locked = false
+		if is_new_campaign:
+			player.global_position = Vector3(0.0, 0.5, 3.8)
+			player.current_health = player.max_health
+			player.health_changed.emit(player.current_health, player.max_health)
+	var main_node = get_tree().get_first_node_in_group("main")
+	if main_node:
+		if "is_title_screen_active" in main_node:
+			main_node.is_title_screen_active = false
+		if main_node.camera_ui_container:
+			main_node.camera_ui_container.visible = true
+		if main_node.has_method("apply_camera_preset"):
+			main_node.apply_camera_preset(4 if use_top_down else 0, false)
+	_update_currencies()
+	_update_hero_progression_badge()
+	_update_story_guide_ui()
+	show_toast("⚔️ Welcome to Echoes of the Ossuary! Created by daryl.created@gmail.com", 4.0)
+
+func _on_main_menu_resumed() -> void:
+	close_pause_menu()
+
+func _on_main_menu_return_to_title() -> void:
+	get_tree().paused = false
+	open_opening_title_screen()
 
 func _check_tri_seal_completion() -> void:
 	if GameManager.quest_port_compass_completed and GameManager.quest_forest_heartwood_completed and GameManager.quest_crags_runecore_completed:
