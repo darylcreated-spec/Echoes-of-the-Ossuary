@@ -1245,9 +1245,11 @@ func _spawn_pirate_captain_duel(duel_pos: Vector3, enemy_ship: Node3D) -> void:
 	boss.add_child(boss_lbl)
 
 	if enemy_ship.has_signal("tree_exited"):
+		var boss_wr = weakref(boss)
 		enemy_ship.tree_exited.connect(func():
-			if is_instance_valid(boss):
-				boss.queue_free()
+			var b = boss_wr.get_ref()
+			if b:
+				b.queue_free()
 		)
 
 func apply_shipyard_upgrade(upgrade_type: String) -> void:

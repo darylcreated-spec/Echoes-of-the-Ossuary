@@ -76,7 +76,9 @@ func _build_speech_bark_ui() -> void:
 	_bark_label.modulate = Color(1.0, 0.94, 0.75, 0.0) # Start invisible
 	_bark_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_bark_label.double_sided = true
-	_bark_label.visibility_range_end = 9.0
+	_bark_label.visibility_range_begin = 2.4
+	_bark_label.visibility_range_begin_margin = 0.8
+	_bark_label.visibility_range_end = 8.0
 	_bark_label.visibility_range_end_margin = 2.0
 	_bark_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	_bark_label.render_priority = 0

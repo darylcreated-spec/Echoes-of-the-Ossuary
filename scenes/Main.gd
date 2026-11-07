@@ -1007,6 +1007,36 @@ func _run_gameplay_self_test() -> void:
 	print(" -> Top-Down Camera verified! Pitch: %.1f°, Distance: %.1fm" % [target_cam_pitch, target_cam_distance])
 	toggle_top_down_camera()
 
+	# =========================================================
+	# TEST 27: AA MULTI-BIOME TERRAIN SHADER, FULL SECTOR NPCs, FX & REGIONAL MUSIC
+	# =========================================================
+	print("\n[TEST 27] Verifying AA Multi-Biome Terrain Shader, Sector NPCs, FX & Dynamic Regional Music...")
+	var nb_grass = current_room.find_child("NorthBank_Grass", true, false) as MeshInstance3D
+	var sb_grass = current_room.find_child("SouthBank_Grass", true, false) as MeshInstance3D
+	assert(nb_grass != null and sb_grass != null, "NorthBank_Grass and SouthBank_Grass must exist")
+	assert(nb_grass.material_override is ShaderMaterial, "NorthBank_Grass must use ShaderMaterial (medieval_terrain.gdshader)")
+	assert(sb_grass.material_override is ShaderMaterial, "SouthBank_Grass must use ShaderMaterial (medieval_terrain.gdshader)")
+
+	var all_npcs = get_tree().get_nodes_in_group("npcs") + get_tree().get_nodes_in_group("npc")
+	var all_townspeople = get_tree().get_nodes_in_group("townsperson")
+	var all_patrols = get_tree().get_nodes_in_group("patrol_npc")
+	print(" -> Total Interactive NPCs: %d | Townspeople: %d | Guard Patrols: %d" % [all_npcs.size(), all_townspeople.size(), all_patrols.size()])
+	assert(all_npcs.size() >= 55, "Must have >= 55 interactive NPCs across all 16 map sectors")
+	assert(all_townspeople.size() >= 30, "Must have >= 30 active walking/conversing townspeople across sectors")
+	assert(all_patrols.size() >= 7, "Must have >= 7 active marching guard patrols across sectors")
+
+	# Verify Dynamic Regional Music Director
+	player.global_position = Vector3(22.0, 0.5, 145.0)
+	AudioManager._update_dynamic_regional_soundscape()
+	assert(AudioManager._active_region_music_zone == "siege_battle", "Sector C4 must trigger siege_battle music")
+	player.global_position = Vector3(-95.0, 0.5, -20.0)
+	AudioManager._update_dynamic_regional_soundscape()
+	assert(AudioManager._active_region_music_zone == "high_seas", "Sector A1/A2 must trigger high_seas music")
+	player.global_position = Vector3(0.0, 0.5, 3.8)
+	AudioManager._update_dynamic_regional_soundscape()
+	assert(AudioManager._active_region_music_zone == "overworld", "Oakhaven Hub must trigger overworld music")
+	print(" -> Multi-Biome Terrain Shader, Sector NPCs, FX & Dynamic Regional Music verified!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
@@ -1230,9 +1260,9 @@ func _process_follow_camera(delta: float) -> void:
 		cos(pitch_rad) * cos(yaw_rad)
 	).normalized()
 
-	# Spring-Arm Anti-Occlusion Raycast: pull camera in front of tall walls/towers in close 3rd-Person mode
+	# Spring-Arm Anti-Occlusion Raycast: pull camera in front of tall walls/roofs/towers across all follow angles
 	var effective_dist = contextual_dist
-	if current_camera_preset == CameraPreset.THIRD_PERSON and get_world_3d() and get_world_3d().direct_space_state:
+	if current_camera_preset != CameraPreset.TOP_DOWN and get_world_3d() and get_world_3d().direct_space_state:
 		var desired_cam_pos = anchor_target + unit_offset * contextual_dist
 		var ray_query = PhysicsRayQueryParameters3D.create(anchor_target, desired_cam_pos, 1)
 		ray_query.exclude = [player.get_rid()]
@@ -1240,7 +1270,7 @@ func _process_follow_camera(delta: float) -> void:
 		if not hit.is_empty():
 			var hit_dist = anchor_target.distance_to(hit["position"])
 			if hit_dist < contextual_dist and hit_dist > MIN_DISTANCE:
-				effective_dist = max(MIN_DISTANCE, hit_dist - 0.65)
+				effective_dist = max(MIN_DISTANCE, hit_dist - 0.85)
 
 	cam_distance = lerp(cam_distance, effective_dist, delta * camera_follow_speed)
 	var target_pos = look_target + unit_offset * cam_distance

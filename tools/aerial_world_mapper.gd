@@ -323,6 +323,44 @@ static func run_mapping(main_node: Node3D) -> void:
 		await tree.process_frame
 	_save_viewport_image(tree, out_dir + "/aa_massive_battle_2_port_sea_warfare_top_down.png", local_dir + "/aa_massive_battle_2_port_sea_warfare_top_down.png")
 
+	# Shot 6G: Sector C1 — Abbey of the Silver Dawn, Sacred Aura, Braziers & Patrols
+	GameManager.set_story_guide_enabled(true)
+	if player:
+		player.global_position = Vector3(4.0, 0.0, -84.0)
+	main_node.call("apply_camera_preset", 0, true) # ACTION_RPG
+	camera.global_position = Vector3(4.0, 9.5, -72.0)
+	camera.look_at(Vector3(4.0, 1.5, -96.0), Vector3.UP)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/sector_c1_abbey_of_silver_dawn.png", local_dir + "/sector_c1_abbey_of_silver_dawn.png")
+
+	# Shot 6H: Sector B4 — Southwatch Coastal Supply Depot, Cavalry Remount Corral & Watchtowers
+	if player:
+		player.global_position = Vector3(-30.0, 0.0, 136.0)
+	camera.global_position = Vector3(-16.0, 11.0, 120.0)
+	camera.look_at(Vector3(-34.0, 1.5, 148.0), Vector3.UP)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/sector_b4_southwatch_depot_and_cavalry.png", local_dir + "/sector_b4_southwatch_depot_and_cavalry.png")
+
+	# Shot 6I: Sector D2 — Eastbrook Orchard, Windmill, Wayfarer's Inn & Ploughed Furrows
+	if player:
+		player.global_position = Vector3(96.0, 0.0, -14.0)
+	camera.global_position = Vector3(80.0, 10.5, -2.0)
+	camera.look_at(Vector3(104.0, 1.5, -18.0), Vector3.UP)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/sector_d2_eastbrook_orchard_and_windmill.png", local_dir + "/sector_d2_eastbrook_orchard_and_windmill.png")
+
+	# Shot 6J: Sector D4 — Southern Fenlands Ruined Keep, Fireflies & Smoke FX
+	if player:
+		player.global_position = Vector3(84.0, 0.0, 132.0)
+	camera.global_position = Vector3(76.0, 11.0, 122.0)
+	camera.look_at(Vector3(98.0, 1.8, 152.0), Vector3.UP)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/sector_d4_southern_fenlands_keep.png", local_dir + "/sector_d4_southern_fenlands_keep.png")
+
 	overlay_layer.queue_free()
 	print("==================================================================")
 	print("   AERIAL MAPPING COMPLETE: ALL SECTOR MAPS GENERATED   ")

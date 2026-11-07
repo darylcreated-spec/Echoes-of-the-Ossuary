@@ -129,7 +129,24 @@ func apply_ship_materials(ship_node: Node3D) -> void:
 		mi.material_override = mat
 
 # --- SAFE ASSET INSTANTIATOR ---
+const ASSET_PATH_ALIASES: Dictionary = {
+	"res://assets/overworld/tree_A.gltf": "res://assets/overworld/tree_single_A.gltf",
+	"res://assets/overworld/tree_B.gltf": "res://assets/overworld/tree_single_B.gltf",
+	"res://assets/overworld/rock_A.gltf": "res://assets/overworld/rock_single_A.gltf",
+	"res://assets/overworld/rock_B.gltf": "res://assets/overworld/rock_single_B.gltf",
+	"res://assets/overworld/rock_C.gltf": "res://assets/overworld/rock_single_C.gltf",
+	"res://assets/overworld/rock_formation_large.gltf": "res://assets/overworld/mountain_A.gltf",
+	"res://assets/overworld/building_stables_blue.gltf": "res://assets/overworld/building_barracks_blue.gltf",
+	"res://assets/overworld/lantern.gltf": "res://assets/overworld/shrine_candles.gltf",
+	"res://assets/dungeon/banner_shield_gold.gltf.glb": "res://assets/dungeon/banner_blue.gltf.glb",
+	"res://assets/dungeon/rubble.gltf.glb": "res://assets/dungeon/rubble_large.gltf.glb",
+	"res://assets/characters/adventurers/Adventurer.glb": "res://assets/characters/adventurers/Rogue.glb",
+	"res://assets/characters/monsters/Skeleton_Warrior.glb": "res://assets/characters/enemies/Skeleton_Warrior.glb"
+}
+
 func load_or_generate_model(asset_path: String, fallback_type: String, fallback_subtype: String) -> Node3D:
+	if ASSET_PATH_ALIASES.has(asset_path):
+		asset_path = ASSET_PATH_ALIASES[asset_path]
 	var candidates: Array[String] = [asset_path]
 	if asset_path.ends_with(".glb"):
 		candidates.append(asset_path.replace(".glb", ".gltf.glb"))
@@ -766,8 +783,10 @@ func style_world_label3d(label: Label3D, text: String = "", font_size: int = 26,
 	label.double_sided = true
 	label.render_priority = 0
 	label.outline_render_priority = 0
-	label.visibility_range_end = 22.0
-	label.visibility_range_end_margin = 4.0
+	label.visibility_range_begin = 2.4
+	label.visibility_range_begin_margin = 0.8
+	label.visibility_range_end = 15.0
+	label.visibility_range_end_margin = 3.5
 	label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

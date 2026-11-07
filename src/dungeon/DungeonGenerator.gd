@@ -355,10 +355,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 
 	parent.add_child(floor_body)
 	
-	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River Z in [20, 28] and Ocean Basin X < -78 in North, X < -62 in South)
-	var g_mat = StandardMaterial3D.new()
-	g_mat.albedo_color = Color(0.20, 0.38, 0.16) # Rich medieval pasture green
-	g_mat.roughness = 0.92
+	# Visual Overworld Slotted Multi-Biome Landscape with Connected Cobblestone & Country Road Network
+	var g_mat = ShaderMaterial.new()
+	g_mat.shader = load("res://shaders/medieval_terrain.gdshader")
 
 	_add_grass_plane_mesh(parent, g_mat, "NorthBank_Grass", Vector2(215.0, 157.0), Vector3(29.5, 0.0, -58.5))
 	_add_grass_plane_mesh(parent, g_mat, "SouthBank_Grass", Vector2(199.0, 182.0), Vector3(37.5, 0.0, 119.0))
@@ -888,7 +887,7 @@ func _build_town_population(parent: Node3D) -> void:
 	cedric.citizen_name = "Cedric"
 	cedric.citizen_title = "Fishmonger"
 	cedric.role = TownspersonNPCScript.NPCRole.VENDOR
-	cedric.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	cedric.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
 	cedric.icon = "🐟"
 	cedric.speech_barks = [
 		"Fresh river trout and silver bream!",
@@ -1035,7 +1034,7 @@ func _build_town_population(parent: Node3D) -> void:
 	eamon.citizen_name = "Eamon"
 	eamon.citizen_title = "Forge Apprentice"
 	eamon.role = TownspersonNPCScript.NPCRole.CITIZEN
-	eamon.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	eamon.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	eamon.icon = "🔨"
 	eamon.speech_barks = [
 		"More charcoal for Master Torval's bellows!",
@@ -1101,7 +1100,7 @@ func _build_town_population(parent: Node3D) -> void:
 	beatrice.citizen_name = "Sister Beatrice"
 	beatrice.citizen_title = "Sanctuary Acolyte"
 	beatrice.role = TownspersonNPCScript.NPCRole.MONK
-	beatrice.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	beatrice.model_path = "res://assets/characters/adventurers/Mage.glb"
 	beatrice.icon = "✨"
 	beatrice.speech_barks = [
 		"Holy water vials blessed at the Altar of Dawn.",
@@ -1159,7 +1158,7 @@ func _build_town_population(parent: Node3D) -> void:
 	jax.citizen_name = "Sailor Jax"
 	jax.citizen_title = "Able Seaman"
 	jax.role = TownspersonNPCScript.NPCRole.CITIZEN
-	jax.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	jax.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
 	jax.icon = "⚓"
 	jax.speech_barks = [
 		"Aye, the Red Skull cog was spotted off the barrier arch!",
@@ -2052,7 +2051,7 @@ func _add_floor_col_box(floor_body: StaticBody3D, b_size: Vector3, b_pos: Vector
 	cs.position = b_pos
 	floor_body.add_child(cs)
 
-func _add_grass_plane_mesh(parent: Node3D, g_mat: StandardMaterial3D, p_name: String, p_size: Vector2, p_pos: Vector3) -> void:
+func _add_grass_plane_mesh(parent: Node3D, g_mat: Material, p_name: String, p_size: Vector2, p_pos: Vector3) -> void:
 	var g_mesh_inst = MeshInstance3D.new()
 	g_mesh_inst.name = p_name
 	var pm = PlaneMesh.new()
@@ -3565,48 +3564,86 @@ func _populate_all_empty_map_sectors_and_sea_warfare(parent: Node3D) -> void:
 	port_sea_battle.position = Vector3(-58.0, 0.0, 78.0)
 	parent.add_child(port_sea_battle)
 
+	# Add dramatic sea warfare & siege battlefield smoke/flame FX across both Massive Battles
+	for b_fx_pos in [
+		Vector3(-56.0, 1.5, 62.0), Vector3(-56.0, 1.5, 92.0),
+		Vector3(-82.0, 2.2, 68.0), Vector3(-84.0, 2.2, 88.0),
+		Vector3(6.0, 1.8, 128.0), Vector3(38.0, 1.8, 128.0),
+		Vector3(8.0, 1.2, 162.0), Vector3(36.0, 1.2, 162.0)
+	]:
+		AmbientFX.create_brazier_flame(parent, b_fx_pos, 1.35)
+		AmbientFX.create_battle_smoke_plume(parent, b_fx_pos + Vector3(0.0, 0.6, 0.0))
+
 	# =========================================================================
-	# B. SECTOR B4 (X: -58 to -6, Z: 105 to 198) — COASTAL SUPPLY DEPOT & WATCHTOWERS
+	# B. SECTOR B4 (X: -58 to -6, Z: 105 to 198) — COASTAL SUPPLY DEPOT, GARRISON & WATCHTOWERS
 	# =========================================================================
-	# Fortified Coastal Supply Highroad linking Port Blackwater (-50, 102) to Sector C4 Siege Front (10, 150)
 	var road_models = [
 		"res://assets/overworld/path_A.gltf",
 		"res://assets/overworld/path_B.gltf",
 		"res://assets/overworld/path_C.gltf"
 	]
-	for step in range(0, 14):
-		var alpha = float(step) / 13.0
+	for step in range(0, 18):
+		var alpha = float(step) / 17.0
 		var rx = lerp(-48.0, 6.0, alpha)
 		var rz = lerp(104.0, 152.0, alpha)
 		_place_prop(parent, road_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.25, 1.0, 1.25), 42.0)
 
-	# Royal Coastal Quartermaster Compound & Watchtowers in Sector B4
+	# Royal Coastal Quartermaster Compound, Watchtowers & South Cliff Lighthouse in Sector B4
 	_place_prop(parent, "res://assets/overworld/building_barracks_blue.gltf", Vector3(-36.0, 0.0, 134.0), Vector3.ONE * 4.8, 90.0)
 	_add_static_box(parent, Vector3(-36.0, 4.0, 134.0), Vector3(7.0, 7.0, 7.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-36.0, 6.8, 134.0))
+	AmbientFX.create_brazier_flame(parent, Vector3(-30.0, 1.2, 130.0), 1.1)
+
 	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-46.0, 0.0, 122.0), Vector3.ONE * 6.5, 45.0)
 	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-22.0, 0.0, 164.0), Vector3.ONE * 6.5, 135.0)
+	_place_prop(parent, "res://assets/overworld/building_castle_blue.gltf", Vector3(-42.0, 0.0, 178.0), Vector3.ONE * 5.2, 90.0)
 	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(-34.0, 0.0, 154.0), Vector3.ONE * 5.6, 0.0)
+	_place_prop(parent, "res://assets/overworld/building_home_B_yellow.gltf", Vector3(-18.0, 0.0, 182.0), Vector3.ONE * 5.4, -45.0)
+	_place_prop(parent, "res://assets/overworld/building_blacksmith_blue.gltf", Vector3(-24.0, 0.0, 118.0), Vector3.ONE * 5.2, 0.0)
+	AmbientFX.create_forge_sparks(parent, Vector3(-24.0, 1.5, 121.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-24.0, 6.5, 118.0))
 	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-20.0, 0.0, 128.0), Vector3.ONE * 2.5, 45.0)
 	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-16.0, 0.0, 142.0), Vector3.ONE * 2.5, 60.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-28.0, 0.0, 168.0), Vector3.ONE * 2.5, 15.0)
 
 	# Royal Warhorse Remount Corral & Supply Munitions in Sector B4
 	for fx in [-44.0, -38.0, -32.0, -26.0]:
 		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, 174.0), Vector3.ONE * 2.0, 90.0)
 		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, 186.0), Vector3.ONE * 2.0, 90.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(-36.0, 0.0, 180.0), 40.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.HORSE, Vector3(-30.0, 0.0, 180.0), -65.0)
+
 	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-30.0, 0.0, 132.0), Vector3.ONE * 2.2)
 	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-20.0, 0.0, 160.0), Vector3.ONE * 2.2)
 	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-28.0, 0.0, 138.0), Vector3.ONE * 1.6)
 	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-28.0, 0.0, 138.0), Vector3.ONE * 1.4)
 	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-26.5, 0.0, 139.0), Vector3.ONE * 1.3)
 
-	# Coastal Pine Groves & Boulders across Sector B4
 	var b4_trees = [
 		Vector3(-52.0, 0.0, 114.0), Vector3(-42.0, 0.0, 112.0), Vector3(-18.0, 0.0, 115.0),
 		Vector3(-48.0, 0.0, 146.0), Vector3(-52.0, 0.0, 168.0), Vector3(-14.0, 0.0, 178.0),
-		Vector3(-34.0, 0.0, 192.0), Vector3(-48.0, 0.0, 190.0), Vector3(-18.0, 0.0, 192.0)
+		Vector3(-34.0, 0.0, 192.0), Vector3(-48.0, 0.0, 190.0), Vector3(-18.0, 0.0, 192.0),
+		Vector3(-10.0, 0.0, 118.0), Vector3(-12.0, 0.0, 156.0), Vector3(-40.0, 0.0, 164.0)
 	]
 	for i in range(b4_trees.size()):
 		_place_prop(parent, "res://assets/overworld/tree_B.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_A.gltf", b4_trees[i], Vector3.ONE * 2.5, float(i * 47))
+
+	# Sector B4 NPCs & Moving Patrols
+	_spawn_sector_dialogue_npc(
+		parent, "b4_quartermaster", "Quartermaster Vance", "South Coast Commissary", "📦",
+		"res://assets/characters/adventurers/Knight.glb", Vector3(-31.0, 0.0, 135.0), 90.0,
+		"Every wagon of bodkin arrows and blackpowder barrels passes through Southwatch Depot on its way to the Sector C4 Siege Lines! Keep the coastal highway clear of Crimson outriders, champion!"
+	)
+	_spawn_sector_townsperson(
+		parent, "Farrier Hobb", "Cavalry Blacksmith", TownspersonNPCScript.NPCRole.VENDOR,
+		"res://assets/characters/adventurers/Barbarian.glb", "🔨", Vector3(-22.0, 0.0, 122.0),
+		[Vector3(-22.0, 0.0, 122.0), Vector3(-32.0, 0.0, 176.0), Vector3(-26.0, 0.0, 148.0)],
+		["Fresh horseshoes for the Royal Lancers!", "Keep the warhorses shod for the southern charge!", "Finest tempered iron on the South Coast!"]
+	)
+	_spawn_sector_patrol(
+		parent, "Southwatch Warden Hal", Vector3(-24.0, 0.0, 130.0),
+		[Vector3(-42.0, 0.0, 118.0), Vector3(-16.0, 0.0, 144.0), Vector3(-26.0, 0.0, 172.0), Vector3(-42.0, 0.0, 152.0)]
+	)
 
 	# =========================================================================
 	# C. SECTOR D4 (X: 76 to 132, Z: 118 to 196) — SOUTHERN FENLANDS RUINED KEEP & OUTLAW FLANK
@@ -3614,11 +3651,16 @@ func _populate_all_empty_map_sectors_and_sea_warfare(parent: Node3D) -> void:
 	_place_prop(parent, "res://assets/overworld/building_destroyed.gltf", Vector3(96.0, 0.0, 142.0), Vector3.ONE * 6.5, -35.0)
 	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(112.0, 0.0, 154.0), Vector3.ONE * 7.2, -90.0)
 	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(88.0, 0.0, 166.0), Vector3.ONE * 4.8, 180.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_A_red.gltf", Vector3(118.0, 0.0, 128.0), Vector3.ONE * 6.2, -45.0)
+	_place_prop(parent, "res://assets/overworld/building_home_B_red.gltf", Vector3(106.0, 0.0, 184.0), Vector3.ONE * 5.5, 180.0)
 	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(104.0, 0.0, 172.0), Vector3.ONE * 2.6, -120.0)
 	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(82.0, 0.0, 150.0), Vector3.ONE * 2.5, -90.0)
 	_place_prop(parent, "res://assets/overworld/flag_red.gltf", Vector3(84.0, 0.0, 144.0), Vector3.ONE * 2.2)
 	_place_prop(parent, "res://assets/overworld/flag_red.gltf", Vector3(106.0, 0.0, 162.0), Vector3.ONE * 2.2)
 	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(98.0, 0.0, 130.0), Vector3.ONE * 2.2)
+	AmbientFX.create_brazier_flame(parent, Vector3(86.0, 1.4, 148.0), 1.25)
+	AmbientFX.create_battle_smoke_plume(parent, Vector3(96.0, 2.0, 142.0))
+	AmbientFX.create_forest_fireflies(parent, Vector3(102.0, 1.5, 132.0), 14.0)
 
 	var d4_trees = [
 		Vector3(80.0, 0.0, 124.0), Vector3(114.0, 0.0, 126.0), Vector3(124.0, 0.0, 142.0),
@@ -3629,57 +3671,106 @@ func _populate_all_empty_map_sectors_and_sea_warfare(parent: Node3D) -> void:
 		var dt_m = "res://assets/overworld/tree_dead_large_decorated.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_B.gltf"
 		_place_prop(parent, dt_m, d4_trees[i], Vector3.ONE * 2.5, float(i * 53))
 
+	# Sector D4 NPCs & Patrols
+	_spawn_sector_dialogue_npc(
+		parent, "d4_fen_ranger", "Fen-Warden Sylas", "Royal Swamp Pathfinder", "🏹",
+		"res://assets/characters/adventurers/Rogue_Hooded.glb", Vector3(82.0, 0.0, 128.0), -45.0,
+		"Tread softly through the Southern Fenlands, traveler. The Crimson Vanguard seized the Ruined Bog Keep ahead to flank our siege lines in Sector C4. Strike their supply tents and watch out for marsh wolves!"
+	)
+	_spawn_sector_patrol(
+		parent, "Fenland Scout Varek", Vector3(80.0, 0.0, 134.0),
+		[Vector3(78.0, 0.0, 122.0), Vector3(92.0, 0.0, 136.0), Vector3(78.0, 0.0, 158.0)]
+	)
+
 	# =========================================================================
-	# D. SECTOR D2 (X: 74 to 130, Z: -38 to 16) — EASTBROOK ORCHARD, GRANARY & TIMBER CLEARING
+	# D. SECTOR D2 (X: 74 to 130, Z: -38 to 16) — EASTBROOK ORCHARD, WINDMILL & WAYFARER'S INN
 	# =========================================================================
 	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(88.0, 0.0, -18.0), Vector3.ONE * 5.8, -90.0)
 	_add_static_box(parent, Vector3(88.0, 3.5, -18.0), Vector3(6.0, 6.5, 6.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(88.0, 6.5, -18.0))
 	_place_prop(parent, "res://assets/overworld/building_home_B_green.gltf", Vector3(106.0, 0.0, -8.0), Vector3.ONE * 5.8, 180.0)
 	_add_static_box(parent, Vector3(106.0, 3.5, -8.0), Vector3(6.0, 6.5, 6.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(106.0, 6.5, -8.0))
+	_place_prop(parent, "res://assets/overworld/building_tavern_yellow.gltf", Vector3(114.0, 0.0, -28.0), Vector3.ONE * 5.8, -45.0)
+	AmbientFX.create_chimney_smoke(parent, Vector3(114.0, 7.2, -28.0))
+	_place_prop(parent, "res://assets/overworld/building_windmill_blue.gltf", Vector3(122.0, 0.0, 4.0), Vector3.ONE * 6.0, -90.0)
 	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(96.0, 0.0, -28.0), Vector3.ONE * 4.2, 0.0)
 	_place_prop(parent, "res://assets/overworld/building_well_blue.gltf", Vector3(96.0, 0.0, -14.0), Vector3.ONE * 2.4)
-	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(114.0, 0.0, -24.0), Vector3.ONE * 2.2)
-	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(118.0, 0.0, -20.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(114.0, 0.0, -16.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(118.0, 0.0, -14.0), Vector3.ONE * 2.2)
 
 	var d2_orchard = [
 		Vector3(78.0, 0.0, -30.0), Vector3(84.0, 0.0, -6.0), Vector3(96.0, 0.0, 4.0),
-		Vector3(112.0, 0.0, 6.0), Vector3(122.0, 0.0, -6.0), Vector3(122.0, 0.0, -30.0),
-		Vector3(108.0, 0.0, -34.0), Vector3(78.0, 0.0, 8.0)
+		Vector3(112.0, 0.0, 6.0), Vector3(122.0, 0.0, -6.0), Vector3(124.0, 0.0, -30.0),
+		Vector3(104.0, 0.0, -34.0), Vector3(78.0, 0.0, 8.0)
 	]
 	for i in range(d2_orchard.size()):
 		_place_prop(parent, "res://assets/overworld/tree_A.gltf", d2_orchard[i], Vector3.ONE * 2.4, float(i * 40))
 
+	_spawn_sector_dialogue_npc(
+		parent, "d2_orchard_master", "Master Rowan", "Eastbrook Orchard Keeper", "🍎",
+		"res://assets/characters/adventurers/Mage.glb", Vector3(94.0, 0.0, -16.0), 0.0,
+		"Welcome to Eastbrook Orchard! Our golden cider apples and highland wheat feed both Oakhaven Town and the miners up in Khar-Drakken Crags. Rest by our well whenever your travels bring you east!"
+	)
+	_spawn_sector_townsperson(
+		parent, "Cider-Maker Elspeth", "Eastbrook Vintner", TownspersonNPCScript.NPCRole.VENDOR,
+		"res://assets/characters/adventurers/Rogue.glb", "🍺", Vector3(102.0, 0.0, -14.0),
+		[Vector3(92.0, 0.0, -14.0), Vector3(110.0, 0.0, -22.0), Vector3(104.0, 0.0, -6.0)],
+		["Sweet pressed orchard cider!", "Fresh honey-apples from Eastbrook!", "Rest your feet at the Wayfarer's Inn!"]
+	)
+	_spawn_animal(parent, AnimalAI.AnimalType.COW, Vector3(90.0, 0.0, -4.0), 25.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(98.0, 0.0, -2.0), -50.0)
+
 	# =========================================================================
-	# E. SECTOR B3 (X: -46 to -16, Z: 34 to 96) — WESTERN MEADOW FARMSTEAD & WATCHPOST
+	# E. SECTOR B3 (X: -46 to -16, Z: 34 to 96) — SUNNYDALE ROYAL STABLES, MANOR & WATCHPOST
 	# =========================================================================
 	_place_prop(parent, "res://assets/overworld/building_home_A_yellow.gltf", Vector3(-34.0, 0.0, 64.0), Vector3.ONE * 5.6, 90.0)
+	AmbientFX.create_chimney_smoke(parent, Vector3(-34.0, 6.2, 64.0))
+	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(-36.0, 0.0, 48.0), Vector3.ONE * 5.6, 90.0)
+	AmbientFX.create_chimney_smoke(parent, Vector3(-36.0, 6.2, 48.0))
 	_place_prop(parent, "res://assets/overworld/building_tower_A_blue.gltf", Vector3(-24.0, 0.0, 44.0), Vector3.ONE * 5.8, 0.0)
 	_place_prop(parent, "res://assets/overworld/building_market_yellow.gltf", Vector3(-32.0, 0.0, 78.0), Vector3.ONE * 3.8, 90.0)
+	_place_prop(parent, "res://assets/overworld/building_stables_blue.gltf", Vector3(-28.0, 0.0, 88.0), Vector3.ONE * 4.8, 0.0)
 	for fz in [56.0, 62.0, 68.0, 74.0]:
 		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(-26.0, 0.0, fz), Vector3.ONE * 2.0, 0.0)
 
+	_spawn_sector_dialogue_npc(
+		parent, "b3_stablemaster", "Stablemaster Garrick", "Keeper of the King's Steeds", "🐎",
+		"res://assets/characters/adventurers/Barbarian.glb", Vector3(-27.0, 0.0, 66.0), 90.0,
+		"These west-meadow pastures raise the swiftest chargers in the realm! Press [G] anytime in the overworld to whistle for your warhorse and gallop between Port Blackwater and the Royal Citadel!"
+	)
+	_spawn_sector_townsperson(
+		parent, "Dairymaid Clara", "West-Meadow Herder", TownspersonNPCScript.NPCRole.CITIZEN,
+		"res://assets/characters/adventurers/Mage.glb", "🥛", Vector3(-30.0, 0.0, 56.0),
+		[Vector3(-30.0, 0.0, 52.0), Vector3(-28.0, 0.0, 76.0), Vector3(-36.0, 0.0, 68.0)],
+		["Fresh meadow cream and golden butter!", "The sea breeze from Port Blackwater keeps the clover sweet!", "Good morrow, Sir Champion!"]
+	)
+
 	# =========================================================================
-	# F. SECTOR A1 & A2 (X: -195 to -85, Z: -125 to 25) — SEA-STACK ISLANDS, REEF & ARMADA FLOTILLA
+	# F. SECTOR A1 & A2 (X: -195 to -85, Z: -125 to 25) — SEA-STACK ISLANDS, ATOLL & ARMADA FLOTILLA
 	# =========================================================================
 	var sea_stacks = [
 		Vector3(-118.0, -0.5, -92.0), Vector3(-148.0, -0.5, -64.0),
 		Vector3(-112.0, -0.5, -28.0), Vector3(-145.0, -0.5, -8.0),
-		Vector3(-116.0, -0.5, 16.0), Vector3(-156.0, -0.5, -105.0)
+		Vector3(-116.0, -0.5, 16.0), Vector3(-156.0, -0.5, -105.0),
+		Vector3(-168.0, -0.5, -36.0), Vector3(-135.0, -0.5, 22.0)
 	]
 	for i in range(sea_stacks.size()):
 		var rk_m = "res://assets/overworld/rock_C.gltf" if (i % 2 == 0) else "res://assets/overworld/rock_A.gltf"
 		_place_prop(parent, rk_m, sea_stacks[i], Vector3(4.5, 5.2, 4.5), float(i * 65))
 
-	# Northern Reef Lighthouse & Shipwreck on Kraken's Tooth Atoll (Sector A1)
+	# Northern Reef Lighthouse & Smuggler's Atoll Dock on Kraken's Tooth Atoll (Sector A1)
 	var north_lighthouse = HarborLighthouse3DScript.new()
 	north_lighthouse.position = Vector3(-118.0, 0.5, -92.0)
 	parent.add_child(north_lighthouse)
+	AmbientFX.create_brazier_flame(parent, Vector3(-118.0, 8.5, -92.0), 1.6)
 
 	# Northern Flotilla of the Invading Sea Armada in Sector A1 & A2
 	for nf_cfg in [
 		{"name": "Northern Vanguard Dreadnought", "pos": Vector3(-106.0, -0.3, -52.0), "rot": 115.0},
 		{"name": "Corsair Raider Black-Fin", "pos": Vector3(-124.0, -0.3, -16.0), "rot": 95.0},
-		{"name": "Sea-Wolf Scout Brigantine", "pos": Vector3(-104.0, -0.3, 12.0), "rot": 80.0}
+		{"name": "Sea-Wolf Scout Brigantine", "pos": Vector3(-104.0, -0.3, 12.0), "rot": 80.0},
+		{"name": "Iron-Tide War Galleon", "pos": Vector3(-142.0, -0.3, -78.0), "rot": 105.0}
 	]:
 		var n_ship = EnemyNavalShip3DScript.new()
 		n_ship.ship_name = nf_cfg["name"]
@@ -3688,12 +3779,111 @@ func _populate_all_empty_map_sectors_and_sea_warfare(parent: Node3D) -> void:
 		parent.add_child(n_ship)
 
 	# =========================================================================
-	# G. SECTOR B1 & C1 NORTHERN FRONTIER — GUARD CHECKPOINTS & WOODLAND GROVES
+	# G. SECTOR B1, C1 & D1 NORTHERN FRONTIER — ABBEY OF DAWN, RANGER LODGE & HIGHLAND GARRISON
 	# =========================================================================
+	# Sector C1: Abbey of the Silver Dawn & Northern King's Gatehouse (X: -24 to 36, Z: -115 to -72)
+	_place_prop(parent, "res://assets/overworld/building_church_yellow.gltf", Vector3(4.0, 0.0, -98.0), Vector3.ONE * 6.8, 0.0)
+	_add_static_box(parent, Vector3(4.0, 5.0, -98.0), Vector3(8.0, 10.0, 8.0))
+	AmbientFX.create_sacred_aura(parent, Vector3(4.0, 0.5, -90.0))
 	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-18.0, 0.0, -96.0), Vector3.ONE * 6.5, 0.0)
 	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(24.0, 0.0, -96.0), Vector3.ONE * 6.5, 0.0)
+	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(-10.0, 0.0, -84.0), Vector3.ONE * 5.2, 45.0)
+	_place_prop(parent, "res://assets/overworld/building_home_B_yellow.gltf", Vector3(18.0, 0.0, -84.0), Vector3.ONE * 5.2, -45.0)
 	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-22.0, 0.0, -82.0), Vector3.ONE * 2.2, 30.0)
 	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(28.0, 0.0, -82.0), Vector3.ONE * 2.2, -30.0)
+	AmbientFX.create_brazier_flame(parent, Vector3(-2.0, 1.2, -88.0), 1.1)
+	AmbientFX.create_brazier_flame(parent, Vector3(10.0, 1.2, -88.0), 1.1)
 	for nx in [-32.0, -12.0, 14.0, 34.0]:
 		_place_prop(parent, "res://assets/overworld/tree_B.gltf", Vector3(nx, 0.0, -108.0), Vector3.ONE * 2.6, 25.0)
+
+	_spawn_sector_dialogue_npc(
+		parent, "c1_abbot", "Abbot Caelum", "Prior of the Silver Dawn", "🔔",
+		"res://assets/characters/adventurers/Mage.glb", Vector3(4.0, 0.0, -88.0), 0.0,
+		"Blessings of the Northern Frontier upon you, champion. From the Abbey of the Silver Dawn we keep vigil over the Ancient Ossuary Crypt and the Whisperwood border."
+	)
+	_spawn_sector_townsperson(
+		parent, "Brother Lucian", "Abbey Chronicler", TownspersonNPCScript.NPCRole.MONK,
+		"res://assets/characters/adventurers/Mage.glb", "📜", Vector3(-4.0, 0.0, -82.0),
+		[Vector3(-8.0, 0.0, -82.0), Vector3(12.0, 0.0, -82.0), Vector3(4.0, 0.0, -72.0)],
+		["The northern watchfires burn bright against the frost!", "May the Silver Dawn illuminate your blade!", "Ancient hymns echo from the Abbey belfry."]
+	)
+	_spawn_sector_patrol(
+		parent, "Northgate Sentinel Vorn", Vector3(0.0, 0.0, -78.0),
+		[Vector3(-16.0, 0.0, -78.0), Vector3(20.0, 0.0, -78.0), Vector3(20.0, 0.0, -90.0), Vector3(-16.0, 0.0, -90.0)]
+	)
+
+	# Sector B1: Whisperwood Ranger Lodge & Lumberjack Hamlet (X: -58 to -24, Z: -115 to -55)
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-42.0, 0.0, -94.0), Vector3.ONE * 5.4, 30.0)
+	AmbientFX.create_chimney_smoke(parent, Vector3(-42.0, 6.2, -94.0))
+	AmbientFX.create_forest_fireflies(parent, Vector3(-36.0, 1.5, -78.0), 14.0)
+	_spawn_sector_dialogue_npc(
+		parent, "b1_warden", "Ranger-Captain Lyris", "Whisperwood Deep-Scout", "🏹",
+		"res://assets/characters/adventurers/Rogue_Hooded.glb", Vector3(-38.0, 0.0, -86.0), 25.0,
+		"The ancient oaks of Whisperwood shelter our relocated sea-watch shrines and moonwell groves. Follow the mossy hunter trails south to Greenhollow or east to the Abbey!"
+	)
+	_spawn_sector_townsperson(
+		parent, "Woodsman Thorne", "Whisperwood Forester", TownspersonNPCScript.NPCRole.CITIZEN,
+		"res://assets/characters/adventurers/Barbarian.glb", "🪓", Vector3(-46.0, 0.0, -72.0),
+		[Vector3(-48.0, 0.0, -72.0), Vector3(-32.0, 0.0, -82.0), Vector3(-36.0, 0.0, -64.0)],
+		["Seasoned heartwood for longbows and trebuchet beams!", "The stags run swift beneath the Whisperwood canopy!", "Keep an ear out for timber wolves near the ridge!"]
+	)
+
+	# Sector D1: Khar-Drakken Highland Dwarven Foundry & Garrison (X: 52 to 124, Z: -115 to -48)
+	_place_prop(parent, "res://assets/overworld/building_blacksmith_red.gltf", Vector3(92.0, 0.0, -88.0), Vector3.ONE * 5.8, -45.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_A_red.gltf", Vector3(112.0, 0.0, -96.0), Vector3.ONE * 6.4, -90.0)
+	AmbientFX.create_forge_sparks(parent, Vector3(92.0, 1.6, -85.0))
+	AmbientFX.create_brazier_flame(parent, Vector3(86.0, 1.4, -82.0), 1.3)
+	AmbientFX.create_chimney_smoke(parent, Vector3(92.0, 6.8, -88.0))
+	_spawn_sector_dialogue_npc(
+		parent, "d1_runesmith", "Thane Bromir", "Highland Foundry Lord", "⚒️",
+		"res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf", Vector3(88.0, 0.0, -82.0), -30.0,
+		"Hail from the Khar-Drakken Crags! Our mountain smelters pour pig-iron day and night for the King's siege engines. Watch your footing on the slate crags!",
+		Vector3.ONE * 0.38
+	)
+	_spawn_sector_patrol(
+		parent, "Highland Iron-Guard", Vector3(78.0, 0.0, -74.0),
+		[Vector3(68.0, 0.0, -68.0), Vector3(96.0, 0.0, -78.0), Vector3(84.0, 0.0, -96.0)]
+	)
+
+	# Sector C3: Royal Citadel Outer Bailey & Jousting Lists (X: -14 to 42, Z: 40 to 96)
+	AmbientFX.create_brazier_flame(parent, Vector3(-5.0, 1.4, 42.0), 1.2)
+	AmbientFX.create_brazier_flame(parent, Vector3(5.0, 1.4, 42.0), 1.2)
+	_spawn_sector_townsperson(
+		parent, "Herald Valerius", "Royal Citadel Seneschal", TownspersonNPCScript.NPCRole.TOWN_CRIER,
+		"res://assets/characters/adventurers/Knight.glb", "🎺", Vector3(6.0, 0.0, 56.0),
+		[Vector3(6.0, 0.0, 52.0), Vector3(-6.0, 0.0, 52.0), Vector3(-6.0, 0.0, 72.0), Vector3(6.0, 0.0, 72.0)],
+		["All hail High King Aldric IV and the Champion of Oakhaven!", "Reinforcements muster in the Citadel Bailey for the Southern Siege!", "Victory on land and sea shall preserve the crown!"]
+	)
+
+func _spawn_sector_dialogue_npc(parent: Node3D, id_str: String, name_str: String, title_str: String, icon_str: String, model_p: String, pos: Vector3, rot_y: float, text_str: String, custom_scale: Vector3 = Vector3(0.85, 0.85, 0.85)) -> void:
+	var npc = TownNPCScript.new()
+	npc.npc_id = id_str
+	npc.npc_name = name_str
+	npc.npc_title = title_str
+	npc.icon = icon_str
+	npc.model_path = model_p
+	npc.model_scale = custom_scale
+	npc.model_rotation_y = rot_y
+	npc.dialogue_text = text_str
+	npc.position = pos
+	parent.add_child(npc)
+
+func _spawn_sector_townsperson(parent: Node3D, name_str: String, title_str: String, role_val: int, model_p: String, icon_str: String, pos: Vector3, wp_list: Array, barks: Array) -> void:
+	var tp = TownspersonNPCScript.new()
+	tp.citizen_name = name_str
+	tp.citizen_title = title_str
+	tp.role = role_val as TownspersonNPCScript.NPCRole
+	tp.model_path = model_p
+	tp.icon = icon_str
+	tp.position = pos
+	tp.waypoints = wp_list
+	tp.speech_barks = barks
+	parent.add_child(tp)
+
+func _spawn_sector_patrol(parent: Node3D, name_str: String, pos: Vector3, wp_list: Array) -> void:
+	var pat = PatrolNPCScript.new()
+	pat.npc_name = name_str
+	pat.position = pos
+	pat.waypoints = wp_list
+	parent.add_child(pat)
 

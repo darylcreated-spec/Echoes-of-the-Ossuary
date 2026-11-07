@@ -21,6 +21,7 @@ var _bark_cooldown: float = 0.0
 
 func _ready() -> void:
 	name = "NPC_" + npc_id
+	add_to_group("npc")
 	add_to_group("interactable")
 	_build_visuals()
 	_build_interaction()

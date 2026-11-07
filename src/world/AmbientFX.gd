@@ -131,3 +131,74 @@ static func create_sacred_aura(parent: Node3D, pos: Vector3) -> GPUParticles3D:
 	
 	parent.add_child(particles)
 	return particles
+
+static func create_brazier_flame(parent: Node3D, pos: Vector3, scale_mult: float = 1.0) -> Node3D:
+	var root = Node3D.new()
+	root.name = "BrazierFlameFX"
+	root.position = pos
+	parent.add_child(root)
+
+	var flames = CPUParticles3D.new()
+	flames.name = "FlamePlume"
+	flames.amount = 16
+	flames.lifetime = 0.75
+	flames.preprocess = 0.5
+	flames.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	flames.emission_sphere_radius = 0.28 * scale_mult
+	flames.direction = Vector3(0.0, 1.0, 0.0)
+	flames.spread = 18.0
+	flames.gravity = Vector3(0.0, 2.6, 0.0)
+	flames.initial_velocity_min = 0.8 * scale_mult
+	flames.initial_velocity_max = 1.8 * scale_mult
+	flames.scale_amount_min = 0.55 * scale_mult
+	flames.scale_amount_max = 1.25 * scale_mult
+
+	var f_mesh = SphereMesh.new()
+	f_mesh.radius = 0.16
+	f_mesh.height = 0.32
+	var f_mat = StandardMaterial3D.new()
+	f_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	f_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	f_mat.albedo_color = Color(1.0, 0.58, 0.12, 0.85)
+	f_mesh.material = f_mat
+	flames.mesh = f_mesh
+	root.add_child(flames)
+
+	var light = OmniLight3D.new()
+	light.name = "TorchLight"
+	light.light_color = Color(1.0, 0.62, 0.22)
+	light.light_energy = 2.6 * scale_mult
+	light.omni_range = 11.0 * scale_mult
+	light.position = Vector3(0.0, 0.65 * scale_mult, 0.0)
+	light.add_to_group("nocturnal_lights")
+	root.add_child(light)
+	return root
+
+static func create_battle_smoke_plume(parent: Node3D, pos: Vector3) -> CPUParticles3D:
+	var smoke = CPUParticles3D.new()
+	smoke.name = "BattleSmokePlume"
+	smoke.position = pos
+	smoke.amount = 22
+	smoke.lifetime = 3.4
+	smoke.preprocess = 1.2
+	smoke.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	smoke.emission_sphere_radius = 0.65
+	smoke.direction = Vector3(0.18, 1.0, 0.12).normalized()
+	smoke.spread = 22.0
+	smoke.gravity = Vector3(0.25, 0.85, 0.10)
+	smoke.initial_velocity_min = 1.4
+	smoke.initial_velocity_max = 2.6
+	smoke.scale_amount_min = 0.8
+	smoke.scale_amount_max = 2.1
+
+	var s_mesh = SphereMesh.new()
+	s_mesh.radius = 0.38
+	s_mesh.height = 0.76
+	var s_mat = StandardMaterial3D.new()
+	s_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	s_mat.albedo_color = Color(0.24, 0.22, 0.20, 0.42)
+	s_mat.roughness = 0.95
+	s_mesh.material = s_mat
+	smoke.mesh = s_mesh
+	parent.add_child(smoke)
+	return smoke

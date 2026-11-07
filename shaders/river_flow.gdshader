@@ -1,44 +1,59 @@
 shader_type spatial;
 render_mode specular_schlick_ggx;
 
-uniform vec4 shallow_color : source_color = vec4(0.12, 0.48, 0.58, 0.88);
-uniform vec4 deep_color : source_color = vec4(0.05, 0.22, 0.38, 0.95);
-uniform vec4 foam_color : source_color = vec4(0.88, 0.94, 1.0, 0.45);
+uniform vec4 shallow_color : source_color = vec4(0.11, 0.44, 0.56, 0.90);
+uniform vec4 deep_color : source_color = vec4(0.04, 0.19, 0.36, 0.96);
+uniform vec4 foam_color : source_color = vec4(0.86, 0.94, 1.0, 0.50);
 uniform float flow_speed : hint_range(0.1, 5.0) = 0.65;
-uniform float wave_frequency : hint_range(0.5, 10.0) = 2.2;
+uniform float wave_frequency : hint_range(0.5, 10.0) = 2.0;
 uniform float wave_amplitude : hint_range(0.005, 0.2) = 0.025;
 
-varying vec2 v_local_xz;
+varying vec2 v_world_xz;
+
+float hash21(vec2 p) {
+	p = fract(p * vec2(127.1, 311.7));
+	p += dot(p, p + 34.23);
+	return fract(p.x * p.y);
+}
+
+float water_noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	return mix(
+		mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+		mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+		u.y
+	);
+}
 
 void vertex() {
-	v_local_xz = VERTEX.xz;
-	// Gentle undulating water waves
-	float wave1 = sin(TIME * flow_speed * 2.0 + VERTEX.x * wave_frequency) * wave_amplitude;
-	float wave2 = cos(TIME * flow_speed * 1.5 + VERTEX.z * wave_frequency * 1.5) * (wave_amplitude * 0.5);
+	v_world_xz = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;
+	float wave1 = sin(TIME * flow_speed * 2.0 + VERTEX.x * wave_frequency + VERTEX.z * 0.7) * wave_amplitude;
+	float wave2 = cos(TIME * flow_speed * 1.5 - VERTEX.z * wave_frequency * 1.3 + VERTEX.x * 0.5) * (wave_amplitude * 0.55);
 	VERTEX.y += wave1 + wave2;
 }
 
 void fragment() {
-	// World-scale UV scrolling current so ripples are crisp at any plane size
-	vec2 flow_uv1 = v_local_xz * vec2(0.45, 0.55) + vec2(TIME * (flow_speed * 0.6), 0.0);
-	vec2 flow_uv2 = v_local_xz * vec2(0.75, 0.85) + vec2(-TIME * (flow_speed * 0.45), TIME * 0.25);
-	
-	float ripple1 = sin(flow_uv1.x * 3.14 + cos(flow_uv1.y * 2.5));
-	float ripple2 = cos(flow_uv2.x * 2.8 - sin(flow_uv2.y * 3.2));
-	float ripple_norm = (ripple1 * 0.5 + ripple2 * 0.5) * 0.5 + 0.5;
-	
-	// Bank distance: 0 in center, 1 at banks
-	float bank_dist = abs(UV.y - 0.5) * 2.0;
-	vec3 water_col = mix(deep_color.rgb, shallow_color.rgb, pow(bank_dist, 1.6) * 0.65);
-	
-	// Subtle soft shoreline foam and wave crests
-	float edge_foam = smoothstep(0.90, 0.99, bank_dist) * 0.40;
-	float crest_foam = smoothstep(0.78, 0.95, ripple_norm) * 0.22;
-	float total_foam = clamp(edge_foam + crest_foam, 0.0, 0.55);
-	
+	vec2 uv1 = v_world_xz * 0.16 + vec2(TIME * flow_speed * 0.35, TIME * 0.18);
+	vec2 uv2 = v_world_xz * 0.31 + vec2(-TIME * flow_speed * 0.25, -TIME * 0.22);
+	vec2 uv3 = v_world_xz * 0.68 + vec2(TIME * 0.15, -TIME * 0.28);
+
+	float n1 = water_noise(uv1);
+	float n2 = water_noise(uv2 * 1.4 + vec2(n1 * 0.8));
+	float n3 = water_noise(uv3);
+	float swell = (n1 * 0.45 + n2 * 0.35 + n3 * 0.20);
+
+	float bank_dist = max(abs(UV.y - 0.5) * 2.0, smoothstep(0.35, 0.50, UV.x));
+	vec3 water_col = mix(deep_color.rgb, shallow_color.rgb, clamp(pow(bank_dist, 1.5) * 0.65 + swell * 0.35, 0.0, 1.0));
+
+	float edge_foam = smoothstep(0.88, 0.99, bank_dist) * 0.45;
+	float crest_foam = smoothstep(0.68, 0.84, swell) * 0.28;
+	float total_foam = clamp(edge_foam + crest_foam, 0.0, 0.60);
+
 	ALBEDO = mix(water_col, foam_color.rgb, total_foam);
-	ROUGHNESS = mix(0.25, 0.50, total_foam);
-	METALLIC = 0.05;
-	SPECULAR = 0.35;
+	ROUGHNESS = mix(0.18, 0.48, total_foam);
+	METALLIC = 0.06;
+	SPECULAR = 0.45;
 	ALPHA = mix(deep_color.a, 0.96, bank_dist * 0.3);
 }

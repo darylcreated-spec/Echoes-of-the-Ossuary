@@ -274,11 +274,18 @@ func trigger_hit_flash() -> void:
 	if _flash_tween:
 		_flash_tween.kill()
 	_flash_tween = create_tween()
+	var self_wr = weakref(self)
 	_flash_tween.tween_callback(func():
-		for m in meshes:
-			var orig_mat = m.get_surface_override_material(0)
-			if orig_mat is StandardMaterial3D:
-				orig_mat.emission_energy_multiplier = 0.0
+		var s = self_wr.get_ref()
+		if not s or not s.visual_model_root:
+			return
+		var cur_meshes: Array[MeshInstance3D] = []
+		s._collect_meshes(s.visual_model_root, cur_meshes)
+		for m in cur_meshes:
+			if is_instance_valid(m):
+				var orig_mat = m.get_surface_override_material(0)
+				if orig_mat is StandardMaterial3D:
+					orig_mat.emission_energy_multiplier = 0.0
 	).set_delay(0.12)
 
 func _collect_meshes(parent: Node, list: Array[MeshInstance3D]) -> void:

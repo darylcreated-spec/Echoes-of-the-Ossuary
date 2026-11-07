@@ -23,6 +23,9 @@ const SFX_PATHS: Dictionary = {
 	"bgm_castle": "res://assets/audio/bgm_castle.ogg",
 	"bgm_forge": "res://assets/audio/bgm_forge.ogg",
 	"bgm_boss": "res://assets/audio/bgm_boss.ogg",
+	"bgm_battle_siege": "res://assets/audio/bgm_battle_siege.wav",
+	"bgm_maritime": "res://assets/audio/bgm_maritime.wav",
+	"bgm_wilderness": "res://assets/audio/bgm_wilderness.wav",
 	"sfx_victory_fanfare": "res://assets/audio/sfx_victory_fanfare.ogg",
 	"soul_pickup": "res://assets/audio/sfx_soul_pickup.ogg",
 	"gold_pickup": "res://assets/audio/sfx_gold_pickup.ogg",
@@ -80,11 +83,58 @@ var _weather_fade_tween: Tween = null
 
 # Synth buffer fallbacks
 var _synth_samples: Dictionary = {}
+var _region_bgm_check_timer: float = 0.0
+var _active_region_music_zone: String = "overworld"
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_audio_players()
 	_load_or_generate_audio()
+
+func _process(delta: float) -> void:
+	_region_bgm_check_timer += delta
+	if _region_bgm_check_timer < 1.25:
+		return
+	_region_bgm_check_timer = 0.0
+	_update_dynamic_regional_soundscape()
+
+func _update_dynamic_regional_soundscape() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if not gm or gm.current_floor != 0:
+		return
+	var p = get_tree().get_first_node_in_group("player") as Node3D
+	if not p or not is_instance_valid(p):
+		return
+	# Do not override interior BGM when player is inside subterranean interiors (Y < -50)
+	if p.global_position.y < -50.0:
+		return
+
+	var pos = p.global_position
+	var desired_bgm = "bgm_overworld"
+	var desired_zone = "overworld"
+
+	if pos.z > 115.0 and pos.x >= -15.0 and pos.x <= 80.0:
+		desired_bgm = "bgm_battle_siege"
+		desired_zone = "siege_battle"
+	elif pos.x < -44.0 and pos.z > 35.0 and pos.z < 115.0:
+		desired_bgm = "bgm_battle_siege"
+		desired_zone = "port_sea_warfare"
+	elif pos.x < -44.0:
+		desired_bgm = "bgm_maritime"
+		desired_zone = "high_seas"
+	elif pos.x > 48.0 and pos.z < -35.0:
+		desired_bgm = "bgm_forge"
+		desired_zone = "khar_drakken"
+	elif (pos.z < -45.0 and pos.x <= 48.0) or (pos.x > 48.0 and pos.z > 38.0):
+		desired_bgm = "bgm_wilderness"
+		desired_zone = "wilderness"
+	elif pos.z >= 45.0 and pos.z <= 105.0 and pos.x >= -20.0 and pos.x <= 38.0:
+		desired_bgm = "bgm_castle"
+		desired_zone = "royal_citadel"
+
+	_active_region_music_zone = desired_zone
+	if _current_bgm_key != desired_bgm:
+		crossfade_to_bgm(desired_bgm, 1.2, -12.0)
 
 func _setup_audio_players() -> void:
 	for i in range(12):
@@ -601,6 +651,91 @@ func _generate_procedural_sfx(type: String) -> AudioStreamWAV:
 				# Dark sinister drone
 				var drone = sin(2.0 * PI * 48.99 * t) * 0.3
 				var val = (drum * 0.5 + chord * 0.4 + drone * 0.3) * 0.7
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"bgm_overworld":
+			# Pastoral medieval lute & wooden recorder melody in D Dorian (4.8s loop)
+			var duration: float = 4.8
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			var melody = [293.66, 329.63, 349.23, 440.00, 392.00, 349.23, 329.63, 293.66]
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var step = int(fmod(t / 0.6, 8.0))
+				var note_t = fmod(t, 0.6)
+				var env = exp(-note_t * 5.2)
+				var f = melody[step]
+				var lute = (sin(2.0 * PI * f * t) * 0.55 + sin(4.0 * PI * f * t) * 0.22) * env
+				var drone = (sin(2.0 * PI * 146.83 * t) * 0.28 + sin(2.0 * PI * 220.0 * t) * 0.20)
+				var val = (lute * 0.65 + drone * 0.35) * 0.65
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"bgm_battle_siege":
+			# Epic medieval combined-arms war-drums, brass horn fifths & string ostinato (3.2s loop)
+			var duration: float = 3.2
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			var ostinato = [146.83, 146.83, 174.61, 196.00, 220.00, 196.00, 174.61, 164.81]
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var beat_t = fmod(t, 0.4)
+				var drum_env = exp(-beat_t * 16.0)
+				var war_drum = (sin(2.0 * PI * lerp(105.0, 42.0, beat_t / 0.4) * t) * 0.85 + randf_range(-0.25, 0.25)) * drum_env
+				var step = int(fmod(t / 0.4, 8.0))
+				var f = ostinato[step]
+				var horn = (sin(2.0 * PI * f * t) * 0.5 + sin(4.0 * PI * f * t) * 0.28 + sin(6.0 * PI * f * t) * 0.14) * exp(-beat_t * 4.5)
+				var sub = sin(2.0 * PI * 73.42 * t) * 0.32
+				var val = (war_drum * 0.48 + horn * 0.42 + sub * 0.25) * 0.72
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"bgm_maritime":
+			# Rollicking medieval sea shanty in A Aeolian with concertina & ship bell (4.0s loop)
+			var duration: float = 4.0
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			var shanty = [220.00, 261.63, 293.66, 329.63, 392.00, 329.63, 293.66, 246.94]
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var step = int(fmod(t / 0.5, 8.0))
+				var note_t = fmod(t, 0.5)
+				var env = exp(-note_t * 6.0)
+				var f = shanty[step]
+				var reed = (sin(2.0 * PI * f * t) * 0.5 + sin(3.0 * PI * f * t) * 0.28) * env
+				var bass = sin(2.0 * PI * 110.0 * t) * 0.30
+				var val = (reed * 0.65 + bass * 0.35) * 0.68
+				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
+				samples.encode_s16(i * 2, s16)
+
+		"bgm_wilderness":
+			# Mystic Celtic harp arpeggios & ethereal forest flute (4.8s loop)
+			var duration: float = 4.8
+			var total_frames = int(sample_rate * duration)
+			samples.resize(total_frames * 2)
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = total_frames
+			var harp_notes = [246.94, 293.66, 369.99, 440.00, 493.88, 440.00, 369.99, 293.66]
+			for i in range(total_frames):
+				var t = float(i) / sample_rate
+				var step = int(fmod(t / 0.6, 8.0))
+				var note_t = fmod(t, 0.6)
+				var env = exp(-note_t * 4.5)
+				var f = harp_notes[step]
+				var harp = (sin(2.0 * PI * f * t) * 0.6 + sin(4.0 * PI * f * t) * 0.18) * env
+				var pad = (sin(2.0 * PI * 123.47 * t) * 0.28 + sin(2.0 * PI * 185.00 * t) * 0.22)
+				var val = (harp * 0.6 + pad * 0.4) * 0.62
 				var s16 = int(clamp(val * 32767.0, -32768.0, 32767.0))
 				samples.encode_s16(i * 2, s16)
 

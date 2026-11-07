@@ -217,34 +217,36 @@ func _spawn_upgrade_altar(pos: Vector3) -> void:
 	altar.name = "UpgradeAltar"
 	altar.position = pos
 	
-	# Altar Stone plinth
-	var base = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(2.0, 1.2, 1.6)
-	base.mesh = box
-	base.position.y = 0.6
+	# Ornate Medieval Stone Shrine & Twin Columns (replaces grey box cube)
+	var shrine_model = AssetLoader.load_or_generate_model("res://assets/overworld/shrine_candles.gltf", "prop", "shrine")
+	shrine_model.scale = Vector3.ONE * 2.2
+	altar.add_child(shrine_model)
 	
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.2, 0.22, 0.25)
-	mat.roughness = 0.9
-	base.material_override = mat
-	altar.add_child(base)
+	for cx in [-1.1, 1.1]:
+		var col_prop = AssetLoader.load_or_generate_model("res://assets/dungeon/column.gltf.glb", "dungeon", "pillar")
+		col_prop.scale = Vector3(0.45, 0.55, 0.45)
+		col_prop.position = Vector3(cx, 0.0, -0.3)
+		altar.add_child(col_prop)
 	
-	# Floating soul flame brazier
+	# Sacred floating Soul Reliquary Crystal & Aura
 	var flame = MeshInstance3D.new()
 	var sphere = SphereMesh.new()
-	sphere.radius = 0.35
-	sphere.height = 0.7
+	sphere.radius = 0.24
+	sphere.height = 0.48
 	flame.mesh = sphere
-	flame.position.y = 1.6
+	flame.position = Vector3(0.0, 1.75, 0.1)
 	
 	var flame_mat = StandardMaterial3D.new()
-	flame_mat.albedo_color = Color(0.1, 0.9, 0.8)
+	flame_mat.albedo_color = Color(0.2, 0.95, 0.9)
 	flame_mat.emission_enabled = true
-	flame_mat.emission = Color(0.1, 0.9, 0.8)
-	flame_mat.emission_energy_multiplier = 3.5
+	flame_mat.emission = Color(0.15, 0.95, 0.88)
+	flame_mat.emission_energy_multiplier = 3.2
 	flame.material_override = flame_mat
 	altar.add_child(flame)
+	
+	var AmbientFXScript = load("res://src/world/AmbientFX.gd")
+	if AmbientFXScript:
+		AmbientFXScript.create_sacred_aura(altar, Vector3(0.0, 0.2, 0.0))
 	
 	var area = Area3D.new()
 	area.name = "InteractArea"
@@ -259,8 +261,8 @@ func _spawn_upgrade_altar(pos: Vector3) -> void:
 	altar.add_child(area)
 	
 	var label = Label3D.new()
-	label.position.y = 2.45
-	AssetLoader.style_world_label3d(label, "[E] Soul Altar", 36, Color(0.7, 0.95, 1.0))
+	label.position.y = 2.55
+	AssetLoader.style_world_label3d(label, "[E] Soul Altar", 32, Color(0.7, 0.95, 1.0))
 	altar.add_child(label)
 	
 	add_child(altar)
@@ -273,21 +275,45 @@ func _spawn_class_pedestals(base_pos: Vector3) -> void:
 		{"type": GameManager.HeroClass.BARBARIAN, "name": "Barbarian", "offset": Vector3(4.5, 0, 0)}
 	]
 	
+	var ped_mat = StandardMaterial3D.new()
+	var brick_tex = load("res://assets/village/T_UnevenBrick_BaseColor.png")
+	if brick_tex:
+		ped_mat.albedo_texture = brick_tex
+		ped_mat.uv1_scale = Vector3(2.0, 1.0, 1.0)
+	else:
+		ped_mat.albedo_color = Color(0.36, 0.35, 0.33)
+	ped_mat.roughness = 0.86
+	
+	var gold_trim_mat = StandardMaterial3D.new()
+	gold_trim_mat.albedo_color = Color(0.85, 0.68, 0.24)
+	gold_trim_mat.metallic = 0.8
+	gold_trim_mat.roughness = 0.3
+	
 	for c in classes:
 		var ped = ClassPedestalScript.new()
 		ped.name = "Pedestal_" + c["name"]
 		ped.hero_class = c["type"]
 		ped.position = base_pos + c["offset"]
 		
-		# Stone Pedestal
+		# Carved Stone Pedestal Plinth
 		var base = MeshInstance3D.new()
 		var cyl = CylinderMesh.new()
 		cyl.top_radius = 0.8
-		cyl.bottom_radius = 0.9
-		cyl.height = 0.4
+		cyl.bottom_radius = 0.92
+		cyl.height = 0.42
+		cyl.material = ped_mat
 		base.mesh = cyl
-		base.position.y = 0.2
+		base.position.y = 0.21
 		ped.add_child(base)
+		
+		var ring = MeshInstance3D.new()
+		var tor = TorusMesh.new()
+		tor.inner_radius = 0.76
+		tor.outer_radius = 0.84
+		tor.material = gold_trim_mat
+		ring.mesh = tor
+		ring.position.y = 0.41
+		ped.add_child(ring)
 		
 		var area = Area3D.new()
 		area.name = "InteractArea"

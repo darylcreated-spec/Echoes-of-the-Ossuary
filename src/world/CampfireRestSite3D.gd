@@ -18,39 +18,33 @@ func _ready() -> void:
 	_setup_interaction_area()
 
 func _build_campfire_visuals() -> void:
-	# 1. Stone ring firepit
-	var stone_mat = StandardMaterial3D.new()
-	stone_mat.albedo_color = Color(0.32, 0.32, 0.34)
-	stone_mat.roughness = 0.95
-	
+	# 1. Authentic Medieval Stone Ring Firepit using 3D Rock Models
 	for i in range(8):
 		var ang = float(i) * (TAU / 8.0)
-		var stone = MeshInstance3D.new()
-		var sm = SphereMesh.new()
-		sm.radius = 0.22
-		sm.height = 0.35
-		sm.material = stone_mat
-		stone.mesh = sm
-		stone.position = Vector3(cos(ang) * 0.95, 0.12, sin(ang) * 0.95)
+		var rk_path = "res://assets/overworld/rock_single_A.gltf" if (i % 2 == 0) else "res://assets/overworld/rock_single_B.gltf"
+		var stone = AssetLoader.load_or_generate_model(rk_path, "prop", "rock")
+		stone.scale = Vector3(0.42, 0.35, 0.42)
+		stone.position = Vector3(cos(ang) * 0.92, 0.0, sin(ang) * 0.92)
+		stone.rotation_degrees.y = float(i * 45)
 		add_child(stone)
 
 	# 2. Charred firewood logs
 	var wood_mat = StandardMaterial3D.new()
-	wood_mat.albedo_color = Color(0.18, 0.14, 0.11)
-	wood_mat.roughness = 0.9
+	wood_mat.albedo_color = Color(0.22, 0.15, 0.10)
+	wood_mat.roughness = 0.92
 	for rot in [35.0, -35.0, 90.0]:
 		var log_mesh = MeshInstance3D.new()
 		var cm = CylinderMesh.new()
 		cm.top_radius = 0.10
 		cm.bottom_radius = 0.11
-		cm.height = 1.1
+		cm.height = 1.15
 		cm.material = wood_mat
 		log_mesh.mesh = cm
 		log_mesh.rotation_degrees = Vector3(25.0, rot, 0.0)
 		log_mesh.position = Vector3(0.0, 0.22, 0.0)
 		add_child(log_mesh)
 
-	# 3. Flame Ember Particles
+	# 3. Flame Ember Particles & Textured Brazier Flame
 	_flame_particles = CPUParticles3D.new()
 	_flame_particles.position = Vector3(0.0, 0.35, 0.0)
 	_flame_particles.amount = 24
@@ -63,12 +57,16 @@ func _build_campfire_visuals() -> void:
 	_flame_particles.initial_velocity_max = 2.4
 	
 	var ember_mat = StandardMaterial3D.new()
-	ember_mat.albedo_color = Color(1.0, 0.52, 0.12)
-	ember_mat.emission_enabled = true
-	ember_mat.emission = Color(1.0, 0.42, 0.05)
-	ember_mat.emission_energy_multiplier = 4.0
-	var ember_mesh = BoxMesh.new()
-	ember_mesh.size = Vector3(0.12, 0.12, 0.12)
+	ember_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ember_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	ember_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ember_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	ember_mat.albedo_color = Color(1.0, 0.58, 0.14, 0.9)
+	var fire_tex = load("res://assets/particles/fire_01.png")
+	if fire_tex:
+		ember_mat.albedo_texture = fire_tex
+	var ember_mesh = QuadMesh.new()
+	ember_mesh.size = Vector2(0.85, 0.85)
 	ember_mesh.material = ember_mat
 	_flame_particles.mesh = ember_mesh
 	add_child(_flame_particles)
@@ -82,12 +80,12 @@ func _build_campfire_visuals() -> void:
 	_light.shadow_enabled = true
 	add_child(_light)
 
-	# 5. Surrounding Log Benches
+	# 5. Surrounding Carved Medieval Benches
 	for z_side in [-2.2, 2.2]:
-		var bench = AssetLoader.load_or_generate_model("res://assets/overworld/bench.gltf", "prop", "bench")
+		var bench = AssetLoader.load_or_generate_model("res://assets/overworld/bench_decorated.gltf", "prop", "bench")
 		if bench:
 			bench.position = Vector3(0.0, 0.0, z_side)
-			bench.scale = Vector3.ONE * 1.5
+			bench.scale = Vector3.ONE * 1.55
 			bench.rotation_degrees.y = 0.0 if z_side < 0 else 180.0
 			add_child(bench)
 
