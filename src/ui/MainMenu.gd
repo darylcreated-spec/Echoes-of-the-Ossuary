@@ -8,7 +8,7 @@ signal return_to_title_requested()
 
 var is_pause_mode: bool = false
 var selected_hero_class: int = 0
-var prefer_top_down_camera: bool = false
+var prefer_top_down_camera: bool = true
 
 var _backdrop: ColorRect = null
 var _title_lbl: Label = null

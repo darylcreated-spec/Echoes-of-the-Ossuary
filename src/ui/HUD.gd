@@ -44,9 +44,15 @@ var dialogue_modal: DialogueModal = null
 var main_menu: MainMenu = null
 var hud_root_control: Control = null
 var creator_hud_badge: Label = null
+var realm_dropdown_btn: Button = null
+var realm_dropdown_panel: PanelContainer = null
 var touch_controls_container: Control = null
 var touch_toggle_btn: Button = null
 var touch_controls_enabled: bool = false
+var touch_kit_drawer_panel: PanelContainer = null
+var touch_kit_drawer_btn: Button = null
+var touch_orders_dropdown_panel: PanelContainer = null
+var touch_orders_dropdown_btn: Button = null
 var fade_curtain: ColorRect = null
 
 # Naval Captaincy HUD
@@ -168,13 +174,14 @@ func _build_ui_tree() -> void:
 	creator_hud_badge.modulate = Color(1.0, 0.90, 0.48, 0.92)
 	top_left.add_child(creator_hud_badge)
 	
-	# Top Right: Currencies & Floor
+	# Top Right: Currencies & Compact Drop-Down Header
 	var top_right = VBoxContainer.new()
 	top_right.anchor_left = 1.0
 	top_right.anchor_right = 1.0
-	top_right.offset_left = -620
+	top_right.offset_left = -310
 	top_right.offset_right = -16
-	top_right.offset_top = 18
+	top_right.offset_top = 14
+	top_right.add_theme_constant_override("separation", 4)
 	root_control.add_child(top_right)
 	
 	floor_label = Label.new()
@@ -204,50 +211,108 @@ func _build_ui_tree() -> void:
 	curr_box.add_child(echoes_label)
 	
 	var btn_box = HBoxContainer.new()
+	btn_box.alignment = BoxContainer.ALIGNMENT_END
 	btn_box.add_theme_constant_override("separation", 6)
 	top_right.add_child(btn_box)
 
-	guide_toggle_btn = Button.new()
-	guide_toggle_btn.text = "🧭 Guide: ON [H]"
-	guide_toggle_btn.custom_minimum_size = Vector2(115, 26)
-	guide_toggle_btn.focus_mode = Control.FOCUS_NONE
-	guide_toggle_btn.pressed.connect(func(): GameManager.toggle_story_guide())
-	btn_box.add_child(guide_toggle_btn)
-
-	var map_btn = Button.new()
-	map_btn.text = "🗺️ Map [N]"
-	map_btn.custom_minimum_size = Vector2(88, 26)
-	map_btn.focus_mode = Control.FOCUS_NONE
-	map_btn.pressed.connect(func(): if realm_map_modal: realm_map_modal.toggle_map())
-	btn_box.add_child(map_btn)
-
-	var missions_btn = Button.new()
-	missions_btn.text = "📜 Quests [M]"
-	missions_btn.custom_minimum_size = Vector2(98, 26)
-	missions_btn.focus_mode = Control.FOCUS_NONE
-	missions_btn.pressed.connect(func(): if mission_menu: mission_menu.toggle_menu())
-	btn_box.add_child(missions_btn)
-
-	var journal_btn = Button.new()
-	journal_btn.text = "📖 Lore [L]"
-	journal_btn.custom_minimum_size = Vector2(92, 26)
-	journal_btn.focus_mode = Control.FOCUS_NONE
-	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
-	btn_box.add_child(journal_btn)
+	realm_dropdown_btn = Button.new()
+	realm_dropdown_btn.text = "☰ Realm Menu ▾"
+	realm_dropdown_btn.custom_minimum_size = Vector2(148, 30)
+	realm_dropdown_btn.focus_mode = Control.FOCUS_NONE
+	var dd_btn_sb = StyleBoxFlat.new()
+	dd_btn_sb.bg_color = Color(0.10, 0.13, 0.22, 0.94)
+	dd_btn_sb.border_color = Color(0.92, 0.76, 0.34, 0.95)
+	dd_btn_sb.set_border_width_all(2)
+	dd_btn_sb.set_corner_radius_all(6)
+	realm_dropdown_btn.add_theme_stylebox_override("normal", dd_btn_sb)
+	realm_dropdown_btn.pressed.connect(_toggle_realm_dropdown_menu)
+	btn_box.add_child(realm_dropdown_btn)
 
 	var menu_btn = Button.new()
-	menu_btn.text = "⚙️ Menu [Esc]"
-	menu_btn.custom_minimum_size = Vector2(96, 26)
+	menu_btn.text = "⚙️ Pause"
+	menu_btn.custom_minimum_size = Vector2(86, 30)
 	menu_btn.focus_mode = Control.FOCUS_NONE
+	menu_btn.add_theme_stylebox_override("normal", dd_btn_sb)
 	menu_btn.pressed.connect(func(): toggle_pause_menu())
 	btn_box.add_child(menu_btn)
 
+	# Collapsible Top-Right Drop-Down Menu Panel
+	realm_dropdown_panel = PanelContainer.new()
+	realm_dropdown_panel.name = "RealmDropdownMenu"
+	realm_dropdown_panel.visible = false
+	var dd_panel_sb = StyleBoxFlat.new()
+	dd_panel_sb.bg_color = Color(0.06, 0.08, 0.14, 0.96)
+	dd_panel_sb.border_color = Color(0.92, 0.76, 0.34, 0.95)
+	dd_panel_sb.set_border_width_all(2)
+	dd_panel_sb.set_corner_radius_all(8)
+	dd_panel_sb.content_margin_left = 10
+	dd_panel_sb.content_margin_right = 10
+	dd_panel_sb.content_margin_top = 8
+	dd_panel_sb.content_margin_bottom = 8
+	realm_dropdown_panel.add_theme_stylebox_override("panel", dd_panel_sb)
+	top_right.add_child(realm_dropdown_panel)
+
+	var dd_vbox = VBoxContainer.new()
+	dd_vbox.add_theme_constant_override("separation", 6)
+	realm_dropdown_panel.add_child(dd_vbox)
+
+	guide_toggle_btn = Button.new()
+	guide_toggle_btn.text = "🧭 Story Guide: ON [H]"
+	guide_toggle_btn.custom_minimum_size = Vector2(220, 30)
+	guide_toggle_btn.focus_mode = Control.FOCUS_NONE
+	guide_toggle_btn.pressed.connect(func(): GameManager.toggle_story_guide())
+	dd_vbox.add_child(guide_toggle_btn)
+
+	var map_btn = Button.new()
+	map_btn.text = "🗺️ Realm Map & Fast Travel [N]"
+	map_btn.custom_minimum_size = Vector2(220, 30)
+	map_btn.focus_mode = Control.FOCUS_NONE
+	map_btn.pressed.connect(func():
+		realm_dropdown_panel.visible = false
+		_update_realm_dropdown_btn()
+		if realm_map_modal: realm_map_modal.toggle_map()
+	)
+	dd_vbox.add_child(map_btn)
+
+	var missions_btn = Button.new()
+	missions_btn.text = "📜 Campaign Quests [M]"
+	missions_btn.custom_minimum_size = Vector2(220, 30)
+	missions_btn.focus_mode = Control.FOCUS_NONE
+	missions_btn.pressed.connect(func():
+		realm_dropdown_panel.visible = false
+		_update_realm_dropdown_btn()
+		if mission_menu: mission_menu.toggle_menu()
+	)
+	dd_vbox.add_child(missions_btn)
+
+	var journal_btn = Button.new()
+	journal_btn.text = "📖 Lore & Hero Sheet [L]"
+	journal_btn.custom_minimum_size = Vector2(220, 30)
+	journal_btn.focus_mode = Control.FOCUS_NONE
+	journal_btn.pressed.connect(func():
+		realm_dropdown_panel.visible = false
+		_update_realm_dropdown_btn()
+		if journal_modal: journal_modal.toggle_modal()
+	)
+	dd_vbox.add_child(journal_btn)
+
+	var cam_dd_btn = Button.new()
+	cam_dd_btn.text = "🦅 Switch Top-Down / Action View [V]"
+	cam_dd_btn.custom_minimum_size = Vector2(220, 30)
+	cam_dd_btn.focus_mode = Control.FOCUS_NONE
+	cam_dd_btn.pressed.connect(func():
+		var main_node = get_tree().get_first_node_in_group("main")
+		if main_node and main_node.has_method("toggle_top_down_camera"):
+			main_node.toggle_top_down_camera()
+	)
+	dd_vbox.add_child(cam_dd_btn)
+
 	touch_toggle_btn = Button.new()
-	touch_toggle_btn.text = "📱 Touch"
-	touch_toggle_btn.custom_minimum_size = Vector2(74, 26)
+	touch_toggle_btn.text = "📱 Touch Controls: ON"
+	touch_toggle_btn.custom_minimum_size = Vector2(220, 30)
 	touch_toggle_btn.focus_mode = Control.FOCUS_NONE
 	touch_toggle_btn.pressed.connect(func(): toggle_touch_controls())
-	btn_box.add_child(touch_toggle_btn)
+	dd_vbox.add_child(touch_toggle_btn)
 
 	_setup_story_guide_popup(root_control)
 	_setup_touch_controls_overlay(root_control)
@@ -1614,6 +1679,17 @@ func _on_main_menu_return_to_title() -> void:
 	get_tree().paused = false
 	open_opening_title_screen()
 
+func _toggle_realm_dropdown_menu() -> void:
+	if not realm_dropdown_panel:
+		return
+	AudioManager.play_sfx("button_click", 0.05, 0.0)
+	realm_dropdown_panel.visible = not realm_dropdown_panel.visible
+	_update_realm_dropdown_btn()
+
+func _update_realm_dropdown_btn() -> void:
+	if realm_dropdown_btn and realm_dropdown_panel:
+		realm_dropdown_btn.text = "☰ Realm Menu ▴" if realm_dropdown_panel.visible else "☰ Realm Menu ▾"
+
 func _setup_touch_controls_overlay(parent: Control) -> void:
 	touch_controls_container = Control.new()
 	touch_controls_container.name = "PWATouchControlsOverlay"
@@ -1630,43 +1706,137 @@ func _setup_touch_controls_overlay(parent: Control) -> void:
 	dpad_panel.anchor_top = 1.0
 	dpad_panel.anchor_right = 0.0
 	dpad_panel.anchor_bottom = 1.0
-	dpad_panel.offset_left = 24
-	dpad_panel.offset_top = -230
-	dpad_panel.offset_right = 204
-	dpad_panel.offset_bottom = -50
+	dpad_panel.offset_left = 20
+	dpad_panel.offset_top = -205
+	dpad_panel.offset_right = 196
+	dpad_panel.offset_bottom = -28
 	dpad_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	touch_controls_container.add_child(dpad_panel)
 
-	_create_touch_hold_button(dpad_panel, "▲", Vector2(60, 0), Vector2(56, 56), "move_up")
-	_create_touch_hold_button(dpad_panel, "▼", Vector2(60, 116), Vector2(56, 56), "move_down")
-	_create_touch_hold_button(dpad_panel, "◀", Vector2(2, 58), Vector2(56, 56), "move_left")
-	_create_touch_hold_button(dpad_panel, "▶", Vector2(118, 58), Vector2(56, 56), "move_right")
+	_create_touch_hold_button(dpad_panel, "▲", Vector2(58, 0), Vector2(56, 56), "move_up")
+	_create_touch_hold_button(dpad_panel, "▼", Vector2(58, 114), Vector2(56, 56), "move_down")
+	_create_touch_hold_button(dpad_panel, "◀", Vector2(0, 57), Vector2(56, 56), "move_left")
+	_create_touch_hold_button(dpad_panel, "▶", Vector2(116, 57), Vector2(56, 56), "move_right")
 
-	# Bottom-Right Action Cluster
-	var act_panel = GridContainer.new()
-	act_panel.columns = 2
-	act_panel.anchor_left = 1.0
-	act_panel.anchor_top = 1.0
-	act_panel.anchor_right = 1.0
-	act_panel.anchor_bottom = 1.0
-	act_panel.offset_left = -260
-	act_panel.offset_top = -230
-	act_panel.offset_right = -20
-	act_panel.offset_bottom = -50
-	act_panel.add_theme_constant_override("h_separation", 8)
-	act_panel.add_theme_constant_override("v_separation", 8)
-	touch_controls_container.add_child(act_panel)
+	# Bottom-Right Primary Thumb Buttons + Collapsible Slide-Out Drawers
+	var right_root = VBoxContainer.new()
+	right_root.anchor_left = 1.0
+	right_root.anchor_top = 1.0
+	right_root.anchor_right = 1.0
+	right_root.anchor_bottom = 1.0
+	right_root.offset_left = -256
+	right_root.offset_top = -350
+	right_root.offset_right = -16
+	right_root.offset_bottom = -20
+	right_root.alignment = BoxContainer.ALIGNMENT_END
+	right_root.add_theme_constant_override("separation", 6)
+	right_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_controls_container.add_child(right_root)
 
-	_create_touch_action_grid_btn(act_panel, "⚔️ Attack", "attack", 0)
-	_create_touch_action_grid_btn(act_panel, "💨 Dash", "dash", KEY_SPACE)
-	_create_touch_action_grid_btn(act_panel, "✋ Use [E]", "interact", KEY_E)
-	_create_touch_action_grid_btn(act_panel, "🛡️ Block", "block", KEY_C)
-	_create_touch_action_grid_btn(act_panel, "🏹 Swap [Q]", "swap_weapon", KEY_Q)
-	_create_touch_action_grid_btn(act_panel, "🐎 Mount [F]", "mount_toggle", KEY_F)
+	var drawer_sb = StyleBoxFlat.new()
+	drawer_sb.bg_color = Color(0.06, 0.09, 0.15, 0.94)
+	drawer_sb.border_color = Color(0.92, 0.76, 0.34, 0.92)
+	drawer_sb.set_border_width_all(2)
+	drawer_sb.set_corner_radius_all(8)
+	drawer_sb.content_margin_left = 8
+	drawer_sb.content_margin_right = 8
+	drawer_sb.content_margin_top = 6
+	drawer_sb.content_margin_bottom = 6
 
-	touch_controls_enabled = DisplayServer.is_touchscreen_available()
+	# 1. Tactical Army & Naval Orders Drop-Down Drawer (Hidden by default)
+	touch_orders_dropdown_panel = PanelContainer.new()
+	touch_orders_dropdown_panel.visible = false
+	touch_orders_dropdown_panel.add_theme_stylebox_override("panel", drawer_sb)
+	right_root.add_child(touch_orders_dropdown_panel)
+
+	var orders_grid = GridContainer.new()
+	orders_grid.columns = 2
+	orders_grid.add_theme_constant_override("h_separation", 6)
+	orders_grid.add_theme_constant_override("v_separation", 6)
+	touch_orders_dropdown_panel.add_child(orders_grid)
+
+	_create_touch_action_grid_btn(orders_grid, "🥁 [1] Charge", "", KEY_1)
+	_create_touch_action_grid_btn(orders_grid, "🛡️ [2] Hold", "", KEY_2)
+	_create_touch_action_grid_btn(orders_grid, "🏹 [3] Volley", "", KEY_3)
+	_create_touch_action_grid_btn(orders_grid, "🐎 [4] Flank", "", KEY_4)
+	_create_touch_action_grid_btn(orders_grid, "📯 [5] Rally", "", KEY_5)
+	_create_touch_action_grid_btn(orders_grid, "🦅 View [V]", "", KEY_V)
+
+	# 2. Combat Kit Slide-Out Drawer (Dash, Block, Swap, Mount — Hidden by default)
+	touch_kit_drawer_panel = PanelContainer.new()
+	touch_kit_drawer_panel.visible = false
+	touch_kit_drawer_panel.add_theme_stylebox_override("panel", drawer_sb)
+	right_root.add_child(touch_kit_drawer_panel)
+
+	var kit_grid = GridContainer.new()
+	kit_grid.columns = 2
+	kit_grid.add_theme_constant_override("h_separation", 6)
+	kit_grid.add_theme_constant_override("v_separation", 6)
+	touch_kit_drawer_panel.add_child(kit_grid)
+
+	_create_touch_action_grid_btn(kit_grid, "💨 Dash", "dash", KEY_SPACE)
+	_create_touch_action_grid_btn(kit_grid, "🛡️ Block", "block", KEY_C)
+	_create_touch_action_grid_btn(kit_grid, "🏹 Swap [Q]", "swap_weapon", KEY_Q)
+	_create_touch_action_grid_btn(kit_grid, "🐎 Mount [F]", "mount_toggle", KEY_F)
+
+	# 3. Drawer Toggle Row (Kit Drawer ▴ & Army Orders ▾)
+	var drawer_toggles = HBoxContainer.new()
+	drawer_toggles.alignment = BoxContainer.ALIGNMENT_END
+	drawer_toggles.add_theme_constant_override("separation", 6)
+	right_root.add_child(drawer_toggles)
+
+	touch_kit_drawer_btn = Button.new()
+	touch_kit_drawer_btn.text = "🎒 Kit Drawer ▴"
+	touch_kit_drawer_btn.custom_minimum_size = Vector2(114, 34)
+	touch_kit_drawer_btn.focus_mode = Control.FOCUS_NONE
+	touch_kit_drawer_btn.pressed.connect(_toggle_touch_kit_drawer)
+	drawer_toggles.add_child(touch_kit_drawer_btn)
+
+	touch_orders_dropdown_btn = Button.new()
+	touch_orders_dropdown_btn.text = "📯 Orders ▴"
+	touch_orders_dropdown_btn.custom_minimum_size = Vector2(114, 34)
+	touch_orders_dropdown_btn.focus_mode = Control.FOCUS_NONE
+	touch_orders_dropdown_btn.pressed.connect(_toggle_touch_orders_dropdown)
+	drawer_toggles.add_child(touch_orders_dropdown_btn)
+
+	# 4. Always-Visible Primary Thumb Action Row (Attack & Use/Interact [E])
+	var primary_row = HBoxContainer.new()
+	primary_row.alignment = BoxContainer.ALIGNMENT_END
+	primary_row.add_theme_constant_override("separation", 8)
+	right_root.add_child(primary_row)
+
+	var atk_btn = _create_touch_action_grid_btn(primary_row, "⚔️ ATTACK", "attack", 0)
+	atk_btn.custom_minimum_size = Vector2(114, 54)
+	var use_btn = _create_touch_action_grid_btn(primary_row, "✋ USE [E]", "interact", KEY_E)
+	use_btn.custom_minimum_size = Vector2(114, 54)
+
+	touch_controls_enabled = DisplayServer.is_touchscreen_available() or OS.has_feature("web")
 	touch_controls_container.visible = touch_controls_enabled
 	_update_touch_toggle_btn()
+
+func _toggle_touch_kit_drawer() -> void:
+	if not touch_kit_drawer_panel:
+		return
+	AudioManager.play_sfx("button_click", 0.05, 0.0)
+	touch_kit_drawer_panel.visible = not touch_kit_drawer_panel.visible
+	if touch_kit_drawer_panel.visible and touch_orders_dropdown_panel:
+		touch_orders_dropdown_panel.visible = false
+	_update_touch_drawer_buttons()
+
+func _toggle_touch_orders_dropdown() -> void:
+	if not touch_orders_dropdown_panel:
+		return
+	AudioManager.play_sfx("button_click", 0.05, 0.0)
+	touch_orders_dropdown_panel.visible = not touch_orders_dropdown_panel.visible
+	if touch_orders_dropdown_panel.visible and touch_kit_drawer_panel:
+		touch_kit_drawer_panel.visible = false
+	_update_touch_drawer_buttons()
+
+func _update_touch_drawer_buttons() -> void:
+	if touch_kit_drawer_btn and touch_kit_drawer_panel:
+		touch_kit_drawer_btn.text = "🎒 Kit Drawer ▾" if touch_kit_drawer_panel.visible else "🎒 Kit Drawer ▴"
+	if touch_orders_dropdown_btn and touch_orders_dropdown_panel:
+		touch_orders_dropdown_btn.text = "📯 Orders ▾" if touch_orders_dropdown_panel.visible else "📯 Orders ▴"
 
 func _create_touch_hold_button(parent: Control, label_text: String, pos: Vector2, btn_size: Vector2, action_name: String) -> Button:
 	var btn = Button.new()

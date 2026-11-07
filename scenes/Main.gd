@@ -35,18 +35,18 @@ enum CameraPreset {
 }
 
 var current_camera_mode: CameraMode = CameraMode.FOLLOW
-var current_camera_preset: CameraPreset = CameraPreset.ACTION_RPG
-var _last_follow_preset: CameraPreset = CameraPreset.ACTION_RPG
+var current_camera_preset: CameraPreset = CameraPreset.TOP_DOWN
+var _last_follow_preset: CameraPreset = CameraPreset.TOP_DOWN
 
-# Follow Mode Spherical & Framing Parameters
+# Follow Mode Spherical & Framing Parameters (Default: Mobile-Optimized Top-Down 82° Pitch)
 var cam_yaw: float = 0.0
-var cam_pitch: float = 36.0
-var cam_distance: float = 14.5
-var cam_fov: float = 44.0
+var cam_pitch: float = 82.0
+var cam_distance: float = 26.5
+var cam_fov: float = 45.0
 var target_cam_yaw: float = 0.0
-var target_cam_pitch: float = 36.0
-var target_cam_distance: float = 14.5
-var target_cam_fov: float = 44.0
+var target_cam_pitch: float = 82.0
+var target_cam_distance: float = 26.5
+var target_cam_fov: float = 45.0
 var _look_ahead_offset: Vector3 = Vector3.ZERO
 
 const MIN_DISTANCE: float = 3.5
@@ -69,6 +69,9 @@ var freecam_boost_speed: float = 55.0
 
 # UI Overlay Elements
 var camera_ui_container: PanelContainer = null
+var camera_drawer_content: HBoxContainer = null
+var camera_drawer_toggle_btn: Button = null
+var camera_drawer_expanded: bool = false
 var camera_ui_label: Label = null
 var camera_mode_button: Button = null
 var camera_style_button: Button = null
@@ -79,6 +82,7 @@ var is_title_screen_active: bool = false
 
 func _ready() -> void:
 	add_to_group("main")
+	DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
 	
 	if camera:
 		CombatJuice.register_camera(camera)
@@ -592,6 +596,7 @@ func _run_gameplay_self_test() -> void:
 	print(" -> Verified Animal Combat & Flee behavior: Animal HP reduced from %.1f to %.1f and fled!" % [pre_hit_hp, fox_sample.current_health])
 
 	# C. Test Active Shield Block & Perfect Parry
+	player.look_at(Vector3(fox_sample.global_position.x, player.global_position.y, fox_sample.global_position.z), Vector3.UP)
 	player.current_health = player.max_health
 	player.is_blocking = true
 	player.parry_window_timer = 0.2 # Active Parry Window
@@ -992,6 +997,7 @@ func _run_gameplay_self_test() -> void:
 	assert(hud.story_guide_panel.visible == false, "StoryGuidePopUp must hide when toggled OFF")
 	GameManager.toggle_story_guide()
 	assert(hud.story_guide_panel.visible == true, "StoryGuidePopUp must reappear when toggled ON")
+	GameManager.reset_for_new_campaign(GameManager.selected_class)
 	var pre_hp = player.max_health
 	var pre_atk = player.attack_damage
 	var pre_lvl = GameManager.hero_level
@@ -1006,11 +1012,10 @@ func _run_gameplay_self_test() -> void:
 	# TEST 26: TOP-DOWN CAMERA MODE VERIFICATION
 	# =========================================================
 	print("\n[TEST 26] Verifying Top-Down Camera Mode...")
-	toggle_top_down_camera()
-	assert(current_camera_preset == CameraPreset.TOP_DOWN, "Camera must switch to TOP_DOWN preset")
+	apply_camera_preset(CameraPreset.TOP_DOWN, true)
+	assert(current_camera_preset == CameraPreset.TOP_DOWN, "Camera must use TOP_DOWN preset")
 	assert(target_cam_pitch >= 80.0, "Top-Down Camera must use overhead pitch >= 80 degrees")
 	print(" -> Top-Down Camera verified! Pitch: %.1f°, Distance: %.1fm" % [target_cam_pitch, target_cam_distance])
-	toggle_top_down_camera()
 
 	# =========================================================
 	# TEST 27: AA MULTI-BIOME TERRAIN SHADER, FULL SECTOR NPCs, FX & REGIONAL MUSIC
@@ -1484,21 +1489,33 @@ func _setup_camera_ui() -> void:
 	sb.content_margin_bottom = 6
 	camera_ui_container.add_theme_stylebox_override("panel", sb)
 	
-	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 10)
-	camera_ui_container.add_child(hbox)
-	
-	camera_style_button = Button.new()
-	camera_style_button.text = "⚔️ Angle: Action-RPG [V]"
-	camera_style_button.focus_mode = Control.FOCUS_NONE
-	camera_style_button.pressed.connect(cycle_camera_preset)
-	hbox.add_child(camera_style_button)
+	var outer_hbox = HBoxContainer.new()
+	outer_hbox.add_theme_constant_override("separation", 8)
+	camera_ui_container.add_child(outer_hbox)
+
+	camera_drawer_toggle_btn = Button.new()
+	camera_drawer_toggle_btn.text = "🎥 View & Time ▸"
+	camera_drawer_toggle_btn.focus_mode = Control.FOCUS_NONE
+	camera_drawer_toggle_btn.pressed.connect(_toggle_camera_drawer)
+	outer_hbox.add_child(camera_drawer_toggle_btn)
 
 	var topdown_btn = Button.new()
 	topdown_btn.text = "🦅 Top-Down"
 	topdown_btn.focus_mode = Control.FOCUS_NONE
 	topdown_btn.pressed.connect(toggle_top_down_camera)
-	hbox.add_child(topdown_btn)
+	outer_hbox.add_child(topdown_btn)
+
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	hbox.visible = camera_drawer_expanded
+	outer_hbox.add_child(hbox)
+	camera_drawer_content = hbox
+	
+	camera_style_button = Button.new()
+	camera_style_button.text = "🦅 Top-Down [V]"
+	camera_style_button.focus_mode = Control.FOCUS_NONE
+	camera_style_button.pressed.connect(cycle_camera_preset)
+	hbox.add_child(camera_style_button)
 	
 	camera_mode_button = Button.new()
 	camera_mode_button.text = "🎥 Free-Cam [C]"
@@ -1507,9 +1524,9 @@ func _setup_camera_ui() -> void:
 	hbox.add_child(camera_mode_button)
 	
 	camera_ui_label = Label.new()
-	camera_ui_label.text = "Zoom: [Scroll] | Snap: [Z/X] | Orbit: [RMB/Arrows]"
+	camera_ui_label.text = "Pitch 82° · 26.5m"
 	camera_ui_label.add_theme_color_override("font_color", Color(0.85, 0.90, 0.98))
-	camera_ui_label.add_theme_font_size_override("font_size", 13)
+	camera_ui_label.add_theme_font_size_override("font_size", 12)
 	hbox.add_child(camera_ui_label)
 	
 	var reset_btn = Button.new()
@@ -1525,16 +1542,26 @@ func _setup_camera_ui() -> void:
 	hbox.add_child(time_btn)
 	
 	canvas.add_child(camera_ui_container)
-	camera_ui_container.anchor_left = 0.0
+	camera_ui_container.anchor_left = 0.5
 	camera_ui_container.anchor_top = 1.0
-	camera_ui_container.anchor_right = 0.0
+	camera_ui_container.anchor_right = 0.5
 	camera_ui_container.anchor_bottom = 1.0
-	camera_ui_container.offset_left = 16.0
-	camera_ui_container.offset_top = -48.0
-	camera_ui_container.offset_right = 760.0
-	camera_ui_container.offset_bottom = -12.0
+	camera_ui_container.offset_left = -135.0
+	camera_ui_container.offset_top = -46.0
+	camera_ui_container.offset_right = 135.0
+	camera_ui_container.offset_bottom = -10.0
 	
 	_update_camera_ui()
+
+func _toggle_camera_drawer() -> void:
+	camera_drawer_expanded = not camera_drawer_expanded
+	if camera_drawer_content:
+		camera_drawer_content.visible = camera_drawer_expanded
+	if camera_drawer_toggle_btn:
+		camera_drawer_toggle_btn.text = "🎥 View & Time ◂" if camera_drawer_expanded else "🎥 View & Time ▸"
+	if camera_ui_container:
+		camera_ui_container.offset_left = -390.0 if camera_drawer_expanded else -135.0
+		camera_ui_container.offset_right = 390.0 if camera_drawer_expanded else 135.0
 
 func _update_camera_ui() -> void:
 	if not camera_ui_label or not camera_mode_button:

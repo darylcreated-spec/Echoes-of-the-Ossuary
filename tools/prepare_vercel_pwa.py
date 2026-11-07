@@ -4,8 +4,8 @@ Post-export processor for Godot 4.7.1 Web / PWA build targeting Vercel & GitHub.
 1. Splits build/web/index.pck into <= 35 MB chunks (index.pck.part0..N) so every
    file stays well below GitHub and Vercel's 100 MB per-file limit.
 2. Injects a transparent ReadableStream chunk-reassembler into build/web/index.html
-   along with a custom Royal Medieval loading screen ("Created by daryl.created@gmail.com")
-   and an "Install App (PWA)" prompt button.
+   along with a custom Royal Medieval loading screen ("Created by daryl.created@gmail.com"),
+   Mobile Landscape Mode Enforcer, and an "Install App (PWA)" prompt button.
 3. Updates build/web/index.service.worker.js and build/web/index.manifest.json.
 """
 import json
@@ -53,7 +53,7 @@ def update_manifest() -> None:
         "short_name": "Ossuary",
         "description": "AA Medieval Action-RPG, Combined-Arms Siege & High-Seas Warfare — Created by daryl.created@gmail.com",
         "start_url": "./index.html",
-        "display": "standalone",
+        "display": "fullscreen",
         "orientation": "landscape",
         "background_color": "#0e111a",
         "theme_color": "#e8c252",
@@ -106,7 +106,7 @@ def update_index_html(pck_total_size: int, chunk_names: list[str]) -> None:
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 	<meta name="theme-color" content="#0e111a">
 	<meta name="description" content="Echoes of the Ossuary — AA Medieval Action-RPG, Combined-Arms Siege & High-Seas Warfare. Created by daryl.created@gmail.com">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -216,8 +216,9 @@ def update_index_html(pck_total_size: int, chunk_names: list[str]) -> None:
 		}}
 		#pwa-toolbar {{
 			position: fixed;
-			bottom: 8px;
-			right: 12px;
+			top: 8px;
+			left: 50%;
+			transform: translateX(-50%);
 			display: flex;
 			gap: 8px;
 			z-index: 15;
@@ -236,20 +237,58 @@ def update_index_html(pck_total_size: int, chunk_names: list[str]) -> None:
 		.pwa-btn:hover {{
 			background: rgba(38, 48, 74, 0.95);
 		}}
+		#landscape-prompt {{
+			display: none;
+			position: fixed;
+			top: 44px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: rgba(14, 18, 29, 0.96);
+			border: 2px solid #e6c155;
+			border-radius: 10px;
+			padding: 8px 14px;
+			color: #ffdf78;
+			font-family: system-ui, sans-serif;
+			font-size: 13px;
+			z-index: 30;
+			align-items: center;
+			gap: 10px;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+		}}
+		@media screen and (orientation: portrait) and (max-width: 950px) {{
+			#landscape-prompt {{
+				display: flex;
+			}}
+		}}
+		body.force-css-landscape {{
+			width: 100vh !important;
+			height: 100vw !important;
+			transform: rotate(90deg) translateY(-100%);
+			transform-origin: top left;
+			position: fixed;
+			top: 0;
+			left: 0;
+		}}
 	</style>
 </head>
 <body>
 	<canvas id="canvas">Your browser does not support the HTML5 canvas tag.</canvas>
 
+	<div id="landscape-prompt">
+		<span>🔄 Best in Landscape Top-Down Mode</span>
+		<button id="lock-landscape-btn" class="pwa-btn">Lock Landscape</button>
+		<button id="rotate-view-btn" class="pwa-btn">Force Rotate</button>
+	</div>
+
 	<div id="pwa-toolbar">
 		<button id="pwa-install-btn" class="pwa-btn" style="display:none;">📲 Install App (PWA)</button>
-		<button id="pwa-fullscreen-btn" class="pwa-btn" title="Toggle Fullscreen">⛶ Fullscreen</button>
+		<button id="pwa-fullscreen-btn" class="pwa-btn" title="Lock Landscape &amp; Fullscreen">⛶ Landscape Fullscreen</button>
 	</div>
 
 	<div id="status">
 		<div class="royal-card">
 			<h1 class="royal-title">⚔️ ECHOES OF THE OSSUARY ⚔️</h1>
-			<div class="royal-subtitle">CHRONICLES OF OAKHAVEN • COMBINED-ARMS SIEGE &amp; HIGH-SEAS WARFARE</div>
+			<div class="royal-subtitle">CHRONICLES OF OAKHAVEN • TOP-DOWN MOBILE &amp; WARFARE EDITION</div>
 			<div class="creator-badge">👑 Created by daryl.created@gmail.com</div>
 			<div class="progress-track">
 				<div id="status-progress-fill" class="progress-fill"></div>
@@ -318,6 +357,8 @@ def update_index_html(pck_total_size: int, chunk_names: list[str]) -> None:
 		const statusNotice = document.getElementById('status-notice');
 		const installBtn = document.getElementById('pwa-install-btn');
 		const fullscreenBtn = document.getElementById('pwa-fullscreen-btn');
+		const lockLandscapeBtn = document.getElementById('lock-landscape-btn');
+		const rotateViewBtn = document.getElementById('rotate-view-btn');
 
 		// Register PWA Service Worker proactively
 		if ('serviceWorker' in navigator && GODOT_CONFIG.serviceWorker) {{
@@ -343,13 +384,40 @@ def update_index_html(pck_total_size: int, chunk_names: list[str]) -> None:
 			installBtn.style.display = 'none';
 		}});
 
-		fullscreenBtn.addEventListener('click', () => {{
-			if (!document.fullscreenElement) {{
-				document.documentElement.requestFullscreen().catch(() => {{}});
-			}} else {{
-				document.exitFullscreen().catch(() => {{}});
+		const lockLandscapeAndFullscreen = async () => {{
+			try {{
+				if (!document.fullscreenElement && document.documentElement.requestFullscreen) {{
+					await document.documentElement.requestFullscreen();
+				}}
+				if (screen.orientation && screen.orientation.lock) {{
+					await screen.orientation.lock('landscape');
+				}}
+			}} catch (e) {{
+				if (window.innerHeight > window.innerWidth) {{
+					document.body.classList.add('force-css-landscape');
+				}}
 			}}
-		}});
+		}};
+
+		fullscreenBtn.addEventListener('click', lockLandscapeAndFullscreen);
+		if (lockLandscapeBtn) {{
+			lockLandscapeBtn.addEventListener('click', lockLandscapeAndFullscreen);
+		}}
+		if (rotateViewBtn) {{
+			rotateViewBtn.addEventListener('click', () => {{
+				document.body.classList.toggle('force-css-landscape');
+				window.dispatchEvent(new Event('resize'));
+			}});
+		}}
+
+		// Attempt automatic landscape orientation lock on startup & first touch
+		const tryAutoLandscape = () => {{
+			if (screen.orientation && screen.orientation.lock) {{
+				screen.orientation.lock('landscape').catch(() => {{}});
+			}}
+		}};
+		tryAutoLandscape();
+		window.addEventListener('pointerdown', tryAutoLandscape, {{ once: true }});
 
 		function displayFailureNotice(err) {{
 			console.error(err);
