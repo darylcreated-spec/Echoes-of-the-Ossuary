@@ -1,0 +1,11 @@
+.godot/
+.git/
+assets/
+scenes/
+src/
+shaders/
+screenshots/
+tools/
+*.bat
+*.import
+*.uid
