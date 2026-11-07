@@ -106,6 +106,9 @@ func _ready() -> void:
 	elif "--capture-world-after" in OS.get_cmdline_args() or "--capture-world-after" in OS.get_cmdline_user_args():
 		var audit_script = load("res://tools/world_screenshot_audit.gd")
 		audit_script.run_audit(self, "after")
+	elif "--capture-aerial-grid" in OS.get_cmdline_args() or "--capture-aerial-grid" in OS.get_cmdline_user_args():
+		var mapper_script = load("res://tools/aerial_world_mapper.gd")
+		mapper_script.run_mapping(self)
 
 func _run_gameplay_self_test() -> void:
 	print("==================================================")
