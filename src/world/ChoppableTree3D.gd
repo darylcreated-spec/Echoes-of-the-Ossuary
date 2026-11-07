@@ -177,7 +177,11 @@ func _spawn_wood_chips(pos: Vector3) -> void:
 	chips.mesh = qm
 	parent_scene.add_child(chips)
 	chips.emitting = true
-	get_tree().create_timer(0.8).timeout.connect(func(): if is_instance_valid(chips): chips.queue_free())
+	var c_wr = weakref(chips)
+	get_tree().create_timer(0.8).timeout.connect(func():
+		var c = c_wr.get_ref()
+		if c: c.queue_free()
+	)
 
 func _spawn_dust_burst(pos: Vector3) -> void:
 	var parent_scene = get_parent()
@@ -210,4 +214,8 @@ func _spawn_dust_burst(pos: Vector3) -> void:
 	dust.mesh = qm
 	parent_scene.add_child(dust)
 	dust.emitting = true
-	get_tree().create_timer(1.2).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
+	var d_wr = weakref(dust)
+	get_tree().create_timer(1.2).timeout.connect(func():
+		var d = d_wr.get_ref()
+		if d: d.queue_free()
+	)

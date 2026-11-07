@@ -226,7 +226,11 @@ func _execute_cleave() -> void:
 	if anim_player:
 		is_attacking = true
 		play_anim("2H_Melee_Attack_Chop", 0.05, 1.4)
-		get_tree().create_timer(0.45).timeout.connect(func(): is_attacking = false)
+		var self_wr = weakref(self)
+		get_tree().create_timer(0.45).timeout.connect(func():
+			var s = self_wr.get_ref()
+			if s: s.is_attacking = false
+		)
 		
 	AudioManager.play_sfx("sword_swing", 0.05, 3.0)
 	CombatJuice.add_trauma(0.25)

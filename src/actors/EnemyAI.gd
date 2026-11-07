@@ -356,7 +356,11 @@ func _execute_attack() -> void:
 		elif enemy_type == EnemyType.CREEP:
 			anim_name = "Bite_Action"
 		play_anim(anim_name, 0.05, 1.8)
-		get_tree().create_timer(0.35).timeout.connect(func(): is_attacking = false)
+		var self_wr = weakref(self)
+		get_tree().create_timer(0.35).timeout.connect(func():
+			var s = self_wr.get_ref()
+			if s: s.is_attacking = false
+		)
 	
 	if enemy_type in [EnemyType.ROGUE, EnemyType.MAGE, EnemyType.BLUE_DEMON]:
 		# Fire projectile (bone bolt or frost orb)

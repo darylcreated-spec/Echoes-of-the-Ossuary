@@ -34,6 +34,7 @@ const TownspersonNPCScript = preload("res://src/actors/TownspersonNPC.gd")
 const EnemyShipAI3DScript = preload("res://src/actors/EnemyShipAI3D.gd")
 const BattlefieldController3DScript = preload("res://src/combat/BattlefieldController3D.gd")
 const BattlegroundTroopAIScript = preload("res://src/combat/BattlegroundTroopAI.gd")
+const PortSeaWarfareController3DScript = preload("res://src/combat/PortSeaWarfareController3D.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -3551,3 +3552,148 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(-56.0, 0.0, -27.0), 80.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.FOX, Vector3(64.0, 0.0, 62.0), 120.0)
 	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(68.0, 0.0, 82.0), -45.0)
+
+	# 4. Populate All Remaining Map Sectors (A1, A2, B3, B4, D2, D4, B1/C1) & Port Sea Warfare
+	_populate_all_empty_map_sectors_and_sea_warfare(parent)
+
+func _populate_all_empty_map_sectors_and_sea_warfare(parent: Node3D) -> void:
+	# =========================================================================
+	# A. MASSIVE BATTLE #2: PORT BLACKWATER SEASIDE SHIP WARFARE (Sector A3/B3)
+	# =========================================================================
+	var port_sea_battle = PortSeaWarfareController3DScript.new()
+	port_sea_battle.name = "PortBlackwater_SeaWarfare"
+	port_sea_battle.position = Vector3(-58.0, 0.0, 78.0)
+	parent.add_child(port_sea_battle)
+
+	# =========================================================================
+	# B. SECTOR B4 (X: -58 to -6, Z: 105 to 198) — COASTAL SUPPLY DEPOT & WATCHTOWERS
+	# =========================================================================
+	# Fortified Coastal Supply Highroad linking Port Blackwater (-50, 102) to Sector C4 Siege Front (10, 150)
+	var road_models = [
+		"res://assets/overworld/path_A.gltf",
+		"res://assets/overworld/path_B.gltf",
+		"res://assets/overworld/path_C.gltf"
+	]
+	for step in range(0, 14):
+		var alpha = float(step) / 13.0
+		var rx = lerp(-48.0, 6.0, alpha)
+		var rz = lerp(104.0, 152.0, alpha)
+		_place_prop(parent, road_models[step % 3], Vector3(rx, 0.02, rz), Vector3(1.25, 1.0, 1.25), 42.0)
+
+	# Royal Coastal Quartermaster Compound & Watchtowers in Sector B4
+	_place_prop(parent, "res://assets/overworld/building_barracks_blue.gltf", Vector3(-36.0, 0.0, 134.0), Vector3.ONE * 4.8, 90.0)
+	_add_static_box(parent, Vector3(-36.0, 4.0, 134.0), Vector3(7.0, 7.0, 7.0))
+	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-46.0, 0.0, 122.0), Vector3.ONE * 6.5, 45.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-22.0, 0.0, 164.0), Vector3.ONE * 6.5, 135.0)
+	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(-34.0, 0.0, 154.0), Vector3.ONE * 5.6, 0.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-20.0, 0.0, 128.0), Vector3.ONE * 2.5, 45.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(-16.0, 0.0, 142.0), Vector3.ONE * 2.5, 60.0)
+
+	# Royal Warhorse Remount Corral & Supply Munitions in Sector B4
+	for fx in [-44.0, -38.0, -32.0, -26.0]:
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, 174.0), Vector3.ONE * 2.0, 90.0)
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(fx, 0.0, 186.0), Vector3.ONE * 2.0, 90.0)
+	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-30.0, 0.0, 132.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/flag_blue.gltf", Vector3(-20.0, 0.0, 160.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/pallet.gltf", Vector3(-28.0, 0.0, 138.0), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/crate_A_big.gltf", Vector3(-28.0, 0.0, 138.0), Vector3.ONE * 1.4)
+	_place_prop(parent, "res://assets/overworld/barrel.gltf", Vector3(-26.5, 0.0, 139.0), Vector3.ONE * 1.3)
+
+	# Coastal Pine Groves & Boulders across Sector B4
+	var b4_trees = [
+		Vector3(-52.0, 0.0, 114.0), Vector3(-42.0, 0.0, 112.0), Vector3(-18.0, 0.0, 115.0),
+		Vector3(-48.0, 0.0, 146.0), Vector3(-52.0, 0.0, 168.0), Vector3(-14.0, 0.0, 178.0),
+		Vector3(-34.0, 0.0, 192.0), Vector3(-48.0, 0.0, 190.0), Vector3(-18.0, 0.0, 192.0)
+	]
+	for i in range(b4_trees.size()):
+		_place_prop(parent, "res://assets/overworld/tree_B.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_A.gltf", b4_trees[i], Vector3.ONE * 2.5, float(i * 47))
+
+	# =========================================================================
+	# C. SECTOR D4 (X: 76 to 132, Z: 118 to 196) — SOUTHERN FENLANDS RUINED KEEP & OUTLAW FLANK
+	# =========================================================================
+	_place_prop(parent, "res://assets/overworld/building_destroyed.gltf", Vector3(96.0, 0.0, 142.0), Vector3.ONE * 6.5, -35.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_catapult_red.gltf", Vector3(112.0, 0.0, 154.0), Vector3.ONE * 7.2, -90.0)
+	_place_prop(parent, "res://assets/overworld/building_barracks_red.gltf", Vector3(88.0, 0.0, 166.0), Vector3.ONE * 4.8, 180.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(104.0, 0.0, 172.0), Vector3.ONE * 2.6, -120.0)
+	_place_prop(parent, "res://assets/overworld/tent.gltf", Vector3(82.0, 0.0, 150.0), Vector3.ONE * 2.5, -90.0)
+	_place_prop(parent, "res://assets/overworld/flag_red.gltf", Vector3(84.0, 0.0, 144.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/flag_red.gltf", Vector3(106.0, 0.0, 162.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(98.0, 0.0, 130.0), Vector3.ONE * 2.2)
+
+	var d4_trees = [
+		Vector3(80.0, 0.0, 124.0), Vector3(114.0, 0.0, 126.0), Vector3(124.0, 0.0, 142.0),
+		Vector3(78.0, 0.0, 178.0), Vector3(96.0, 0.0, 186.0), Vector3(118.0, 0.0, 182.0),
+		Vector3(126.0, 0.0, 168.0), Vector3(84.0, 0.0, 192.0), Vector3(110.0, 0.0, 194.0)
+	]
+	for i in range(d4_trees.size()):
+		var dt_m = "res://assets/overworld/tree_dead_large_decorated.gltf" if (i % 2 == 0) else "res://assets/overworld/tree_B.gltf"
+		_place_prop(parent, dt_m, d4_trees[i], Vector3.ONE * 2.5, float(i * 53))
+
+	# =========================================================================
+	# D. SECTOR D2 (X: 74 to 130, Z: -38 to 16) — EASTBROOK ORCHARD, GRANARY & TIMBER CLEARING
+	# =========================================================================
+	_place_prop(parent, "res://assets/overworld/building_home_A_blue.gltf", Vector3(88.0, 0.0, -18.0), Vector3.ONE * 5.8, -90.0)
+	_add_static_box(parent, Vector3(88.0, 3.5, -18.0), Vector3(6.0, 6.5, 6.0))
+	_place_prop(parent, "res://assets/overworld/building_home_B_green.gltf", Vector3(106.0, 0.0, -8.0), Vector3.ONE * 5.8, 180.0)
+	_add_static_box(parent, Vector3(106.0, 3.5, -8.0), Vector3(6.0, 6.5, 6.0))
+	_place_prop(parent, "res://assets/overworld/building_market_blue.gltf", Vector3(96.0, 0.0, -28.0), Vector3.ONE * 4.2, 0.0)
+	_place_prop(parent, "res://assets/overworld/building_well_blue.gltf", Vector3(96.0, 0.0, -14.0), Vector3.ONE * 2.4)
+	_place_prop(parent, "res://assets/overworld/trees_A_cut.gltf", Vector3(114.0, 0.0, -24.0), Vector3.ONE * 2.2)
+	_place_prop(parent, "res://assets/overworld/resource_lumber.gltf", Vector3(118.0, 0.0, -20.0), Vector3.ONE * 2.2)
+
+	var d2_orchard = [
+		Vector3(78.0, 0.0, -30.0), Vector3(84.0, 0.0, -6.0), Vector3(96.0, 0.0, 4.0),
+		Vector3(112.0, 0.0, 6.0), Vector3(122.0, 0.0, -6.0), Vector3(122.0, 0.0, -30.0),
+		Vector3(108.0, 0.0, -34.0), Vector3(78.0, 0.0, 8.0)
+	]
+	for i in range(d2_orchard.size()):
+		_place_prop(parent, "res://assets/overworld/tree_A.gltf", d2_orchard[i], Vector3.ONE * 2.4, float(i * 40))
+
+	# =========================================================================
+	# E. SECTOR B3 (X: -46 to -16, Z: 34 to 96) — WESTERN MEADOW FARMSTEAD & WATCHPOST
+	# =========================================================================
+	_place_prop(parent, "res://assets/overworld/building_home_A_yellow.gltf", Vector3(-34.0, 0.0, 64.0), Vector3.ONE * 5.6, 90.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_A_blue.gltf", Vector3(-24.0, 0.0, 44.0), Vector3.ONE * 5.8, 0.0)
+	_place_prop(parent, "res://assets/overworld/building_market_yellow.gltf", Vector3(-32.0, 0.0, 78.0), Vector3.ONE * 3.8, 90.0)
+	for fz in [56.0, 62.0, 68.0, 74.0]:
+		_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(-26.0, 0.0, fz), Vector3.ONE * 2.0, 0.0)
+
+	# =========================================================================
+	# F. SECTOR A1 & A2 (X: -195 to -85, Z: -125 to 25) — SEA-STACK ISLANDS, REEF & ARMADA FLOTILLA
+	# =========================================================================
+	var sea_stacks = [
+		Vector3(-118.0, -0.5, -92.0), Vector3(-148.0, -0.5, -64.0),
+		Vector3(-112.0, -0.5, -28.0), Vector3(-145.0, -0.5, -8.0),
+		Vector3(-116.0, -0.5, 16.0), Vector3(-156.0, -0.5, -105.0)
+	]
+	for i in range(sea_stacks.size()):
+		var rk_m = "res://assets/overworld/rock_C.gltf" if (i % 2 == 0) else "res://assets/overworld/rock_A.gltf"
+		_place_prop(parent, rk_m, sea_stacks[i], Vector3(4.5, 5.2, 4.5), float(i * 65))
+
+	# Northern Reef Lighthouse & Shipwreck on Kraken's Tooth Atoll (Sector A1)
+	var north_lighthouse = HarborLighthouse3DScript.new()
+	north_lighthouse.position = Vector3(-118.0, 0.5, -92.0)
+	parent.add_child(north_lighthouse)
+
+	# Northern Flotilla of the Invading Sea Armada in Sector A1 & A2
+	for nf_cfg in [
+		{"name": "Northern Vanguard Dreadnought", "pos": Vector3(-106.0, -0.3, -52.0), "rot": 115.0},
+		{"name": "Corsair Raider Black-Fin", "pos": Vector3(-124.0, -0.3, -16.0), "rot": 95.0},
+		{"name": "Sea-Wolf Scout Brigantine", "pos": Vector3(-104.0, -0.3, 12.0), "rot": 80.0}
+	]:
+		var n_ship = EnemyNavalShip3DScript.new()
+		n_ship.ship_name = nf_cfg["name"]
+		n_ship.position = nf_cfg["pos"]
+		n_ship.rotation_degrees.y = nf_cfg["rot"]
+		parent.add_child(n_ship)
+
+	# =========================================================================
+	# G. SECTOR B1 & C1 NORTHERN FRONTIER — GUARD CHECKPOINTS & WOODLAND GROVES
+	# =========================================================================
+	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(-18.0, 0.0, -96.0), Vector3.ONE * 6.5, 0.0)
+	_place_prop(parent, "res://assets/overworld/building_tower_B_blue.gltf", Vector3(24.0, 0.0, -96.0), Vector3.ONE * 6.5, 0.0)
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-22.0, 0.0, -82.0), Vector3.ONE * 2.2, 30.0)
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(28.0, 0.0, -82.0), Vector3.ONE * 2.2, -30.0)
+	for nx in [-32.0, -12.0, 14.0, 34.0]:
+		_place_prop(parent, "res://assets/overworld/tree_B.gltf", Vector3(nx, 0.0, -108.0), Vector3.ONE * 2.6, 25.0)
+

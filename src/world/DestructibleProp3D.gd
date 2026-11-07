@@ -215,7 +215,11 @@ func _spawn_dust_cloud(pos: Vector3, is_wood: bool) -> void:
 
 	parent_scene.add_child(dust)
 	dust.emitting = true
-	get_tree().create_timer(1.0).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
+	var d_wr = weakref(dust)
+	get_tree().create_timer(1.0).timeout.connect(func():
+		var d = d_wr.get_ref()
+		if d: d.queue_free()
+	)
 
 func _spawn_loot(pos: Vector3) -> void:
 	if drop_loot == "none":

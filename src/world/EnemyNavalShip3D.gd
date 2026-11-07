@@ -174,6 +174,9 @@ func _fire_broadside_volley() -> void:
 
 	var dest = target_pos + Vector3(randf_range(-2.0, 2.0), 0.5, randf_range(-2.0, 2.0))
 	var fly_time = 0.9
+	var ball_wr = weakref(ball)
+	var chosen_wr = weakref(chosen)
+	var dmg = attack_damage
 	var tw = ball.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(ball, "global_position:x", dest.x, fly_time)
@@ -181,12 +184,14 @@ func _fire_broadside_volley() -> void:
 	tw.tween_property(ball, "global_position:y", dest.y + 2.8, fly_time * 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(ball, "global_position:y", dest.y, fly_time * 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(func():
-		if is_instance_valid(ball):
-			ball.queue_free()
+		var b = ball_wr.get_ref()
+		if b:
+			b.queue_free()
 		AudioManager.play_sfx_at_position("cannon_impact", dest, 45.0, 0.1, 0.0)
 		CombatJuice.spawn_hit_spark(dest, Color(1.0, 0.5, 0.2))
-		if chosen and is_instance_valid(chosen) and chosen.has_method("take_ship_damage"):
-			chosen.take_ship_damage(attack_damage)
+		var c = chosen_wr.get_ref()
+		if c and c.has_method("take_ship_damage"):
+			c.take_ship_damage(dmg)
 	)
 
 func take_naval_damage(amount: float, _source: Node = null) -> void:

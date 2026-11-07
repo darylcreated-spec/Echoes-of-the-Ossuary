@@ -1017,6 +1017,10 @@ func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3, dmg: float = 40.0
 				break
 
 	var fly_time = 0.75
+	var ball_wr = weakref(ball)
+	var hit_wr = weakref(hit_enemy)
+	var self_wr = weakref(self)
+	var tree_ref = get_tree()
 	var tw = ball.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(ball, "global_position:x", target_dest.x, fly_time)
@@ -1024,20 +1028,24 @@ func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3, dmg: float = 40.0
 	tw.tween_property(ball, "global_position:y", target_dest.y + 2.5, fly_time * 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(ball, "global_position:y", target_dest.y, fly_time * 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(func():
-		if is_instance_valid(ball):
-			ball.queue_free()
+		var b = ball_wr.get_ref()
+		if b:
+			b.queue_free()
 		AudioManager.play_sfx_at_position("cannon_impact", target_dest, 45.0, 0.1, 0.0)
 		CombatJuice.spawn_hit_spark(target_dest, Color(1.0, 0.65, 0.2))
-		if hit_enemy and is_instance_valid(hit_enemy) and hit_enemy.has_method("take_naval_damage"):
-			hit_enemy.take_naval_damage(dmg, self)
+		var h = hit_wr.get_ref()
+		var s = self_wr.get_ref()
+		if h and h.has_method("take_naval_damage"):
+			h.take_naval_damage(dmg, s)
 
 		# Blast nearby destructibles
-		var destructibles = get_tree().get_nodes_in_group("destructible")
-		for prop in destructibles:
-			if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
-				if prop.global_position.distance_to(target_dest) < 6.0:
-					if prop.has_method("take_damage"):
-						prop.take_damage(dmg, "cannon", target_dest)
+		if tree_ref:
+			var destructibles = tree_ref.get_nodes_in_group("destructible")
+			for prop in destructibles:
+				if is_instance_valid(prop) and not prop.get("is_destroyed") and not prop.get("is_felled"):
+					if prop.global_position.distance_to(target_dest) < 6.0:
+						if prop.has_method("take_damage"):
+							prop.take_damage(dmg, "cannon", target_dest)
 	)
 
 func _spawn_flaming_arrow(start_pos: Vector3, dest_pos: Vector3) -> void:
@@ -1058,17 +1066,23 @@ func _spawn_flaming_arrow(start_pos: Vector3, dest_pos: Vector3) -> void:
 	arr.global_position = start_pos
 	arr.look_at(dest_pos, Vector3.UP)
 
+	var arr_wr = weakref(arr)
+	var self_wr = weakref(self)
+	var tree_ref = get_tree()
 	var tw = arr.create_tween()
 	tw.tween_property(arr, "global_position", dest_pos, 0.55)
 	tw.chain().tween_callback(func():
-		if is_instance_valid(arr):
-			arr.queue_free()
+		var a = arr_wr.get_ref()
+		if a:
+			a.queue_free()
 		CombatJuice.spawn_hit_spark(dest_pos, Color(1.0, 0.6, 0.1))
-		var enemies = get_tree().get_nodes_in_group("enemy_naval_ship")
-		for e in enemies:
-			if is_instance_valid(e) and not e.is_queued_for_deletion():
-				if e.global_position.distance_to(dest_pos) < 6.0 and e.has_method("take_naval_damage"):
-					e.take_naval_damage(16.0, self)
+		var s = self_wr.get_ref()
+		if tree_ref:
+			var enemies = tree_ref.get_nodes_in_group("enemy_naval_ship")
+			for e in enemies:
+				if is_instance_valid(e) and not e.is_queued_for_deletion():
+					if e.global_position.distance_to(dest_pos) < 6.0 and e.has_method("take_naval_damage"):
+						e.take_naval_damage(16.0, s)
 	)
 
 func take_ship_damage(amount: float) -> void:

@@ -90,8 +90,11 @@ func _setup_timers() -> void:
 	add_child(_dash_cd_timer)
 
 func _setup_player_stats() -> void:
+	var old_max = max_health
 	var stats = GameManager.get_base_hero_stats(GameManager.selected_class)
 	max_health = stats["max_hp"]
+	if max_health > old_max and old_max > 0:
+		current_health += (max_health - old_max)
 	current_health = min(current_health, max_health)
 	if current_health <= 0:
 		current_health = max_health
@@ -994,7 +997,7 @@ func update_movement_animation(delta: float) -> void:
 	super.update_movement_animation(delta)
 
 # --- OVERRIDES ---
-func take_damage(amount: float, knockback: Vector3, is_crit: bool, source: Node3D) -> void:
+func take_damage(amount: float, knockback: Vector3 = Vector3.ZERO, is_crit: bool = false, source: Node3D = null) -> void:
 	if is_dead or amount <= 0.0:
 		return
 	var forward = -transform.basis.z

@@ -146,6 +146,10 @@ func _fire_coastal_cannon() -> void:
 
 	var target_dest = _target_ship.global_position + Vector3(randf_range(-1.5, 1.5), 1.0, randf_range(-1.5, 1.5))
 	var fly_time = 0.85
+	var ball_wr = weakref(ball)
+	var target_wr = weakref(_target_ship)
+	var self_wr = weakref(self)
+	var dmg = attack_damage
 	var tween = ball.create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(ball, "global_position:x", target_dest.x, fly_time)
@@ -153,10 +157,13 @@ func _fire_coastal_cannon() -> void:
 	tween.tween_property(ball, "global_position:y", target_dest.y + 3.2, fly_time * 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.chain().tween_property(ball, "global_position:y", target_dest.y, fly_time * 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(func():
-		if is_instance_valid(ball):
-			ball.queue_free()
+		var b = ball_wr.get_ref()
+		if b:
+			b.queue_free()
 		AudioManager.play_sfx_at_position("cannon_impact", target_dest, 50.0, 0.1, 0.0)
 		CombatJuice.spawn_hit_spark(target_dest, Color(1.0, 0.6, 0.2))
-		if is_instance_valid(_target_ship) and _target_ship.has_method("take_naval_damage"):
-			_target_ship.take_naval_damage(attack_damage, self)
+		var t = target_wr.get_ref()
+		var s = self_wr.get_ref()
+		if t and t.has_method("take_naval_damage"):
+			t.take_naval_damage(dmg, s)
 	)

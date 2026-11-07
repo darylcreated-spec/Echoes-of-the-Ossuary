@@ -15,6 +15,10 @@ signal mission_completed(mission: Dictionary)
 signal mission_claimed(mission: Dictionary)
 signal story_act_advanced(new_act: int, act_title: String)
 signal world_structure_repaired(structure_id: String)
+signal hero_leveled_up(new_level: int, new_title: String)
+signal campaign_step_changed(step_index: int, step_data: Dictionary)
+signal campaign_step_completed(step_index: int, step_data: Dictionary)
+signal story_guide_toggled(enabled: bool)
 
 # --- ENUMS ---
 enum HeroClass {
@@ -42,7 +46,160 @@ var selected_class: HeroClass = HeroClass.KNIGHT
 
 # Currencies
 var gold: int = 0
+var player_gold: int:
+	get:
+		return gold
+	set(val):
+		var diff = val - gold
+		gold = val
+		gold_changed.emit(gold, diff)
 var soul_echoes: int = 150 # Starting echoes for initial altar testing
+
+# Character Development & Hero Progression
+var hero_level: int = 1
+var hero_xp: int = 0
+var xp_to_next_level: int = 100
+var hero_title: String = "King's Vanguard Squire"
+var bonus_max_hp: float = 0.0
+var bonus_attack_damage: float = 0.0
+var bonus_armor_defense: float = 0.0
+var unlocked_weapon_tier: int = 1
+var unlocked_armor_tier: int = 1
+
+# Toggleable Pop-Up Story Guide State
+var story_guide_enabled: bool = true
+var current_campaign_step: int = 0
+
+var campaign_quests: Array[Dictionary] = [
+	{
+		"id": "chapter_1_royal_muster",
+		"chapter": "Chapter I • The King's Summons",
+		"title": "Pledge Fealty & Arm for War",
+		"sector": "Sector C2 • Oakhaven Sanctuary",
+		"target_pos": Vector3(0.0, 0.0, -3.0),
+		"instructions": "1. Use [WASD] to move and press [V] to test the new Top-Down Camera view.\n2. Speak with Captain Vane or Master Blacksmith Torvald in Oakhaven Square [E].\n3. Practice your melee combo [LMB] & Dash [Space], or click [Complete Step] to claim your Royal Muster Arms!",
+		"reward_gold": 150,
+		"reward_echoes": 60,
+		"reward_xp": 120,
+		"reward_hp": 25.0,
+		"reward_atk": 4.0,
+		"reward_def": 2.0,
+		"reward_desc": "+150 Gold • +60 Echoes • +25 Max HP • +4 Atk • Steel Arms (Tier II)",
+		"completed": false
+	},
+	{
+		"id": "chapter_2_whisperwood_enclave",
+		"chapter": "Chapter II • Shadows of Whisperwood",
+		"title": "Cleanse Sylva's Enclave & Sun Altar",
+		"sector": "Sector B1 • Whisperwood Forest",
+		"target_pos": Vector3(-48.0, 0.0, -58.0),
+		"instructions": "1. Follow the golden beacon northwest into Sector B1 (Whisperwood Enclave).\n2. Speak with Elder Druid Thorne [E] and defeat the forest bandit raiders.\n3. Restore the Ancient Druidic Sun Altar [E] to earn the Living Heartwood blessing!",
+		"reward_gold": 200,
+		"reward_echoes": 90,
+		"reward_xp": 160,
+		"reward_hp": 30.0,
+		"reward_atk": 5.0,
+		"reward_def": 3.0,
+		"reward_desc": "+200 Gold • +90 Echoes • +30 Max HP • +5 Atk • Druid Ward",
+		"completed": false
+	},
+	{
+		"id": "chapter_3_port_sea_warfare",
+		"chapter": "Chapter III • Seaside Ship Warfare",
+		"title": "Defend Port Blackwater from the Sea Armada",
+		"sector": "Sector A3/B3 • Port Blackwater Harbor",
+		"target_pos": Vector3(-58.0, 0.0, 78.0),
+		"instructions": "1. Urgent! An Invading Corsair Armada & Landing Fleet is assaulting Port Blackwater (Sector A3/B3)!\n2. Sound the Port Naval War Horn [E] on the Stone Quay to rally the Port Defenses.\n3. Command the Harbor Cannon Batteries, Quay Bowmen & Marines [Keys 1-5] or helm The Sea Sovereign flagship to crush the sea invasion!",
+		"reward_gold": 350,
+		"reward_echoes": 150,
+		"reward_xp": 240,
+		"reward_hp": 40.0,
+		"reward_atk": 8.0,
+		"reward_def": 4.0,
+		"reward_desc": "+350 Gold • +150 Echoes • +40 Max HP • +8 Atk • High Admiral Crest",
+		"completed": false
+	},
+	{
+		"id": "chapter_4_dwarven_forge",
+		"chapter": "Chapter IV • The Iron Crucible",
+		"title": "Reclaim the Khar-Drakken Mithril Forge",
+		"sector": "Sector D1 • Khar-Drakken Crags",
+		"target_pos": Vector3(62.0, 0.0, -52.0),
+		"instructions": "1. Ride northeast to the mountain fortress of Khar-Drakken in Sector D1.\n2. Aid Runesmith Torvald against the Iron-Tusk Orc Warband.\n3. Repair the ancestral Dwarven Bellows [E] to temper your blade with Mithril!",
+		"reward_gold": 300,
+		"reward_echoes": 140,
+		"reward_xp": 250,
+		"reward_hp": 35.0,
+		"reward_atk": 10.0,
+		"reward_def": 4.0,
+		"reward_desc": "+300 Gold • +140 Echoes • +35 Max HP • +10 Atk • Mithril Warblade (Tier III)",
+		"completed": false
+	},
+	{
+		"id": "chapter_5_massive_land_siege",
+		"chapter": "Chapter V • The Great Southern Siege",
+		"title": "Lead the King's Combined-Arms Army",
+		"sector": "Sector C4 • Southern Siege Battlefield",
+		"target_pos": Vector3(24.0, 0.0, 126.0),
+		"instructions": "1. March south across the river bridge to the fortified ramparts in Sector C4.\n2. Sound the Royal War Horn [E] to launch the Massive Combined-Arms Land Battle!\n3. Command your Infantry Phalanx, Longbowmen, Mounted Cavalry & Trebuchet Siege Weapons [Keys 1-5] to crush Warlord Malakor's besieging army!",
+		"reward_gold": 500,
+		"reward_echoes": 250,
+		"reward_xp": 350,
+		"reward_hp": 55.0,
+		"reward_atk": 14.0,
+		"reward_def": 6.0,
+		"reward_desc": "+500 Gold • +250 Echoes • +55 Max HP • +14 Atk • Royal Marshal Plate (Tier IV)",
+		"completed": false
+	},
+	{
+		"id": "chapter_6_weeping_fen",
+		"chapter": "Chapter VI • Mists of the Weeping Fen",
+		"title": "Purge the Fenland Outlaws & Bog Ward",
+		"sector": "Sector D3/D4 • Weeping Fen & Ruined Keep",
+		"target_pos": Vector3(58.0, 0.0, 62.0),
+		"instructions": "1. Journey southeast into the mist-shrouded Weeping Fen (Sector D3 & D4).\n2. Speak with Witch Morwenna [E] and clear the southern Ruined Watch-Keep.\n3. Claim the Fenland Soul Ward to shield your spirit against abyssal magic!",
+		"reward_gold": 350,
+		"reward_echoes": 200,
+		"reward_xp": 300,
+		"reward_hp": 45.0,
+		"reward_atk": 10.0,
+		"reward_def": 5.0,
+		"reward_desc": "+350 Gold • +200 Echoes • +45 Max HP • +10 Atk • Fen-Bane Ward",
+		"completed": false
+	},
+	{
+		"id": "chapter_7_tri_seal_gate",
+		"chapter": "Chapter VII • Awakening the Tri-Seal",
+		"title": "Unseal the Northern Ossuary Gate",
+		"sector": "Sector C1 • Northern Crypt Approach",
+		"target_pos": Vector3(0.0, 0.0, -28.0),
+		"instructions": "1. Return north along the King's Highway to the Ossuary Gate in Sector C1.\n2. Channel your hard-won relics at the Descent Sigil.\n3. Step onto the glowing sigil to descend into Floor 1 of the Ossuary Catacombs!",
+		"reward_gold": 400,
+		"reward_echoes": 300,
+		"reward_xp": 400,
+		"reward_hp": 60.0,
+		"reward_atk": 15.0,
+		"reward_def": 6.0,
+		"reward_desc": "+400 Gold • +300 Echoes • +60 Max HP • +15 Atk • Sovereign Relic Blade (Tier V)",
+		"completed": false
+	},
+	{
+		"id": "chapter_8_ossuary_warden",
+		"chapter": "Chapter VIII • Throne of the Ossuary",
+		"title": "Vanquish the Skeletal Warden",
+		"sector": "Ossuary Catacombs • Floors 1 to 5",
+		"target_pos": Vector3(0.0, 0.0, -29.0),
+		"instructions": "1. Fight through the subterranean chambers of the Ossuary Catacombs.\n2. Attune to Relic Boons after each cleared chamber.\n3. Defeat the Skeletal Warden on Floor 5 to become Immortal Savior of Oakhaven!",
+		"reward_gold": 1000,
+		"reward_echoes": 500,
+		"reward_xp": 600,
+		"reward_hp": 100.0,
+		"reward_atk": 25.0,
+		"reward_def": 10.0,
+		"reward_desc": "+1000 Gold • +500 Echoes • +100 Max HP • +25 Atk • Immortal Crown",
+		"completed": false
+	}
+]
 
 # Meta Upgrades (persists across runs)
 var upgrade_max_hp_level: int = 0       # +20 Max HP per level (Max 5)
@@ -329,6 +486,11 @@ func get_base_hero_stats(h_class: HeroClass = selected_class) -> Dictionary:
 	stats["max_hp"] += upgrade_max_hp_level * 20.0
 	stats["attack_damage"] *= (1.0 + upgrade_attack_power_level * 0.12)
 	stats["dash_cooldown"] *= max(0.4, 1.0 - upgrade_dash_cooldown_level * 0.12)
+
+	# Apply Storyline & Mission Character Development Bonuses
+	stats["max_hp"] += bonus_max_hp + float(hero_level - 1) * 18.0
+	stats["attack_damage"] += bonus_attack_damage + float(hero_level - 1) * 3.5
+	stats["defense"] += bonus_armor_defense + float(hero_level - 1) * 1.5
 	
 	# Apply boons
 	for boon in relic_boons:
@@ -610,11 +772,111 @@ func claim_mission_reward(mission_id: String) -> bool:
 				m["claimed"] = true
 				add_gold(m["reward_gold"])
 				add_echoes(m["reward_echoes"])
+				bonus_max_hp += 10.0
+				bonus_attack_damage += 2.0
+				add_hero_xp(80)
+				player_stats_changed.emit()
 				mission_claimed.emit(m)
 				save_game()
 				var am = get_node_or_null("/root/AudioManager")
 				if am and am.has_method("play_sfx"):
 					am.play_sfx("chest_open", 0.05, 1.2)
+				return true
+	return false
+
+# --- STORYLINE CAMPAIGN & CHARACTER DEVELOPMENT METHODS ---
+const HERO_TITLES: Array[String] = [
+	"King's Vanguard Squire",
+	"Royal Vanguard Knight",
+	"Ward of Sylva's Enclave",
+	"High Admiral of Blackwater",
+	"Mithril Forge Champion",
+	"Grand Marshal of the Realm",
+	"Fen-Bane Paladin",
+	"Sovereign Crypt-Breaker",
+	"Arch-Paladin of Aethelgard",
+	"Immortal Savior of Oakhaven"
+]
+
+func toggle_story_guide() -> bool:
+	story_guide_enabled = not story_guide_enabled
+	story_guide_toggled.emit(story_guide_enabled)
+	return story_guide_enabled
+
+func set_story_guide_enabled(enabled: bool) -> void:
+	if story_guide_enabled != enabled:
+		story_guide_enabled = enabled
+		story_guide_toggled.emit(story_guide_enabled)
+
+func get_current_campaign_quest() -> Dictionary:
+	if campaign_quests.is_empty():
+		return {}
+	var idx = clampi(current_campaign_step, 0, campaign_quests.size() - 1)
+	return campaign_quests[idx]
+
+func add_hero_xp(amount: int) -> void:
+	hero_xp += amount
+	var leveled = false
+	while hero_xp >= xp_to_next_level:
+		hero_xp -= xp_to_next_level
+		hero_level += 1
+		xp_to_next_level = int(round(float(xp_to_next_level) * 1.25))
+		var t_idx = clampi(hero_level - 1, 0, HERO_TITLES.size() - 1)
+		hero_title = HERO_TITLES[t_idx]
+		leveled = true
+	if leveled:
+		player_stats_changed.emit()
+		hero_leveled_up.emit(hero_level, hero_title)
+		var am = get_node_or_null("/root/AudioManager")
+		if am and am.has_method("play_sfx"):
+			am.play_sfx("level_up", 0.05, 2.0)
+
+func complete_current_campaign_step() -> Dictionary:
+	if current_campaign_step < 0 or current_campaign_step >= campaign_quests.size():
+		return {}
+	var q = campaign_quests[current_campaign_step]
+	if q.get("completed", false):
+		if current_campaign_step < campaign_quests.size() - 1:
+			current_campaign_step += 1
+			campaign_step_changed.emit(current_campaign_step, get_current_campaign_quest())
+		return q
+
+	q["completed"] = true
+	var r_gold = int(q.get("reward_gold", 150))
+	var r_echoes = int(q.get("reward_echoes", 75))
+	var r_xp = int(q.get("reward_xp", 120))
+	var r_hp = float(q.get("reward_hp", 25.0))
+	var r_atk = float(q.get("reward_atk", 4.0))
+	var r_def = float(q.get("reward_def", 2.0))
+
+	add_gold(r_gold)
+	add_echoes(r_echoes)
+	bonus_max_hp += r_hp
+	bonus_attack_damage += r_atk
+	bonus_armor_defense += r_def
+	unlocked_weapon_tier = max(unlocked_weapon_tier, current_campaign_step + 2)
+	unlocked_armor_tier = max(unlocked_armor_tier, current_campaign_step + 2)
+	add_hero_xp(r_xp)
+	player_stats_changed.emit()
+
+	var completed_idx = current_campaign_step
+	campaign_step_completed.emit(completed_idx, q)
+
+	if current_campaign_step < campaign_quests.size() - 1:
+		current_campaign_step += 1
+	if current_campaign_step <= 5:
+		advance_story_act(min(current_campaign_step, 5))
+
+	campaign_step_changed.emit(current_campaign_step, get_current_campaign_quest())
+	save_game()
+	return q
+
+func complete_campaign_step_by_id(step_id: String) -> bool:
+	for i in range(campaign_quests.size()):
+		if campaign_quests[i].get("id", "") == step_id:
+			if not campaign_quests[i].get("completed", false):
+				current_campaign_step = i
+				complete_current_campaign_step()
 				return true
 	return false
 

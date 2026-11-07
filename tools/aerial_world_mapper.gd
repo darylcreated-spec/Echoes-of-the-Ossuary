@@ -205,22 +205,123 @@ static func run_mapping(main_node: Node3D) -> void:
 			await tree.process_frame
 		_save_viewport_image(tree, out_dir + "/" + q["name"] + ".png", local_dir + "/" + q["name"] + ".png")
 
-	# --- 5. GROUND PERSPECTIVE CLOSE-UPS ---
-	# A. Sector C4 Ground Troop Battle (Hero's Vanguard vs Crimson Legion)
+	# --- 5. GROUND PERSPECTIVE & TOP-DOWN CAMERA COMPARISON SCREENSHOTS ---
+	camera.near = 0.08
+	camera.far = 380.0
 	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
-	camera.fov = 60.0
-	camera.global_position = Vector3(35.0, 7.5, 124.0)
-	camera.look_at(Vector3(35.0, 1.2, 165.0), Vector3.UP)
+	camera.fov = 55.0
+
+	# A. Sector C4 Combined-Arms Land Siege Battle (Close-up Action View)
+	camera.global_position = Vector3(35.0, 10.5, 118.0)
+	camera.look_at(Vector3(35.0, 1.2, 162.0), Vector3.UP)
 	for i in range(4):
 		await tree.process_frame
 	_save_viewport_image(tree, out_dir + "/ground_battle_c4_clash.png", local_dir + "/ground_battle_c4_clash.png")
 
 	# B. Sector B1 Relocated Sylva's Rest & Open Western Ocean
-	camera.global_position = Vector3(-46.0, 8.5, -60.0)
+	camera.global_position = Vector3(-46.0, 9.5, -56.0)
 	camera.look_at(Vector3(-46.0, 1.0, -88.0), Vector3.UP)
 	for i in range(4):
 		await tree.process_frame
 	_save_viewport_image(tree, out_dir + "/sector_b1_whisperwood_enclave.png", local_dir + "/sector_b1_whisperwood_enclave.png")
+
+	# --- 6. GAMEPLAY HUD, STORY GUIDE & TOP-DOWN CAMERA EVALUATION SHOTS ---
+	if hud: hud.visible = true
+	if cam_ui: cam_ui.visible = true
+
+	# Shot 6A: Oakhaven Hub — Action-RPG Camera + Storyline Guide Pop-Up ON (Chapter I)
+	GameManager.set_story_guide_enabled(true)
+	if player:
+		player.global_position = Vector3(0.0, 0.0, 4.0)
+	main_node.call("apply_camera_preset", 0, true) # ACTION_RPG
+	for i in range(5):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_hub_action_rpg_with_story_guide.png", local_dir + "/aa_hub_action_rpg_with_story_guide.png")
+
+	# Complete Chapter I to showcase Character Progression Rewards (Lv.2 + Max HP + Attack + Chapter II)
+	GameManager.complete_current_campaign_step()
+
+	# Shot 6B: Oakhaven Hub — Top-Down Camera Mode (82° Pitch, 26.5m Dist) + Level-Up & Chapter II Guide
+	main_node.call("apply_camera_preset", 4, true) # TOP_DOWN
+	for i in range(5):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_hub_top_down_camera_view.png", local_dir + "/aa_hub_top_down_camera_view.png")
+
+	# Trigger Combined-Arms Charge & Siege Barrage in Sector C4 for live combat shots
+	var b_ctrls = tree.get_nodes_in_group("battlefield_controller")
+	if b_ctrls.size() > 0:
+		b_ctrls[0].call("command_all_charge")
+		b_ctrls[0].call("command_cavalry_and_siege")
+		b_ctrls[0].call("command_all_volley")
+
+	for i in range(12):
+		await tree.physics_frame
+
+	# Shot 6C: Massive Battle #1 (Combined-Arms Land Siege) — Action-RPG View looking South across both clashing armies
+	GameManager.set_story_guide_enabled(true)
+	if player:
+		player.global_position = Vector3(35.0, 0.0, 148.5)
+	main_node.call("apply_camera_preset", 0, true) # ACTION_RPG
+	main_node.set("target_cam_yaw", 180.0)
+	main_node.set("cam_yaw", 180.0)
+	camera.global_position = Vector3(35.0, 9.8, 136.5)
+	camera.look_at(Vector3(35.0, 1.2, 156.0), Vector3.UP)
+	if b_ctrls.size() > 0:
+		b_ctrls[0].call("command_cavalry_and_siege")
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_massive_battle_1_land_siege_action_view.png", local_dir + "/aa_massive_battle_1_land_siege_action_view.png")
+
+	# Shot 6D: Massive Battle #1 (Combined-Arms Land Siege) — Top-Down Camera View (with Guide toggled OFF [H] for full tactical view)
+	GameManager.set_story_guide_enabled(false)
+	if player:
+		player.global_position = Vector3(35.0, 0.0, 155.0)
+	main_node.call("apply_camera_preset", 4, true) # TOP_DOWN
+	main_node.set("target_cam_yaw", 180.0)
+	main_node.set("cam_yaw", 180.0)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_massive_battle_1_land_siege_top_down.png", local_dir + "/aa_massive_battle_1_land_siege_top_down.png")
+
+	# Advance campaign to Chapter IV & re-enable Story Guide Pop-Up
+	GameManager.complete_current_campaign_step()
+	GameManager.complete_current_campaign_step()
+	GameManager.set_story_guide_enabled(true)
+
+	# Trigger Port Blackwater Sea Warfare Cannon Barrage & Beachhead Charge
+	var p_ctrls = tree.get_nodes_in_group("port_sea_warfare")
+	if p_ctrls.size() > 0:
+		p_ctrls[0].call("command_marines_charge")
+		p_ctrls[0].call("command_coastal_cannon_barrage")
+		p_ctrls[0].call("command_marines_volley")
+
+	for i in range(12):
+		await tree.physics_frame
+
+	# Shot 6E: Massive Battle #2 (Port Blackwater Seaside Ship Warfare) — Action-RPG View looking West toward the Harbor & Armada
+	if player:
+		player.global_position = Vector3(-56.0, 0.0, 78.0)
+	main_node.call("apply_camera_preset", 0, true) # ACTION_RPG
+	main_node.set("target_cam_yaw", 90.0)
+	main_node.set("cam_yaw", 90.0)
+	camera.global_position = Vector3(-44.0, 9.8, 78.0)
+	camera.look_at(Vector3(-68.0, 1.2, 78.0), Vector3.UP)
+	if p_ctrls.size() > 0:
+		p_ctrls[0].call("command_coastal_cannon_barrage")
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_massive_battle_2_port_sea_warfare_action_view.png", local_dir + "/aa_massive_battle_2_port_sea_warfare_action_view.png")
+
+	# Shot 6F: Massive Battle #2 (Port Blackwater Seaside Ship Warfare) — Top-Down Camera View (Guide toggled OFF [H])
+	GameManager.set_story_guide_enabled(false)
+	if player:
+		player.global_position = Vector3(-64.0, 0.0, 78.0)
+	main_node.call("apply_camera_preset", 4, true) # TOP_DOWN
+	main_node.set("target_cam_yaw", 90.0)
+	main_node.set("cam_yaw", 90.0)
+	for i in range(6):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/aa_massive_battle_2_port_sea_warfare_top_down.png", local_dir + "/aa_massive_battle_2_port_sea_warfare_top_down.png")
 
 	overlay_layer.queue_free()
 	print("==================================================================")

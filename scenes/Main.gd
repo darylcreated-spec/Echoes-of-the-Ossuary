@@ -23,14 +23,15 @@ const EnemyShipAI3DScript = preload("res://src/actors/EnemyShipAI3D.gd")
 @onready var player: Node3D = $Player
 @onready var hud: CanvasLayer = $UI_HUD
 
-# --- CAMERA CONTROL MODES & 5-PRESET MULTI-ANGLE SYSTEM ---
+# --- CAMERA CONTROL MODES & 6-PRESET MULTI-ANGLE SYSTEM ---
 enum CameraMode { FOLLOW, FREECAM }
 enum CameraPreset {
 	ACTION_RPG,     # 0: Balanced 36° Pitch, 0° Cardinal Yaw, 14.5m Dist, 44° FOV (Default)
 	ISOMETRIC,      # 1: Classic 48° Pitch, 45° Diagonal Yaw, 17.5m Dist, 38° FOV
 	THIRD_PERSON,   # 2: Close 20° Pitch, Over-the-Shoulder 6.8m Dist, 58° FOV
 	TACTICAL_WIDE,  # 3: High 58° Pitch, 0° Cardinal Yaw, 28.0m Dist, 46° FOV
-	FREECAM         # 4: Unbound 6-DOF Flight Camera
+	TOP_DOWN,       # 4: Overhead 82° Top-Down Pitch, 0° Cardinal Yaw, 26.5m Dist, 45° FOV
+	FREECAM         # 5: Unbound 6-DOF Flight Camera
 }
 
 var current_camera_mode: CameraMode = CameraMode.FOLLOW
@@ -49,9 +50,9 @@ var target_cam_fov: float = 44.0
 var _look_ahead_offset: Vector3 = Vector3.ZERO
 
 const MIN_DISTANCE: float = 3.5
-const MAX_DISTANCE: float = 48.0
+const MAX_DISTANCE: float = 62.0
 const MIN_PITCH: float = 12.0
-const MAX_PITCH: float = 80.0
+const MAX_PITCH: float = 86.0
 
 var camera_follow_speed: float = 8.5
 var camera_rot_speed: float = 9.0
@@ -170,6 +171,7 @@ func _run_gameplay_self_test() -> void:
 	
 	# 5. Structure Repair & Story Act Progression
 	print("\n[TEST 5] Structure Repair & Act Progression...")
+	GameManager.current_story_act = 0
 	GameManager.materials["lumber"] = 2
 	GameManager.materials["iron_ore"] = 2
 	GameManager.repair_structure("port_crane")
@@ -947,6 +949,64 @@ func _run_gameplay_self_test() -> void:
 	bf.command_all_volley()
 	print(" -> Command [4] ARCHER VOLLEY verified!")
 
+	# Test Command 5: Combined-Arms Cavalry Charge & Siege Barrage
+	bf.command_cavalry_and_siege()
+	var cav_count = 0
+	for t in royals:
+		if t.get("role") == 3: # Role.CAVALRY
+			cav_count += 1
+	assert(cav_count >= 4, "King's Combined-Arms Army must include at least 4 Mounted Cavalry Knights")
+	assert(bf.royal_trebuchets.size() >= 2 and bf.crimson_trebuchets.size() >= 2, "Both armies must field active Counterweight Siege Trebuchets")
+	print(" -> Command [5] CAVALRY & SIEGE BARRAGE verified! (%d Royal Cavalry, %d Royal Trebuchets, %d Crimson Trebuchets)" % [cav_count, bf.royal_trebuchets.size(), bf.crimson_trebuchets.size()])
+
+	# =========================================================
+	# TEST 24: PORT BLACKWATER SEASIDE SHIP WARFARE & AMPHIBIOUS INVASION
+	# =========================================================
+	print("\n[TEST 24] Verifying Port Blackwater Seaside Ship Warfare & Amphibious Invasion...")
+	var port_battles = get_tree().get_nodes_in_group("port_sea_warfare")
+	assert(port_battles.size() > 0, "PortSeaWarfareController3D must exist at Port Blackwater")
+	var psb = port_battles[0]
+	var marines = get_tree().get_nodes_in_group("port_royal_army")
+	var invaders = get_tree().get_nodes_in_group("port_invader_army")
+	assert(marines.size() >= 12, "Port Defense Garrison must deploy at least 12 marines/bowmen")
+	assert(invaders.size() >= 14, "Invading Sea Raiders must deploy at least 14 troops from landing boats")
+	assert(psb.invading_warships.size() >= 3, "Invading Sea Armada must include at least 3 offshore warships")
+	assert(psb.coastal_cannons.size() >= 4, "Port Quay Defenses must include at least 4 coastal artillery cannons")
+	psb.command_marines_shield_wall()
+	psb.command_marines_charge()
+	psb.command_coastal_cannon_barrage()
+	print(" -> Port Blackwater Sea Warfare verified! %d Port Marines, %d Sea Raiders, %d Warships, %d Coastal Cannons" % [marines.size(), invaders.size(), psb.invading_warships.size(), psb.coastal_cannons.size()])
+
+	# =========================================================
+	# TEST 25: STORYLINE CAMPAIGN SCRIPT, TOGGLEABLE POP-UP & CHARACTER PROGRESSION
+	# =========================================================
+	print("\n[TEST 25] Verifying Storyline Campaign Pop-Up Toggle & Character Development Rewards...")
+	assert(hud.story_guide_panel != null, "HUD must have toggleable StoryGuidePopUp panel")
+	assert(hud.story_guide_panel.visible == true, "StoryGuidePopUp must start visible")
+	GameManager.toggle_story_guide()
+	assert(hud.story_guide_panel.visible == false, "StoryGuidePopUp must hide when toggled OFF")
+	GameManager.toggle_story_guide()
+	assert(hud.story_guide_panel.visible == true, "StoryGuidePopUp must reappear when toggled ON")
+	var pre_hp = player.max_health
+	var pre_atk = player.attack_damage
+	var pre_lvl = GameManager.hero_level
+	GameManager.complete_current_campaign_step()
+	assert(GameManager.hero_level > pre_lvl, "Completing Chapter I must level up the Hero")
+	assert(player.max_health > pre_hp and player.attack_damage > pre_atk, "Mission completion must permanently increase Hero Max HP & Attack Power")
+	print(" -> Story Guide Toggle [H] & Character Progression verified! Hero Lv.%d (%s), HP: %.0f -> %.0f, ATK: %.1f -> %.1f" % [
+		GameManager.hero_level, GameManager.hero_title, pre_hp, player.max_health, pre_atk, player.attack_damage
+	])
+
+	# =========================================================
+	# TEST 26: TOP-DOWN CAMERA MODE VERIFICATION
+	# =========================================================
+	print("\n[TEST 26] Verifying Top-Down Camera Mode...")
+	toggle_top_down_camera()
+	assert(current_camera_preset == CameraPreset.TOP_DOWN, "Camera must switch to TOP_DOWN preset")
+	assert(target_cam_pitch >= 80.0, "Top-Down Camera must use overhead pitch >= 80 degrees")
+	print(" -> Top-Down Camera verified! Pitch: %.1f°, Distance: %.1fm" % [target_cam_pitch, target_cam_distance])
+	toggle_top_down_camera()
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")
@@ -981,6 +1041,11 @@ func apply_camera_preset(preset: CameraPreset, instant: bool = false) -> void:
 			target_cam_pitch = 36.0
 			target_cam_distance = 14.5
 			target_cam_fov = 44.0
+		CameraPreset.TOP_DOWN:
+			target_cam_yaw = 0.0
+			target_cam_pitch = 82.0
+			target_cam_distance = 26.5
+			target_cam_fov = 45.0
 		CameraPreset.ISOMETRIC:
 			target_cam_yaw = 45.0
 			target_cam_pitch = 48.0
@@ -1029,6 +1094,8 @@ func _get_preset_look_height() -> float:
 			return 1.30
 		CameraPreset.TACTICAL_WIDE:
 			return 1.00
+		CameraPreset.TOP_DOWN:
+			return 0.50
 		_:
 			return 0.95
 
@@ -1036,12 +1103,14 @@ func _get_preset_title(preset: CameraPreset) -> String:
 	match preset:
 		CameraPreset.ACTION_RPG:
 			return "⚔️ Action-RPG"
+		CameraPreset.TOP_DOWN:
+			return "🦅 Top-Down"
 		CameraPreset.ISOMETRIC:
 			return "💎 Isometric"
 		CameraPreset.THIRD_PERSON:
 			return "🛡️ 3rd-Person"
 		CameraPreset.TACTICAL_WIDE:
-			return "🦅 Tactical Wide"
+			return "🔭 Tactical Wide"
 		CameraPreset.FREECAM:
 			return "🎥 Free-Cam"
 	return "⚔️ Action-RPG"
@@ -1050,13 +1119,25 @@ func cycle_camera_preset() -> void:
 	if current_camera_mode == CameraMode.FREECAM:
 		apply_camera_preset(_last_follow_preset, false)
 		return
-	var next_idx = (int(current_camera_preset) + 1) % 4
+	var next_idx = (int(current_camera_preset) + 1) % 5
 	apply_camera_preset( next_idx as CameraPreset, false )
 	if player and is_instance_valid(player):
 		CombatJuice.show_popup_text(
 			player.global_position + Vector3(0, 2.1, 0),
 			"Camera: " + _get_preset_title(current_camera_preset),
 			Color(0.75, 0.92, 1.0)
+		)
+
+func toggle_top_down_camera() -> void:
+	if current_camera_preset == CameraPreset.TOP_DOWN and current_camera_mode == CameraMode.FOLLOW:
+		apply_camera_preset(CameraPreset.ACTION_RPG, false)
+	else:
+		apply_camera_preset(CameraPreset.TOP_DOWN, false)
+	if player and is_instance_valid(player):
+		CombatJuice.show_popup_text(
+			player.global_position + Vector3(0, 2.1, 0),
+			"Camera: " + _get_preset_title(current_camera_preset),
+			Color(0.95, 0.88, 0.35)
 		)
 
 func snap_camera_yaw(step_deg: float) -> void:
@@ -1149,9 +1230,9 @@ func _process_follow_camera(delta: float) -> void:
 		cos(pitch_rad) * cos(yaw_rad)
 	).normalized()
 
-	# Spring-Arm Anti-Occlusion Raycast: pull camera in front of tall walls/towers blocking line-of-sight
+	# Spring-Arm Anti-Occlusion Raycast: pull camera in front of tall walls/towers in close 3rd-Person mode
 	var effective_dist = contextual_dist
-	if current_camera_preset in [CameraPreset.THIRD_PERSON, CameraPreset.ACTION_RPG] and get_world_3d() and get_world_3d().direct_space_state:
+	if current_camera_preset == CameraPreset.THIRD_PERSON and get_world_3d() and get_world_3d().direct_space_state:
 		var desired_cam_pos = anchor_target + unit_offset * contextual_dist
 		var ray_query = PhysicsRayQueryParameters3D.create(anchor_target, desired_cam_pos, 1)
 		ray_query.exclude = [player.get_rid()]
@@ -1322,6 +1403,12 @@ func _setup_camera_ui() -> void:
 	camera_style_button.focus_mode = Control.FOCUS_NONE
 	camera_style_button.pressed.connect(cycle_camera_preset)
 	hbox.add_child(camera_style_button)
+
+	var topdown_btn = Button.new()
+	topdown_btn.text = "🦅 Top-Down"
+	topdown_btn.focus_mode = Control.FOCUS_NONE
+	topdown_btn.pressed.connect(toggle_top_down_camera)
+	hbox.add_child(topdown_btn)
 	
 	camera_mode_button = Button.new()
 	camera_mode_button.text = "🎥 Free-Cam [C]"

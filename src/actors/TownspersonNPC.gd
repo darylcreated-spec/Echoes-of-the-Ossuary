@@ -69,15 +69,15 @@ func _build_visuals() -> void:
 
 func _build_speech_bark_ui() -> void:
 	_bark_label = Label3D.new()
-	_bark_label.position = Vector3(0.0, 2.35 if role != NPCRole.CHILD else 1.65, 0.0)
-	_bark_label.font_size = 24
-	_bark_label.outline_size = 6
+	_bark_label.position = Vector3(0.0, 2.25 if role != NPCRole.CHILD else 1.55, 0.0)
+	_bark_label.font_size = 18
+	_bark_label.outline_size = 5
 	_bark_label.outline_modulate = Color(0.05, 0.05, 0.08, 0.95)
 	_bark_label.modulate = Color(1.0, 0.94, 0.75, 0.0) # Start invisible
 	_bark_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_bark_label.double_sided = true
-	_bark_label.visibility_range_end = 16.0
-	_bark_label.visibility_range_end_margin = 3.0
+	_bark_label.visibility_range_end = 9.0
+	_bark_label.visibility_range_end_margin = 2.0
 	_bark_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	_bark_label.render_priority = 0
 	_bark_label.outline_render_priority = 0
@@ -149,17 +149,18 @@ func _setup_default_barks() -> void:
 			]
 
 func _process(delta: float) -> void:
-	_bark_timer -= delta
-	if _bark_timer <= 0.0:
-		_bark_timer = randf_range(9.0, 18.0)
-		_trigger_ambient_bark()
-
 	# Proximity check for player approaching
+	var near_player = false
 	if not _player_ref:
 		_player_ref = get_tree().get_first_node_in_group("player") as Node3D
 	elif _player_ref and is_instance_valid(_player_ref):
 		var dist = global_position.distance_to(_player_ref.global_position)
-		if dist < 4.5 and randf() < 0.005:
+		near_player = dist < 8.5
+
+	_bark_timer -= delta
+	if _bark_timer <= 0.0:
+		_bark_timer = randf_range(16.0, 32.0)
+		if near_player:
 			_trigger_ambient_bark()
 
 	_process_movement(delta)
@@ -176,10 +177,12 @@ func _process_movement(delta: float) -> void:
 		if randf() < 0.5:
 			_play_anim("Idle")
 			set_process(false)
+			var self_wr = weakref(self)
 			get_tree().create_timer(randf_range(2.0, 4.5)).timeout.connect(func():
-				if is_instance_valid(self):
-					set_process(true)
-					_play_anim("Walking_A")
+				var s = self_wr.get_ref()
+				if s:
+					s.set_process(true)
+					s._play_anim("Walking_A")
 			)
 		return
 

@@ -262,21 +262,27 @@ func _spawn_cannonball(start_pos: Vector3, shoot_dir: Vector3) -> void:
 		target_dest = _target_player_ship.global_position + Vector3(randf_range(-2.0, 2.0), randf_range(0.2, 1.5), randf_range(-2.0, 2.0))
 
 	var fly_time = 0.75
+	var ball_wr = weakref(ball)
+	var target_wr = weakref(_target_player_ship)
+	var self_wr = weakref(self)
 	var tw = ball.create_tween()
 	tw.tween_property(ball, "global_position:x", target_dest.x, fly_time)
 	tw.parallel().tween_property(ball, "global_position:z", target_dest.z, fly_time)
 	tw.tween_property(ball, "global_position:y", target_dest.y + 2.0, fly_time * 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(ball, "global_position:y", target_dest.y, fly_time * 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(func():
-		if is_instance_valid(ball):
-			ball.queue_free()
+		var b = ball_wr.get_ref()
+		if b:
+			b.queue_free()
 		AudioManager.play_sfx_at_position("boulder_explosion", target_dest, 45.0, 0.1, -4.0)
 		CombatJuice.spawn_hit_spark(target_dest, Color(1.0, 0.6, 0.2))
-		if _target_player_ship and is_instance_valid(_target_player_ship):
-			if _target_player_ship.has_method("take_ship_damage"):
-				_target_player_ship.take_ship_damage(35.0)
-			elif _target_player_ship.has_method("take_damage"):
-				_target_player_ship.take_damage(25.0, Vector3.ZERO, false, self)
+		var t = target_wr.get_ref()
+		var s = self_wr.get_ref()
+		if t:
+			if t.has_method("take_ship_damage"):
+				t.take_ship_damage(35.0)
+			elif t.has_method("take_damage"):
+				t.take_damage(25.0, Vector3.ZERO, false, s)
 	)
 
 func _ram_target() -> void:

@@ -57,20 +57,42 @@ var mission_toast: PanelContainer = null
 var mission_toast_lbl: Label = null
 var _toast_tween: Tween = null
 
+# Storyline Pop-Up Guide & Character Progression UI
+var hero_level_label: Label = null
+var story_guide_panel: PanelContainer = null
+var story_guide_chapter_lbl: Label = null
+var story_guide_title_lbl: Label = null
+var story_guide_sector_lbl: Label = null
+var story_guide_instructions_lbl: Label = null
+var story_guide_reward_lbl: Label = null
+var guide_toggle_btn: Button = null
+var _story_beacon_3d: Node3D = null
+var _story_beacon_ring: MeshInstance3D = null
+
 func _ready() -> void:
 	add_to_group("hud")
 	_build_ui_tree()
 	_connect_game_signals()
 	_update_currencies()
 	_update_floor_display()
+	_update_hero_progression_badge()
+	_update_story_guide_ui()
 
 func _connect_game_signals() -> void:
 	GameManager.gold_changed.connect(func(_new_val, _d): _update_currencies())
 	GameManager.echoes_changed.connect(func(_new_val, _d): _update_currencies())
-	GameManager.floor_changed.connect(func(_f): _update_floor_display())
+	GameManager.floor_changed.connect(func(_f):
+		_update_floor_display()
+		_update_story_guide_ui()
+	)
 	GameManager.boon_acquired.connect(_on_boon_acquired)
 	GameManager.game_over.connect(_on_game_over)
 	GameManager.mission_completed.connect(_on_mission_completed)
+	GameManager.player_stats_changed.connect(_update_hero_progression_badge)
+	GameManager.hero_leveled_up.connect(_on_hero_leveled_up)
+	GameManager.campaign_step_changed.connect(func(_idx, _q): _update_story_guide_ui())
+	GameManager.campaign_step_completed.connect(_on_campaign_step_completed)
+	GameManager.story_guide_toggled.connect(_on_story_guide_toggled)
 	
 	# Connect to player if spawned
 	var player = get_tree().get_first_node_in_group("player")
@@ -123,12 +145,18 @@ func _build_ui_tree() -> void:
 	hp_label.text = "100 / 100"
 	hp_label.add_theme_font_size_override("font_size", 14)
 	hp_box.add_child(hp_label)
+
+	hero_level_label = Label.new()
+	hero_level_label.text = "⚔️ Lv. 1 King's Vanguard Squire • ATK 32 • DEF 6"
+	hero_level_label.add_theme_font_size_override("font_size", 13)
+	hero_level_label.modulate = Color(1.0, 0.90, 0.55)
+	top_left.add_child(hero_level_label)
 	
 	# Top Right: Currencies & Floor
 	var top_right = VBoxContainer.new()
 	top_right.anchor_left = 1.0
 	top_right.anchor_right = 1.0
-	top_right.position = Vector2(-240, 20)
+	top_right.position = Vector2(-430, 20)
 	root_control.add_child(top_right)
 	
 	floor_label = Label.new()
@@ -158,26 +186,38 @@ func _build_ui_tree() -> void:
 	curr_box.add_child(echoes_label)
 	
 	var btn_box = HBoxContainer.new()
-	btn_box.add_theme_constant_override("separation", 8)
+	btn_box.add_theme_constant_override("separation", 6)
 	top_right.add_child(btn_box)
+
+	guide_toggle_btn = Button.new()
+	guide_toggle_btn.text = "🧭 Guide: ON [H]"
+	guide_toggle_btn.custom_minimum_size = Vector2(115, 26)
+	guide_toggle_btn.focus_mode = Control.FOCUS_NONE
+	guide_toggle_btn.pressed.connect(func(): GameManager.toggle_story_guide())
+	btn_box.add_child(guide_toggle_btn)
 
 	var map_btn = Button.new()
 	map_btn.text = "🗺️ Map [N]"
-	map_btn.custom_minimum_size = Vector2(90, 26)
+	map_btn.custom_minimum_size = Vector2(88, 26)
+	map_btn.focus_mode = Control.FOCUS_NONE
 	map_btn.pressed.connect(func(): if realm_map_modal: realm_map_modal.toggle_map())
 	btn_box.add_child(map_btn)
 
 	var missions_btn = Button.new()
-	missions_btn.text = "📜 Missions [M]"
-	missions_btn.custom_minimum_size = Vector2(105, 26)
+	missions_btn.text = "📜 Quests [M]"
+	missions_btn.custom_minimum_size = Vector2(98, 26)
+	missions_btn.focus_mode = Control.FOCUS_NONE
 	missions_btn.pressed.connect(func(): if mission_menu: mission_menu.toggle_menu())
 	btn_box.add_child(missions_btn)
 
 	var journal_btn = Button.new()
-	journal_btn.text = "📖 Journal [L]"
-	journal_btn.custom_minimum_size = Vector2(105, 26)
+	journal_btn.text = "📖 Lore [L]"
+	journal_btn.custom_minimum_size = Vector2(92, 26)
+	journal_btn.focus_mode = Control.FOCUS_NONE
 	journal_btn.pressed.connect(func(): if journal_modal: journal_modal.toggle_modal())
 	btn_box.add_child(journal_btn)
+
+	_setup_story_guide_popup(root_control)
 
 	# Top Center: Current Region Location Badge
 	region_badge = Label.new()
@@ -468,6 +508,248 @@ func _process(_delta: float) -> void:
 			region_badge.visible = true
 		elif region_badge:
 			region_badge.text = "💀 Catacombs Floor %d" % GameManager.current_floor
+
+	_process_story_guide_live_tracker(_delta)
+
+func _setup_story_guide_popup(parent: Control) -> void:
+	story_guide_panel = PanelContainer.new()
+	story_guide_panel.name = "StoryGuidePopUp"
+	story_guide_panel.position = Vector2(20, 74)
+	story_guide_panel.custom_minimum_size = Vector2(340, 0)
+
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.06, 0.08, 0.13, 0.90)
+	sb.border_color = Color(0.92, 0.76, 0.32, 0.95)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 10
+	sb.content_margin_bottom = 10
+	story_guide_panel.add_theme_stylebox_override("panel", sb)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	story_guide_panel.add_child(vbox)
+
+	# Row 1: Header + Toggle Off Button
+	var head_hb = HBoxContainer.new()
+	story_guide_chapter_lbl = Label.new()
+	story_guide_chapter_lbl.text = "📜 Chapter I • The King's Summons"
+	story_guide_chapter_lbl.add_theme_font_size_override("font_size", 12)
+	story_guide_chapter_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.35))
+	story_guide_chapter_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head_hb.add_child(story_guide_chapter_lbl)
+
+	var hide_btn = Button.new()
+	hide_btn.text = "✕ Hide [H]"
+	hide_btn.custom_minimum_size = Vector2(72, 22)
+	hide_btn.focus_mode = Control.FOCUS_NONE
+	hide_btn.add_theme_font_size_override("font_size", 11)
+	hide_btn.pressed.connect(func(): GameManager.toggle_story_guide())
+	head_hb.add_child(hide_btn)
+	vbox.add_child(head_hb)
+
+	# Row 2: Mission Title
+	story_guide_title_lbl = Label.new()
+	story_guide_title_lbl.text = "Pledge Fealty & Arm for War"
+	story_guide_title_lbl.add_theme_font_size_override("font_size", 15)
+	story_guide_title_lbl.add_theme_color_override("font_color", Color(0.98, 0.96, 0.90))
+	story_guide_title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(story_guide_title_lbl)
+
+	# Row 3: Sector & Live Distance
+	story_guide_sector_lbl = Label.new()
+	story_guide_sector_lbl.text = "📍 Sector C2 • Oakhaven Sanctuary"
+	story_guide_sector_lbl.add_theme_font_size_override("font_size", 12)
+	story_guide_sector_lbl.add_theme_color_override("font_color", Color(0.45, 0.92, 1.0))
+	vbox.add_child(story_guide_sector_lbl)
+
+	# Row 4: Step-by-Step Instructions
+	story_guide_instructions_lbl = Label.new()
+	story_guide_instructions_lbl.text = ""
+	story_guide_instructions_lbl.add_theme_font_size_override("font_size", 12)
+	story_guide_instructions_lbl.add_theme_color_override("font_color", Color(0.86, 0.90, 0.96))
+	story_guide_instructions_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(story_guide_instructions_lbl)
+
+	# Row 5: Completion Rewards Preview
+	story_guide_reward_lbl = Label.new()
+	story_guide_reward_lbl.text = "🎁 Reward: +150 Gold • +60 Echoes • +25 HP • +4 Atk"
+	story_guide_reward_lbl.add_theme_font_size_override("font_size", 11)
+	story_guide_reward_lbl.add_theme_color_override("font_color", Color(0.55, 1.0, 0.62))
+	story_guide_reward_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(story_guide_reward_lbl)
+
+	# Row 6: Action Buttons (Complete Step / Fast-Track & Teleport to Objective)
+	var act_hb = HBoxContainer.new()
+	act_hb.add_theme_constant_override("separation", 6)
+
+	var complete_btn = Button.new()
+	complete_btn.text = "✨ Complete Step & Claim Reward [G]"
+	complete_btn.custom_minimum_size = Vector2(210, 26)
+	complete_btn.focus_mode = Control.FOCUS_NONE
+	complete_btn.add_theme_font_size_override("font_size", 11)
+	complete_btn.pressed.connect(func(): GameManager.complete_current_campaign_step())
+	act_hb.add_child(complete_btn)
+
+	var goto_btn = Button.new()
+	goto_btn.text = "🧭 Go To"
+	goto_btn.custom_minimum_size = Vector2(78, 26)
+	goto_btn.focus_mode = Control.FOCUS_NONE
+	goto_btn.add_theme_font_size_override("font_size", 11)
+	goto_btn.pressed.connect(func():
+		var q = GameManager.get_current_campaign_quest()
+		if not q.is_empty():
+			var t_pos: Vector3 = q.get("target_pos", Vector3.ZERO)
+			_fast_travel_to(t_pos + Vector3(0.0, 0.2, 2.5), q.get("sector", "Objective"))
+	)
+	act_hb.add_child(goto_btn)
+	vbox.add_child(act_hb)
+
+	parent.add_child(story_guide_panel)
+
+func _update_hero_progression_badge() -> void:
+	if not hero_level_label:
+		return
+	var stats = GameManager.get_base_hero_stats(GameManager.selected_class)
+	var atk_val = int(round(stats.get("attack_damage", 28.0)))
+	var def_val = int(round(stats.get("defense", 6.0)))
+	hero_level_label.text = "⚔️ Lv.%d %s • ATK %d • DEF %d • Tier %d Arms" % [
+		GameManager.hero_level,
+		GameManager.hero_title,
+		atk_val,
+		def_val,
+		GameManager.unlocked_weapon_tier
+	]
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		var cur_hp = player.get("current_health")
+		var max_hp = player.get("max_health")
+		if cur_hp != null and max_hp != null:
+			update_player_health(cur_hp, max_hp)
+
+func _update_story_guide_ui() -> void:
+	if guide_toggle_btn:
+		guide_toggle_btn.text = ("🧭 Guide: ON [H]" if GameManager.story_guide_enabled else "🧭 Guide: OFF [H]")
+	if not story_guide_panel:
+		return
+	story_guide_panel.visible = GameManager.story_guide_enabled
+	var q = GameManager.get_current_campaign_quest()
+	if q.is_empty():
+		return
+	if story_guide_chapter_lbl:
+		story_guide_chapter_lbl.text = "📜 %s (%d/%d)" % [
+			q.get("chapter", "Campaign"),
+			GameManager.current_campaign_step + 1,
+			GameManager.campaign_quests.size()
+		]
+	if story_guide_title_lbl:
+		story_guide_title_lbl.text = q.get("title", "")
+	if story_guide_instructions_lbl:
+		story_guide_instructions_lbl.text = q.get("instructions", "")
+	if story_guide_reward_lbl:
+		story_guide_reward_lbl.text = "🎁 Reward: " + q.get("reward_desc", "")
+	_ensure_story_beacon_3d()
+
+func _on_story_guide_toggled(enabled: bool) -> void:
+	_update_story_guide_ui()
+	if _story_beacon_3d and is_instance_valid(_story_beacon_3d):
+		_story_beacon_3d.visible = enabled and (GameManager.current_floor == 0)
+	show_toast("📜 Story Guide Pop-Up: " + ("ENABLED [H]" if enabled else "HIDDEN [H]"), 1.8)
+
+func _on_hero_leveled_up(new_level: int, new_title: String) -> void:
+	_update_hero_progression_badge()
+	show_toast("🌟 LEVEL UP! Lv.%d — %s!\nMax HP, Attack Power & Armor Defense Increased!" % [new_level, new_title], 3.4)
+
+func _on_campaign_step_completed(_idx: int, q: Dictionary) -> void:
+	_update_hero_progression_badge()
+	_update_story_guide_ui()
+	show_toast("🏆 MISSION COMPLETE: %s!\nEarned: %s" % [q.get("title", ""), q.get("reward_desc", "")], 3.8)
+
+func _ensure_story_beacon_3d() -> void:
+	if not is_inside_tree() or not get_tree().current_scene:
+		return
+	if not _story_beacon_3d or not is_instance_valid(_story_beacon_3d):
+		_story_beacon_3d = Node3D.new()
+		_story_beacon_3d.name = "StoryGuideBeacon3D"
+
+		var beam = MeshInstance3D.new()
+		var cyl = CylinderMesh.new()
+		cyl.top_radius = 0.35
+		cyl.bottom_radius = 0.85
+		cyl.height = 18.0
+		var b_mat = StandardMaterial3D.new()
+		b_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		b_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		b_mat.albedo_color = Color(1.0, 0.86, 0.25, 0.26)
+		b_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		cyl.material = b_mat
+		beam.mesh = cyl
+		beam.position.y = 9.0
+		_story_beacon_3d.add_child(beam)
+
+		_story_beacon_ring = MeshInstance3D.new()
+		var torus = TorusMesh.new()
+		torus.inner_radius = 1.35
+		torus.outer_radius = 1.65
+		var r_mat = StandardMaterial3D.new()
+		r_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		r_mat.albedo_color = Color(1.0, 0.90, 0.32)
+		torus.material = r_mat
+		_story_beacon_ring.mesh = torus
+		_story_beacon_ring.position.y = 0.25
+		_story_beacon_3d.add_child(_story_beacon_ring)
+
+		var lbl = Label3D.new()
+		lbl.name = "BeaconLabel"
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.font_size = 28
+		lbl.outline_size = 6
+		lbl.modulate = Color(1.0, 0.92, 0.38)
+		lbl.position.y = 4.2
+		lbl.text = "⭐ STORY OBJECTIVE"
+		_story_beacon_3d.add_child(lbl)
+
+		get_tree().current_scene.add_child.call_deferred(_story_beacon_3d)
+
+	var q = GameManager.get_current_campaign_quest()
+	if not q.is_empty() and _story_beacon_3d and is_instance_valid(_story_beacon_3d):
+		_story_beacon_3d.position = q.get("target_pos", Vector3.ZERO)
+		_story_beacon_3d.visible = GameManager.story_guide_enabled and (GameManager.current_floor == 0)
+		var lbl = _story_beacon_3d.get_node_or_null("BeaconLabel") as Label3D
+		if lbl:
+			lbl.text = "⭐ " + q.get("title", "Story Objective")
+
+func _process_story_guide_live_tracker(delta: float) -> void:
+	if _story_beacon_ring and is_instance_valid(_story_beacon_ring):
+		_story_beacon_ring.rotation.y += delta * 1.8
+
+	if not GameManager.story_guide_enabled or not story_guide_sector_lbl:
+		return
+	var q = GameManager.get_current_campaign_quest()
+	if q.is_empty():
+		return
+	var player = get_tree().get_first_node_in_group("player") as Node3D
+	if player and is_instance_valid(player) and GameManager.current_floor == 0:
+		var t_pos: Vector3 = q.get("target_pos", Vector3.ZERO)
+		var diff = t_pos - player.global_position
+		diff.y = 0.0
+		var dist = int(round(diff.length()))
+		var dir_str = "HERE"
+		if dist > 4:
+			var angle = rad_to_deg(atan2(diff.x, -diff.z))
+			if angle >= -22.5 and angle < 22.5: dir_str = "▲ N"
+			elif angle >= 22.5 and angle < 67.5: dir_str = "↗ NE"
+			elif angle >= 67.5 and angle < 112.5: dir_str = "▶ E"
+			elif angle >= 112.5 and angle < 157.5: dir_str = "↘ SE"
+			elif angle >= -67.5 and angle < -22.5: dir_str = "↖ NW"
+			elif angle >= -112.5 and angle < -67.5: dir_str = "◀ W"
+			elif angle >= -157.5 and angle < -112.5: dir_str = "↙ SW"
+			else: dir_str = "▼ S"
+		story_guide_sector_lbl.text = "📍 %s • %dm (%s)" % [q.get("sector", ""), dist, dir_str]
+	else:
+		story_guide_sector_lbl.text = "📍 " + q.get("sector", "")
 
 func fade_screen(to_black: bool, duration: float = 0.25) -> Signal:
 	if not fade_curtain:
@@ -1184,7 +1466,13 @@ static func show_notification(text: String, duration: float = 2.6) -> void:
 	print("[NOTIFICATION] ", text)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+		GameManager.toggle_story_guide()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
+		GameManager.complete_current_campaign_step()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
 		if realm_map_modal:
 			realm_map_modal.toggle_map()
 			get_viewport().set_input_as_handled()

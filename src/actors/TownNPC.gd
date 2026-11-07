@@ -300,9 +300,11 @@ func interact(player: Node3D) -> void:
 				break
 		if gesture != "":
 			_anim_player.play(gesture, 0.15, 1.2)
+			var self_wr = weakref(self)
 			get_tree().create_timer(1.2).timeout.connect(func():
-				if is_instance_valid(self) and _anim_player:
-					_play_default_idle()
+				var s = self_wr.get_ref()
+				if s and s._anim_player:
+					s._play_default_idle()
 			)
 
 	var hud = get_tree().get_first_node_in_group("hud")

@@ -2,6 +2,7 @@ extends Node3D
 class_name BattlefieldController3D
 
 const BattlegroundTroopAIScript = preload("res://src/combat/BattlegroundTroopAI.gd")
+const SiegeTrebuchet3DScript = preload("res://src/world/SiegeTrebuchet3D.gd")
 
 signal battle_started()
 signal battle_victory()
@@ -12,6 +13,11 @@ signal battle_wave_cleared(wave_number: int)
 
 var royal_troops: Array = []
 var crimson_troops: Array = []
+var royal_trebuchets: Array = []
+var crimson_trebuchets: Array = []
+var _total_royal_spawned: int = 18
+var _total_crimson_spawned: int = 20
+var _siege_barrage_timer: float = 5.0
 var current_wave: int = 1
 var is_battle_active: bool = false
 var is_victory_achieved: bool = false
@@ -47,12 +53,23 @@ func _build_battlefield_fortifications() -> void:
 	for bx in [-16.0, -8.0, 8.0, 16.0]:
 		_place_local_prop("res://assets/overworld/flag_blue.gltf", Vector3(bx, 0.0, -20.0), Vector3.ONE * 2.2)
 
-	# Royal Armory racks, pallets, crates
+	# Royal Armory racks, pallets, crates & Defensive Catapult Towers
+	_place_local_prop("res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(-22.0, 0.0, -18.0), Vector3.ONE * 7.2, 180.0)
+	_place_local_prop("res://assets/overworld/building_tower_catapult_blue.gltf", Vector3(22.0, 0.0, -18.0), Vector3.ONE * 7.2, 180.0)
 	_place_local_prop("res://assets/overworld/weaponrack.gltf", Vector3(-8.0, 0.0, -18.0), Vector3.ONE * 1.8, 90.0)
 	_place_local_prop("res://assets/overworld/weaponrack.gltf", Vector3(8.0, 0.0, -18.0), Vector3.ONE * 1.8, -90.0)
 	_place_local_prop("res://assets/overworld/pallet.gltf", Vector3(-14.0, 0.0, -24.0), Vector3.ONE * 1.5)
 	_place_local_prop("res://assets/overworld/crate_A_big.gltf", Vector3(-14.0, 0.0, -24.0), Vector3.ONE * 1.3)
 	_place_local_prop("res://assets/overworld/barrel.gltf", Vector3(14.0, 0.0, -24.0), Vector3.ONE * 1.3)
+
+	# Royal Counterweight Siege Trebuchets (Aimed South at Crimson Siege Line)
+	for r_tx in [-11.5, 11.5]:
+		var r_treb = SiegeTrebuchet3DScript.new()
+		r_treb.position = Vector3(r_tx, 0.0, -13.5)
+		r_treb.rotation_degrees.y = 180.0
+		r_treb.fire_interval = 9.5 + randf_range(0.0, 3.0)
+		add_child(r_treb)
+		royal_trebuchets.append(r_treb)
 
 	# 2. Central No-Man's Land: Defensive Stakes, Barricades & Earthworks (Z ≈ 0.0 locally)
 	# Spiked timber palisades with openings for cavalry & troop charges
@@ -68,12 +85,21 @@ func _build_battlefield_fortifications() -> void:
 	_place_burning_brazier(Vector3(-15.0, 0.0, 0.0))
 	_place_burning_brazier(Vector3(15.0, 0.0, 0.0))
 
-	# 3. Crimson Enemy Vanguard Bastion (South side of battlefield: Z ≈ 26.0 locally)
-	# Crimson Command Pavilions & Watchtowers
-	_place_local_prop("res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-20.0, 0.0, 30.0), Vector3.ONE * 7.5, 0.0)
-	_place_local_prop("res://assets/overworld/building_tower_catapult_red.gltf", Vector3(20.0, 0.0, 30.0), Vector3.ONE * 7.5, 0.0)
+	# 3. Crimson Enemy Vanguard Bastion & Siege Line (South side of battlefield: Z ≈ 26.0 locally)
+	# Crimson Command Pavilions & Catapult Siege Towers
+	_place_local_prop("res://assets/overworld/building_tower_catapult_red.gltf", Vector3(-22.0, 0.0, 30.0), Vector3.ONE * 7.5, 0.0)
+	_place_local_prop("res://assets/overworld/building_tower_catapult_red.gltf", Vector3(22.0, 0.0, 30.0), Vector3.ONE * 7.5, 0.0)
 	_place_local_prop("res://assets/overworld/tent.gltf", Vector3(-6.0, 0.0, 28.0), Vector3.ONE * 2.6, 180.0)
 	_place_local_prop("res://assets/overworld/tent.gltf", Vector3(6.0, 0.0, 28.0), Vector3.ONE * 2.6, 180.0)
+
+	# Crimson Counterweight Siege Trebuchets (Aimed North at Royal Defenses)
+	for c_tx in [-11.5, 11.5]:
+		var c_treb = SiegeTrebuchet3DScript.new()
+		c_treb.position = Vector3(c_tx, 0.0, 14.5)
+		c_treb.rotation_degrees.y = 0.0
+		c_treb.fire_interval = 10.5 + randf_range(0.0, 3.5)
+		add_child(c_treb)
+		crimson_trebuchets.append(c_treb)
 
 	# Crimson War Banners
 	for rx in [-18.0, -7.0, 7.0, 18.0]:
@@ -146,46 +172,59 @@ func spawn_battlefield_armies() -> void:
 	is_battle_active = true
 	is_victory_achieved = false
 
-	# 1. Spawn King's Royal Army (14 Units) on North Line (Z ≈ -16.0)
+	# 1. Spawn King's Royal Combined-Arms Army (18 Units: Infantry, Bowmen, Cavalry & Siege) on North Line (Z ≈ -5.5..-10.5)
 	# [0] Commander
-	_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.COMMANDER, "Marshal of the Citadel", Vector3(0.0, 0.0, -18.0), Vector3(0.0, 0.0, -1.5))
+	_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.COMMANDER, "Marshal of the Citadel", Vector3(0.0, 0.0, -8.5), Vector3(0.0, 0.0, -1.5))
 
-	# [1..5] Royal Vanguard Knights (Frontline Phalanx)
-	var knight_xs = [-6.0, -3.0, 0.0, 3.0, 6.0]
+	# [1..5] Royal Vanguard Knights (Frontline Shield-Wall Infantry)
+	var knight_xs = [-5.6, -2.8, 0.0, 2.8, 5.6]
 	for kx in knight_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.KNIGHT, "Royal Knight", Vector3(kx, 0.0, -14.0), Vector3(kx, 0.0, 0.0))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.KNIGHT, "Royal Infantry Knight", Vector3(kx, 0.0, -5.2), Vector3(kx, 0.0, 0.0))
 
-	# [6..9] Royal Berserkers (Shock Cleavers)
-	var zerker_xs = [-4.5, -1.5, 1.5, 4.5]
+	# [6..9] Royal Halberdiers / Berserkers (2H Shock Infantry)
+	var zerker_xs = [-4.2, -1.4, 1.4, 4.2]
 	for zx in zerker_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.BERSERKER, "Royal Berserker", Vector3(zx, 0.0, -16.0), Vector3(zx, 0.0, 1.5))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.BERSERKER, "Royal Shock Halberdier", Vector3(zx, 0.0, -7.2), Vector3(zx, 0.0, 1.5))
 
-	# [10..13] Royal Crossbow Marksmen (Backline Volley)
-	var archer_xs = [-5.0, -2.0, 2.0, 5.0]
+	# [10..13] Royal Longbow / Crossbow Marksmen (Ranged Bowmen Regiment)
+	var archer_xs = [-5.2, -1.8, 1.8, 5.2]
 	for ax in archer_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.ARCHER, "Citadel Crossbowman", Vector3(ax, 0.0, -19.0), Vector3(ax, 0.0, -2.5))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.ARCHER, "Citadel Longbowman", Vector3(ax, 0.0, -10.2), Vector3(ax, 0.0, -2.5))
 
-	# 2. Spawn Crimson Legion Army (16 Units) on South Line (Z ≈ +22.0)
+	# [14..17] Royal Heavy Lancer Cavalry (Mounted Warhorse Squadron on Left & Right Wings)
+	var cav_xs = [-9.6, -7.6, 7.6, 9.6]
+	for cvx in cav_xs:
+		_spawn_troop(BattlegroundTroopAIScript.Faction.ROYAL, BattlegroundTroopAIScript.Role.CAVALRY, "Royal Lancer Cavalry", Vector3(cvx, 0.0, -6.0), Vector3(cvx, 0.0, 0.5))
+
+	# 2. Spawn Crimson Besieging Combined-Arms Army (20 Units: Infantry, Bowmen, Cavalry & Siege) on South Line (Z ≈ +5.5..+10.5)
 	# [0] Crimson Warlord Commander
-	_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.COMMANDER, "Crimson Warlord Malakor", Vector3(0.0, 0.0, 24.0), Vector3(0.0, 0.0, 1.5))
+	_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.COMMANDER, "Crimson Warlord Malakor", Vector3(0.0, 0.0, 8.8), Vector3(0.0, 0.0, 1.5))
 
-	# [1..6] Crimson Footmen (Frontline Swordsmen)
-	var c_foot_xs = [-7.5, -4.5, -1.5, 1.5, 4.5, 7.5]
+	# [1..6] Crimson Heavy Infantry Footmen
+	var c_foot_xs = [-6.2, -3.7, -1.2, 1.2, 3.7, 6.2]
 	for cx in c_foot_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.KNIGHT, "Redcrest Footman", Vector3(cx, 0.0, 18.0), Vector3(cx, 0.0, 0.0))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.KNIGHT, "Redcrest Infantry", Vector3(cx, 0.0, 5.2), Vector3(cx, 0.0, 0.0))
 
-	# [7..11] Crimson Marauder Berserkers
-	var c_zerk_xs = [-6.0, -3.0, 0.0, 3.0, 6.0]
+	# [7..11] Crimson Marauder Shock Troops
+	var c_zerk_xs = [-5.0, -2.5, 0.0, 2.5, 5.0]
 	for zx in c_zerk_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.BERSERKER, "Crimson Marauder", Vector3(zx, 0.0, 20.0), Vector3(zx, 0.0, 1.0))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.BERSERKER, "Crimson Shock Marauder", Vector3(zx, 0.0, 7.4), Vector3(zx, 0.0, 1.0))
 
-	# [12..15] Crimson Outlaw Archers
-	var c_arch_xs = [-4.5, -1.5, 1.5, 4.5]
+	# [12..15] Crimson Siege Bowmen
+	var c_arch_xs = [-4.8, -1.6, 1.6, 4.8]
 	for ax in c_arch_xs:
-		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.ARCHER, "Redcrest Arbalest", Vector3(ax, 0.0, 22.0), Vector3(ax, 0.0, 2.5))
+		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.ARCHER, "Crimson Siege Bowman", Vector3(ax, 0.0, 10.5), Vector3(ax, 0.0, 2.5))
+
+	# [16..19] Crimson Outrider Cavalry (Mounted Raider Squadron on Flanks)
+	var c_cav_xs = [-9.8, -7.8, 7.8, 9.8]
+	for ccx in c_cav_xs:
+		_spawn_troop(BattlegroundTroopAIScript.Faction.CRIMSON, BattlegroundTroopAIScript.Role.CAVALRY, "Crimson Outrider Cavalry", Vector3(ccx, 0.0, 6.2), Vector3(ccx, 0.0, 0.5))
+
+	_total_royal_spawned = royal_troops.size()
+	_total_crimson_spawned = crimson_troops.size()
 
 	battle_started.emit()
-	show_command_banner("⚔️ THE SOUTHERN BATTLEGROUND HAS ENGAGED! Press [1] Charge, [2] Shield Wall, [3] Rally, [4] Volley!", 4.0)
+	show_command_banner("⚔️ COMBINED-ARMS SIEGE ENGAGED! [1] Charge [2] Shield Wall [3] Rally [4] Bowmen Volley [5] Cavalry & Siege!", 4.5)
 	AudioManager.play_sfx("horn_rally", 0.05, 1.5)
 
 func _spawn_troop(f: int, r: int, troop_name: String, local_pos: Vector3, form_offset: Vector3) -> Node:
@@ -261,6 +300,10 @@ func _process(delta: float) -> void:
 
 	if is_near:
 		_process_player_commands()
+		_siege_barrage_timer -= delta
+		if _siege_barrage_timer <= 0.0 and not is_victory_achieved:
+			_siege_barrage_timer = 7.5
+			_fire_siege_exchange()
 
 	_command_banner_timer = max(0.0, _command_banner_timer - delta)
 	if _command_banner_label and _command_banner_timer <= 0.0:
@@ -277,6 +320,70 @@ func _process_player_commands() -> void:
 		command_all_rally()
 	elif Input.is_key_pressed(KEY_4):
 		command_all_volley()
+	elif Input.is_key_pressed(KEY_5):
+		command_cavalry_and_siege()
+
+func command_cavalry_and_siege() -> void:
+	show_command_banner("🐎💥 ORDER: CAVALRY FLANK CHARGE & TREBUCHET SIEGE BARRAGE!", 3.0)
+	AudioManager.play_sfx("horn_rally", 0.08, 1.4)
+	for t in royal_troops:
+		if is_instance_valid(t) and t.role == BattlegroundTroopAIScript.Role.CAVALRY:
+			t.command_charge()
+	for treb in royal_trebuchets:
+		if is_instance_valid(treb) and treb.has_method("fire_boulder"):
+			treb.fire_boulder()
+	_spawn_siege_catapult_salvo(true)
+
+func _fire_siege_exchange() -> void:
+	if count_alive_crimson() > 0:
+		_spawn_siege_catapult_salvo(false)
+	if count_alive_royal() > 0:
+		_spawn_siege_catapult_salvo(true)
+
+func _spawn_siege_catapult_salvo(from_royal: bool) -> void:
+	if not is_inside_tree():
+		return
+	var start_z = -20.0 if from_royal else 28.0
+	var target_z = 18.0 if from_royal else -14.0
+	for side_x in [-18.0, 18.0]:
+		var boulder = MeshInstance3D.new()
+		var sp = SphereMesh.new()
+		sp.radius = 0.45
+		sp.height = 0.90
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(1.0, 0.55, 0.12) if from_royal else Color(0.95, 0.25, 0.10)
+		mat.emission_enabled = true
+		mat.emission = mat.albedo_color
+		mat.emission_energy_multiplier = 2.4
+		sp.material = mat
+		boulder.mesh = sp
+		add_child(boulder)
+		boulder.position = Vector3(side_x, 4.5, start_z)
+
+		var dest = Vector3(randf_range(-9.0, 9.0), 0.4, target_z + randf_range(-4.0, 4.0))
+		var b_wr = weakref(boulder)
+		var self_wr = weakref(self)
+		var tw = boulder.create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(boulder, "position:x", dest.x, 1.0)
+		tw.tween_property(boulder, "position:z", dest.z, 1.0)
+		tw.tween_property(boulder, "position:y", 11.5, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.chain().tween_property(boulder, "position:y", dest.y, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.chain().tween_callback(func():
+			var b = b_wr.get_ref()
+			if b:
+				b.queue_free()
+			var s = self_wr.get_ref()
+			if s:
+				var world_hit = s.global_position + dest
+				AudioManager.play_sfx_at_position("boulder_explosion", world_hit, 42.0, 0.1, 0.0)
+				CombatJuice.spawn_hit_spark(world_hit, Color(1.0, 0.6, 0.15))
+				var targets = s.crimson_troops if from_royal else s.royal_troops
+				for unit in targets:
+					if is_instance_valid(unit) and unit.current_state != BattlegroundTroopAIScript.State.DEAD:
+						if unit.global_position.distance_to(world_hit) < 5.2:
+							unit.take_damage(32.0, s)
+		)
 
 func command_all_charge() -> void:
 	show_command_banner("⚔️ ORDER: FULL ARMY CHARGE! All units advance aggressively!", 2.5)
@@ -315,12 +422,14 @@ func show_command_banner(msg: String, duration: float = 2.5) -> void:
 func _trigger_victory() -> void:
 	is_victory_achieved = true
 	battle_victory.emit()
-	show_command_banner("👑 VICTORY ON THE CRIMSON FRONT! The King's Army Triumphs! (+300 Gold, +150 Soul Echoes)", 5.0)
+	show_command_banner("👑 VICTORY ON THE CRIMSON FRONT! The King's Army Triumphs! (+500 Gold, +250 Echoes, +350 XP)", 5.5)
 	AudioManager.play_sfx("horn_rally", 0.02, 2.5)
 
-	# Rewards
-	GameManager.player_gold += 300
-	GameManager.soul_echoes += 150
+	# Rewards & Character Development Progression
+	GameManager.add_gold(500)
+	GameManager.add_echoes(250)
+	GameManager.add_hero_xp(350)
+	GameManager.complete_campaign_step_by_id("chapter_5_massive_land_siege")
 
 	# Spawn Golden Royal Spoils of War Chest in center
 	_spawn_victory_chest()
@@ -374,12 +483,20 @@ func _build_tactical_hud() -> void:
 
 	# Top Tally Bar
 	var panel = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	panel.offset_top = 48.0
-	panel.offset_left = 220.0
-	panel.offset_right = -220.0
+	panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	panel.offset_top = 60.0
+	panel.offset_left = -265.0
+	panel.offset_right = 265.0
 	panel.offset_bottom = 96.0
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tally_sb = StyleBoxFlat.new()
+	tally_sb.bg_color = Color(0.06, 0.07, 0.11, 0.90)
+	tally_sb.border_color = Color(0.85, 0.68, 0.28, 0.85)
+	tally_sb.set_border_width_all(1)
+	tally_sb.set_corner_radius_all(6)
+	tally_sb.content_margin_left = 14
+	tally_sb.content_margin_right = 14
+	panel.add_theme_stylebox_override("panel", tally_sb)
 	_hud_container.add_child(panel)
 
 	var hbox = HBoxContainer.new()
@@ -387,55 +504,58 @@ func _build_tactical_hud() -> void:
 	panel.add_child(hbox)
 
 	_royal_count_label = Label.new()
-	_royal_count_label.text = "👑 King's Army: 14/14"
-	_royal_count_label.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0))
-	_royal_count_label.add_theme_font_size_override("font_size", 18)
+	_royal_count_label.text = "👑 King's Combined Army: 18/18"
+	_royal_count_label.add_theme_color_override("font_color", Color(0.45, 0.82, 1.0))
+	_royal_count_label.add_theme_font_size_override("font_size", 16)
 	hbox.add_child(_royal_count_label)
 
 	var vs_lbl = Label.new()
-	vs_lbl.text = "   ⚔️   VS   ⚔️   "
+	vs_lbl.text = "   ⚔️ VS ⚔️   "
 	vs_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
-	vs_lbl.add_theme_font_size_override("font_size", 16)
+	vs_lbl.add_theme_font_size_override("font_size", 15)
 	hbox.add_child(vs_lbl)
 
 	_crimson_count_label = Label.new()
-	_crimson_count_label.text = "💀 Crimson Legion: 16/16"
-	_crimson_count_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.45))
-	_crimson_count_label.add_theme_font_size_override("font_size", 18)
+	_crimson_count_label.text = "💀 Crimson Siege Army: 20/20"
+	_crimson_count_label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.48))
+	_crimson_count_label.add_theme_font_size_override("font_size", 16)
 	hbox.add_child(_crimson_count_label)
 
 	# Center Action / Command Banner
 	_command_banner_label = Label.new()
 	_command_banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_command_banner_label.offset_top = 104.0
+	_command_banner_label.offset_top = 138.0
 	_command_banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_command_banner_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.4))
-	_command_banner_label.add_theme_font_size_override("font_size", 20)
+	_command_banner_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+	_command_banner_label.add_theme_constant_override("outline_size", 4)
+	_command_banner_label.add_theme_font_size_override("font_size", 17)
 	_hud_container.add_child(_command_banner_label)
 
-	# Bottom Command Bar
+	# Bottom Command Bar (positioned cleanly above the Camera Bar)
 	var cmd_panel = PanelContainer.new()
-	cmd_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	cmd_panel.offset_top = -68.0
-	cmd_panel.offset_left = 180.0
-	cmd_panel.offset_right = -180.0
-	cmd_panel.offset_bottom = -22.0
+	cmd_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	cmd_panel.offset_top = -92.0
+	cmd_panel.offset_left = -430.0
+	cmd_panel.offset_right = 430.0
+	cmd_panel.offset_bottom = -58.0
 	cmd_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cmd_panel.add_theme_stylebox_override("panel", tally_sb)
 	_hud_container.add_child(cmd_panel)
 
 	var cmd_hbox = HBoxContainer.new()
 	cmd_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	cmd_panel.add_child(cmd_hbox)
 
-	var commands_text = "[1] Charge!  |  [2] Shield Wall (-75% Dmg)  |  [3] Rally to Hero  |  [4] Crossbow Volley  |  [E] Sound Horn"
+	var commands_text = "[1] Charge!  |  [2] Shield Wall (-75% Dmg)  |  [3] Rally to Hero  |  [4] Bowmen Volley  |  [5] Cavalry & Siege!  |  [E] Sound Horn"
 	var cmd_lbl = Label.new()
 	cmd_lbl.text = commands_text
-	cmd_lbl.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
-	cmd_lbl.add_theme_font_size_override("font_size", 15)
+	cmd_lbl.add_theme_color_override("font_color", Color(0.95, 0.96, 1.0))
+	cmd_lbl.add_theme_font_size_override("font_size", 13)
 	cmd_hbox.add_child(cmd_lbl)
 
 func _update_hud_tallies() -> void:
 	if _royal_count_label:
-		_royal_count_label.text = "👑 King's Army: %d/14" % count_alive_royal()
+		_royal_count_label.text = "👑 King's Combined Army: %d/%d" % [count_alive_royal(), _total_royal_spawned]
 	if _crimson_count_label:
-		_crimson_count_label.text = "💀 Crimson Legion: %d/16" % count_alive_crimson()
+		_crimson_count_label.text = "💀 Crimson Siege Army: %d/%d" % [count_alive_crimson(), _total_crimson_spawned]

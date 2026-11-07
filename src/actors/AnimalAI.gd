@@ -373,7 +373,11 @@ func _execute_attack() -> void:
 	if anim_player:
 		is_attacking = true
 		play_anim("Attack", 0.08, 1.5)
-		get_tree().create_timer(0.4).timeout.connect(func(): is_attacking = false)
+		var self_wr = weakref(self)
+		get_tree().create_timer(0.4).timeout.connect(func():
+			var s = self_wr.get_ref()
+			if s: s.is_attacking = false
+		)
 		
 	if target_player and target_player.has_method("take_damage"):
 		var forward = -transform.basis.z

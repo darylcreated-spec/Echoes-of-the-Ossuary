@@ -416,12 +416,15 @@ func _launch_boulder() -> void:
 	_proj_vel = dir * 24.0 + Vector3(0.0, 15.0, 0.0)
 	_proj_time = 0.0
 
-	var proj_ref = _active_projectile
+	var proj_wr = weakref(_active_projectile)
+	var self_wr = weakref(self)
 	get_tree().create_timer(4.5).timeout.connect(func():
-		if is_instance_valid(proj_ref):
-			if _active_projectile == proj_ref:
-				_active_projectile = null
-			proj_ref.queue_free()
+		var p = proj_wr.get_ref()
+		var s = self_wr.get_ref()
+		if p:
+			if s and s._active_projectile == p:
+				s._active_projectile = null
+			p.queue_free()
 	)
 
 func _create_stone_boulder() -> Node3D:
@@ -467,7 +470,11 @@ func _spawn_launch_dust_puff() -> void:
 	dust.mesh = q_m
 	get_parent().add_child(dust)
 	dust.emitting = true
-	get_tree().create_timer(1.0).timeout.connect(func(): if is_instance_valid(dust): dust.queue_free())
+	var d_wr = weakref(dust)
+	get_tree().create_timer(1.0).timeout.connect(func():
+		var d = d_wr.get_ref()
+		if d: d.queue_free()
+	)
 
 func _create_winch_wheel(wood_mat: Material, iron_mat: Material) -> Node3D:
 	var root = Node3D.new()
@@ -577,7 +584,11 @@ func _spawn_impact_explosion(pos: Vector3) -> void:
 	fq_mesh.material = fb_mat
 	fire_burst.mesh = fq_mesh
 	get_parent().add_child(fire_burst)
-	get_tree().create_timer(0.9).timeout.connect(func(): if is_instance_valid(fire_burst): fire_burst.queue_free())
+	var fb_wr = weakref(fire_burst)
+	get_tree().create_timer(0.9).timeout.connect(func():
+		var fb = fb_wr.get_ref()
+		if fb: fb.queue_free()
+	)
 
 	# 3. Flying Earth & Rock Debris using dirt_01.png
 	var debris = CPUParticles3D.new()
@@ -608,7 +619,11 @@ func _spawn_impact_explosion(pos: Vector3) -> void:
 	dq_mesh.material = d_mat
 	debris.mesh = dq_mesh
 	get_parent().add_child(debris)
-	get_tree().create_timer(1.1).timeout.connect(func(): if is_instance_valid(debris): debris.queue_free())
+	var deb_wr = weakref(debris)
+	get_tree().create_timer(1.1).timeout.connect(func():
+		var db = deb_wr.get_ref()
+		if db: db.queue_free()
+	)
 
 	var player = get_tree().get_first_node_in_group("player") as Node3D
 	if player and player.global_position.distance_to(pos) < 35.0:
