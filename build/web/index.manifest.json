@@ -1,0 +1,28 @@
+{
+  "name": "Echoes of the Ossuary",
+  "short_name": "Ossuary",
+  "description": "AA Medieval Action-RPG, Combined-Arms Siege & High-Seas Warfare \u2014 Created by daryl.created@gmail.com",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0e111a",
+  "theme_color": "#e8c252",
+  "icons": [
+    {
+      "src": "index.144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "index.180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "index.512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

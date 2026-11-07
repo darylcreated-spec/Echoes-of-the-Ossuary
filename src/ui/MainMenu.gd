@@ -543,4 +543,10 @@ func _on_start_button_pressed() -> void:
 
 func _on_quit_button_pressed() -> void:
 	GameManager.save_game()
+	if OS.has_feature("web"):
+		if is_pause_mode:
+			_on_return_to_title_pressed()
+		elif _status_feedback_lbl:
+			_status_feedback_lbl.text = "✓ Campaign Saved to Browser Storage!"
+		return
 	get_tree().quit()

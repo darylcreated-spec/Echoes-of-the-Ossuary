@@ -104,10 +104,11 @@ var _ship_colormap_texture: Texture2D = null
 
 func get_ship_colormap_texture() -> Texture2D:
 	if not _ship_colormap_texture:
-		var img = Image.load_from_file("res://assets/ships/Textures/colormap.png")
-		if img and not img.is_empty():
-			_ship_colormap_texture = ImageTexture.create_from_image(img)
-		else:
+		if ResourceLoader.exists("res://assets/ships/Textures/colormap.png"):
+			var loaded_tex = ResourceLoader.load("res://assets/ships/Textures/colormap.png")
+			if loaded_tex is Texture2D:
+				_ship_colormap_texture = loaded_tex
+		if not _ship_colormap_texture:
 			var p = ProjectSettings.globalize_path("res://assets/ships/Textures/colormap.png")
 			if FileAccess.file_exists(p):
 				var fallback_img = Image.new()

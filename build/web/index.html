@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
+	<meta name="theme-color" content="#0e111a">
+	<meta name="description" content="Echoes of the Ossuary — AA Medieval Action-RPG, Combined-Arms Siege & High-Seas Warfare. Created by daryl.created@gmail.com">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<title>Echoes of the Ossuary — Created by daryl.created@gmail.com</title>
+	<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+	<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+	<link rel="manifest" href="index.manifest.json">
+	<style>
+		* { box-sizing: border-box; }
+		html, body, #canvas {
+			margin: 0;
+			padding: 0;
+			border: 0;
+			width: 100%;
+			height: 100%;
+		}
+		body {
+			color: #f4eed7;
+			background-color: #0b0e17;
+			overflow: hidden;
+			touch-action: none;
+			font-family: Georgia, "Times New Roman", serif;
+		}
+		#canvas {
+			display: block;
+		}
+		#canvas:focus {
+			outline: none;
+		}
+		#status {
+			position: fixed;
+			inset: 0;
+			background: radial-gradient(circle at center, #182034 0%, #0b0e17 78%);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			z-index: 20;
+			padding: 24px;
+		}
+		.royal-card {
+			max-width: 680px;
+			width: 92%;
+			background: rgba(14, 18, 29, 0.96);
+			border: 3px solid #e6c155;
+			border-radius: 14px;
+			padding: 32px 28px;
+			text-align: center;
+			box-shadow: 0 20px 55px rgba(0, 0, 0, 0.78);
+		}
+		.royal-title {
+			font-size: clamp(22px, 4vw, 34px);
+			color: #ffdf78;
+			margin: 0 0 8px 0;
+			letter-spacing: 1px;
+			text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+		}
+		.royal-subtitle {
+			font-size: 13px;
+			color: #c2cee8;
+			margin-bottom: 16px;
+			font-family: system-ui, -apple-system, sans-serif;
+			letter-spacing: 0.6px;
+		}
+		.creator-badge {
+			display: inline-block;
+			background: rgba(38, 30, 14, 0.95);
+			border: 1.5px solid #e6c155;
+			border-radius: 8px;
+			padding: 6px 18px;
+			color: #ffe380;
+			font-size: 15px;
+			font-weight: bold;
+			margin-bottom: 22px;
+		}
+		.progress-track {
+			width: 100%;
+			height: 18px;
+			background: #090c14;
+			border: 1.5px solid #6b5828;
+			border-radius: 9px;
+			overflow: hidden;
+			margin-bottom: 10px;
+		}
+		.progress-fill {
+			height: 100%;
+			width: 2%;
+			background: linear-gradient(90deg, #b8861e 0%, #f5d161 55%, #40e4da 100%);
+			transition: width 0.15s ease-out;
+		}
+		#status-label {
+			font-family: system-ui, -apple-system, sans-serif;
+			font-size: 13px;
+			color: #d6e0f5;
+			margin-bottom: 6px;
+		}
+		#status-notice {
+			display: none;
+			background-color: #5b242c;
+			border-radius: 8px;
+			border: 1px solid #d45565;
+			color: #ffe8eb;
+			font-family: system-ui, sans-serif;
+			padding: 12px;
+			margin-top: 12px;
+		}
+		#pwa-toolbar {
+			position: fixed;
+			bottom: 8px;
+			right: 12px;
+			display: flex;
+			gap: 8px;
+			z-index: 15;
+		}
+		.pwa-btn {
+			background: rgba(16, 21, 34, 0.88);
+			color: #ffdf78;
+			border: 1.5px solid #e6c155;
+			border-radius: 7px;
+			padding: 5px 11px;
+			font-size: 12px;
+			font-weight: 600;
+			cursor: pointer;
+			font-family: system-ui, sans-serif;
+		}
+		.pwa-btn:hover {
+			background: rgba(38, 48, 74, 0.95);
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas">Your browser does not support the HTML5 canvas tag.</canvas>
+
+	<div id="pwa-toolbar">
+		<button id="pwa-install-btn" class="pwa-btn" style="display:none;">📲 Install App (PWA)</button>
+		<button id="pwa-fullscreen-btn" class="pwa-btn" title="Toggle Fullscreen">⛶ Fullscreen</button>
+	</div>
+
+	<div id="status">
+		<div class="royal-card">
+			<h1 class="royal-title">⚔️ ECHOES OF THE OSSUARY ⚔️</h1>
+			<div class="royal-subtitle">CHRONICLES OF OAKHAVEN • COMBINED-ARMS SIEGE &amp; HIGH-SEAS WARFARE</div>
+			<div class="creator-badge">👑 Created by daryl.created@gmail.com</div>
+			<div class="progress-track">
+				<div id="status-progress-fill" class="progress-fill"></div>
+			</div>
+			<div id="status-label">Initializing WebGL 2.0 &amp; Downloading Realm Assets...</div>
+			<div id="status-notice"></div>
+		</div>
+	</div>
+
+	<script>
+	// Transparent Chunked PCK Stream Assembler for GitHub & Vercel (<35 MB chunks)
+	(function() {
+		const PCK_CHUNKS = ["index.pck.part0", "index.pck.part1", "index.pck.part2", "index.pck.part3"];
+		const PCK_TOTAL_SIZE = 132338888;
+		const nativeFetch = window.fetch.bind(window);
+
+		window.fetch = function(resource, init) {
+			const url = (typeof resource === 'string') ? resource : (resource && resource.url ? resource.url : '');
+			if (url.endsWith('index.pck')) {
+				const stream = new ReadableStream({
+					async start(controller) {
+						try {
+							for (let i = 0; i < PCK_CHUNKS.length; i++) {
+								const partUrl = url.replace(/index\.pck$/, PCK_CHUNKS[i]);
+								const resp = await nativeFetch(partUrl, init);
+								if (!resp.ok) {
+									throw new Error('Failed loading chunk ' + PCK_CHUNKS[i] + ' (' + resp.status + ')');
+								}
+								const reader = resp.body.getReader();
+								while (true) {
+									const { done, value } = await reader.read();
+									if (done) break;
+									controller.enqueue(value);
+								}
+							}
+							controller.close();
+						} catch (err) {
+							controller.error(err);
+						}
+					}
+				});
+				return Promise.resolve(new Response(stream, {
+					status: 200,
+					statusText: 'OK',
+					headers: {
+						'Content-Type': 'application/octet-stream',
+						'Content-Length': String(PCK_TOTAL_SIZE)
+					}
+				}));
+			}
+			return nativeFetch(resource, init);
+		};
+	})();
+	</script>
+
+	<script src="index.js"></script>
+	<script>
+	const GODOT_CONFIG = {"args": [], "canvasResizePolicy": 2, "emscriptenPoolSize": 8, "ensureCrossOriginIsolationHeaders": false, "executable": "index", "experimentalVK": true, "fileSizes": {"index.pck": 132338888, "index.wasm": 39513091}, "focusCanvas": true, "gdextensionLibs": [], "godotPoolSize": 4, "serviceWorker": "index.service.worker.js"};
+	const GODOT_THREADS_ENABLED = false;
+	const engine = new Engine(GODOT_CONFIG);
+
+	(function () {
+		const statusOverlay = document.getElementById('status');
+		const statusProgressFill = document.getElementById('status-progress-fill');
+		const statusLabel = document.getElementById('status-label');
+		const statusNotice = document.getElementById('status-notice');
+		const installBtn = document.getElementById('pwa-install-btn');
+		const fullscreenBtn = document.getElementById('pwa-fullscreen-btn');
+
+		// Register PWA Service Worker proactively
+		if ('serviceWorker' in navigator && GODOT_CONFIG.serviceWorker) {
+			window.addEventListener('load', function() {
+				navigator.serviceWorker.register(GODOT_CONFIG.serviceWorker).catch(function(err) {
+					console.warn('PWA Service Worker registration note:', err);
+				});
+			});
+		}
+
+		// Handle Install App (PWA) prompt
+		let deferredPrompt = null;
+		window.addEventListener('beforeinstallprompt', (e) => {
+			e.preventDefault();
+			deferredPrompt = e;
+			installBtn.style.display = 'inline-block';
+		});
+		installBtn.addEventListener('click', async () => {
+			if (!deferredPrompt) return;
+			deferredPrompt.prompt();
+			await deferredPrompt.userChoice;
+			deferredPrompt = null;
+			installBtn.style.display = 'none';
+		});
+
+		fullscreenBtn.addEventListener('click', () => {
+			if (!document.fullscreenElement) {
+				document.documentElement.requestFullscreen().catch(() => {});
+			} else {
+				document.exitFullscreen().catch(() => {});
+			}
+		});
+
+		function displayFailureNotice(err) {
+			console.error(err);
+			statusNotice.style.display = 'block';
+			statusNotice.textContent = (err instanceof Error) ? err.message : String(err);
+		}
+
+		const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+		if (missing.length !== 0) {
+			displayFailureNotice('Missing WebGL2 / WebAssembly browser features: ' + missing.join(', '));
+		} else {
+			engine.startGame({
+				'onProgress': function (current, total) {
+					if (current > 0 && total > 0) {
+						const pct = Math.min(100, Math.round((current / total) * 100));
+						statusProgressFill.style.width = pct + '%';
+						const curMB = (current / 1048576).toFixed(1);
+						const totMB = (total / 1048576).toFixed(1);
+						statusLabel.textContent = 'Loading Realm Assets: ' + curMB + ' MB / ' + totMB + ' MB (' + pct + '%)';
+					}
+				},
+			}).then(() => {
+				statusOverlay.remove();
+			}, displayFailureNotice);
+		}
+	}());
+	</script>
+</body>
+</html>

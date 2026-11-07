@@ -44,6 +44,9 @@ var dialogue_modal: DialogueModal = null
 var main_menu: MainMenu = null
 var hud_root_control: Control = null
 var creator_hud_badge: Label = null
+var touch_controls_container: Control = null
+var touch_toggle_btn: Button = null
+var touch_controls_enabled: bool = false
 var fade_curtain: ColorRect = null
 
 # Naval Captaincy HUD
@@ -169,7 +172,7 @@ func _build_ui_tree() -> void:
 	var top_right = VBoxContainer.new()
 	top_right.anchor_left = 1.0
 	top_right.anchor_right = 1.0
-	top_right.offset_left = -520
+	top_right.offset_left = -620
 	top_right.offset_right = -16
 	top_right.offset_top = 18
 	root_control.add_child(top_right)
@@ -239,7 +242,15 @@ func _build_ui_tree() -> void:
 	menu_btn.pressed.connect(func(): toggle_pause_menu())
 	btn_box.add_child(menu_btn)
 
+	touch_toggle_btn = Button.new()
+	touch_toggle_btn.text = "📱 Touch"
+	touch_toggle_btn.custom_minimum_size = Vector2(74, 26)
+	touch_toggle_btn.focus_mode = Control.FOCUS_NONE
+	touch_toggle_btn.pressed.connect(func(): toggle_touch_controls())
+	btn_box.add_child(touch_toggle_btn)
+
 	_setup_story_guide_popup(root_control)
+	_setup_touch_controls_overlay(root_control)
 
 	# Top Center: Current Region Location Badge
 	region_badge = Label.new()
@@ -1602,6 +1613,127 @@ func _on_main_menu_resumed() -> void:
 func _on_main_menu_return_to_title() -> void:
 	get_tree().paused = false
 	open_opening_title_screen()
+
+func _setup_touch_controls_overlay(parent: Control) -> void:
+	touch_controls_container = Control.new()
+	touch_controls_container.name = "PWATouchControlsOverlay"
+	touch_controls_container.anchor_left = 0.0
+	touch_controls_container.anchor_top = 0.0
+	touch_controls_container.anchor_right = 1.0
+	touch_controls_container.anchor_bottom = 1.0
+	touch_controls_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(touch_controls_container)
+
+	# Bottom-Left D-Pad Cluster
+	var dpad_panel = Control.new()
+	dpad_panel.anchor_left = 0.0
+	dpad_panel.anchor_top = 1.0
+	dpad_panel.anchor_right = 0.0
+	dpad_panel.anchor_bottom = 1.0
+	dpad_panel.offset_left = 24
+	dpad_panel.offset_top = -230
+	dpad_panel.offset_right = 204
+	dpad_panel.offset_bottom = -50
+	dpad_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_controls_container.add_child(dpad_panel)
+
+	_create_touch_hold_button(dpad_panel, "▲", Vector2(60, 0), Vector2(56, 56), "move_up")
+	_create_touch_hold_button(dpad_panel, "▼", Vector2(60, 116), Vector2(56, 56), "move_down")
+	_create_touch_hold_button(dpad_panel, "◀", Vector2(2, 58), Vector2(56, 56), "move_left")
+	_create_touch_hold_button(dpad_panel, "▶", Vector2(118, 58), Vector2(56, 56), "move_right")
+
+	# Bottom-Right Action Cluster
+	var act_panel = GridContainer.new()
+	act_panel.columns = 2
+	act_panel.anchor_left = 1.0
+	act_panel.anchor_top = 1.0
+	act_panel.anchor_right = 1.0
+	act_panel.anchor_bottom = 1.0
+	act_panel.offset_left = -260
+	act_panel.offset_top = -230
+	act_panel.offset_right = -20
+	act_panel.offset_bottom = -50
+	act_panel.add_theme_constant_override("h_separation", 8)
+	act_panel.add_theme_constant_override("v_separation", 8)
+	touch_controls_container.add_child(act_panel)
+
+	_create_touch_action_grid_btn(act_panel, "⚔️ Attack", "attack", 0)
+	_create_touch_action_grid_btn(act_panel, "💨 Dash", "dash", KEY_SPACE)
+	_create_touch_action_grid_btn(act_panel, "✋ Use [E]", "interact", KEY_E)
+	_create_touch_action_grid_btn(act_panel, "🛡️ Block", "block", KEY_C)
+	_create_touch_action_grid_btn(act_panel, "🏹 Swap [Q]", "swap_weapon", KEY_Q)
+	_create_touch_action_grid_btn(act_panel, "🐎 Mount [F]", "mount_toggle", KEY_F)
+
+	touch_controls_enabled = DisplayServer.is_touchscreen_available()
+	touch_controls_container.visible = touch_controls_enabled
+	_update_touch_toggle_btn()
+
+func _create_touch_hold_button(parent: Control, label_text: String, pos: Vector2, btn_size: Vector2, action_name: String) -> Button:
+	var btn = Button.new()
+	btn.text = label_text
+	btn.position = pos
+	btn.custom_minimum_size = btn_size
+	btn.size = btn_size
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 20)
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.11, 0.18, 0.78)
+	sb.border_color = Color(0.92, 0.76, 0.34, 0.85)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(12)
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.button_down.connect(func(): Input.action_press(action_name))
+	btn.button_up.connect(func(): Input.action_release(action_name))
+	parent.add_child(btn)
+	return btn
+
+func _create_touch_action_grid_btn(parent: Control, label_text: String, action_name: String, key_code: int) -> Button:
+	var btn = Button.new()
+	btn.text = label_text
+	btn.custom_minimum_size = Vector2(114, 48)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 14)
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.12, 0.15, 0.24, 0.82)
+	sb.border_color = Color(0.92, 0.76, 0.34, 0.85)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.button_down.connect(func():
+		if action_name != "":
+			Input.action_press(action_name)
+		if key_code > 0:
+			var ev = InputEventKey.new()
+			ev.keycode = key_code
+			ev.physical_keycode = key_code
+			ev.pressed = true
+			Input.parse_input_event(ev)
+	)
+	btn.button_up.connect(func():
+		if action_name != "":
+			Input.action_release(action_name)
+		if key_code > 0:
+			var ev = InputEventKey.new()
+			ev.keycode = key_code
+			ev.physical_keycode = key_code
+			ev.pressed = false
+			Input.parse_input_event(ev)
+	)
+	parent.add_child(btn)
+	return btn
+
+func toggle_touch_controls() -> void:
+	touch_controls_enabled = not touch_controls_enabled
+	if touch_controls_container:
+		touch_controls_container.visible = touch_controls_enabled
+	_update_touch_toggle_btn()
+	show_toast("📱 On-Screen Touch Controls: %s" % ("ENABLED" if touch_controls_enabled else "HIDDEN"), 2.0)
+
+func _update_touch_toggle_btn() -> void:
+	if touch_toggle_btn:
+		touch_toggle_btn.text = "📱 Touch: ON" if touch_controls_enabled else "📱 Touch"
+		touch_toggle_btn.modulate = Color(0.55, 1.0, 0.65) if touch_controls_enabled else Color(0.88, 0.92, 1.0)
+
 
 func _check_tri_seal_completion() -> void:
 	if GameManager.quest_port_compass_completed and GameManager.quest_forest_heartwood_completed and GameManager.quest_crags_runecore_completed:
