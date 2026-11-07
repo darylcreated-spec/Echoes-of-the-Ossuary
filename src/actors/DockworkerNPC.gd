@@ -66,6 +66,11 @@ func _setup_character() -> void:
 	col.position.y = 0.9
 	add_child(col)
 
+	var lbl = Label3D.new()
+	lbl.position.y = 2.45
+	AssetLoader.style_world_label3d(lbl, "⚓ Stevedore Thatch\n[E] Speak", 48, Color(0.88, 0.95, 1.0))
+	add_child(lbl)
+
 	_play_walk_anim()
 
 func _physics_process(delta: float) -> void:

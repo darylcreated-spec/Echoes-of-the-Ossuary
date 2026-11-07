@@ -86,6 +86,11 @@ func _build_drydock_structure() -> void:
 	# 5. Master Owen's Workbench
 	_spawn_shipwright_workbench()
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 3.3, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🔨 Royal Shipwright Drydock\n[E] Shipyard Upgrades & Hull Repairs", 54, Color(1.0, 0.90, 0.58))
+	add_child(lbl)
+
 func _spawn_apprentice_pip() -> void:
 	var char_path = "res://assets/characters/adventurers/Rogue.glb"
 	if ResourceLoader.exists(char_path):

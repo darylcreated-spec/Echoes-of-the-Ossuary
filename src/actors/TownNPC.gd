@@ -175,13 +175,11 @@ func _build_visuals() -> void:
 	if _anim_player:
 		_play_default_idle()
 
-	# Floating Name Tag (Clean single line, proximity culled to prevent HUD clutter)
+	# Prominent Floating Name & Role Tag
 	_label = Label3D.new()
-	_label.position.y = 2.45
-	AssetLoader.style_world_label3d(_label, icon + " " + npc_name, 26, Color(1.0, 0.92, 0.65))
-	_label.visibility_range_end = 20.0
-	_label.visibility_range_end_margin = 4.0
-	_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	_label.position.y = 2.55
+	var label_str = "%s %s\n[%s]" % [icon, npc_name, npc_title] if npc_title != "" else (icon + " " + npc_name)
+	AssetLoader.style_world_label3d(_label, label_str, 54, Color(1.0, 0.94, 0.68))
 	add_child(_label)
 
 func _play_default_idle() -> void:

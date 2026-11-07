@@ -77,6 +77,12 @@ func _build_fishing_spot() -> void:
 	_bobber.visible = false
 	add_child(_bobber)
 
+	var lbl = Label3D.new()
+	lbl.name = "FishingLabel"
+	lbl.position = Vector3(-0.6, 2.65, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🎣 Angler Jonas's Pier\n[E] Cast Fishing Line", 50, Color(0.65, 0.94, 1.0))
+	add_child(lbl)
+
 func _process(delta: float) -> void:
 	match _state:
 		FishingState.WAITING_FOR_BITE:

@@ -910,11 +910,11 @@ func _build_town_population(parent: Node3D) -> void:
 		"Long live the High King and the Light of Oakhaven!"
 	]
 	oestred.waypoints = [
-		Vector3(0.0, 0.0, 6.0),
-		Vector3(3.0, 0.0, 9.0),
-		Vector3(-3.0, 0.0, 9.0)
+		Vector3(4.2, 0.0, 7.2),
+		Vector3(5.2, 0.0, 10.2),
+		Vector3(3.2, 0.0, 9.5)
 	]
-	oestred.position = Vector3(0.0, 0.0, 6.5)
+	oestred.position = Vector3(4.2, 0.0, 7.2)
 	parent.add_child(oestred)
 
 	var ronald = TownspersonNPCScript.new()
@@ -940,11 +940,11 @@ func _build_town_population(parent: Node3D) -> void:
 	pip.icon = "🏃"
 	pip.speech_barks = ["Tag! You're it!", "Look at the champion's sword!", "Bet you can't catch me!"]
 	pip.waypoints = [
-		Vector3(-3.0, 0.0, 7.5),
-		Vector3(1.0, 0.0, 10.5),
-		Vector3(-2.0, 0.0, 8.5)
+		Vector3(-2.8, 0.0, 11.2),
+		Vector3(1.2, 0.0, 12.6),
+		Vector3(-1.8, 0.0, 10.8)
 	]
-	pip.position = Vector3(-3.0, 0.0, 7.5)
+	pip.position = Vector3(-2.8, 0.0, 11.2)
 	parent.add_child(pip)
 
 	var tommy = TownspersonNPCScript.new()
@@ -956,11 +956,11 @@ func _build_town_population(parent: Node3D) -> void:
 	tommy.icon = "🏃"
 	tommy.speech_barks = ["Wait for me, Pip!", "I'm gonna be a knight one day!", "Did you see that warhorse?"]
 	tommy.waypoints = [
-		Vector3(2.5, 0.0, 7.5),
-		Vector3(-1.5, 0.0, 10.5),
-		Vector3(3.0, 0.0, 8.5)
+		Vector3(2.8, 0.0, 11.2),
+		Vector3(-1.2, 0.0, 12.6),
+		Vector3(2.2, 0.0, 10.8)
 	]
-	tommy.position = Vector3(2.5, 0.0, 7.5)
+	tommy.position = Vector3(2.8, 0.0, 11.2)
 	parent.add_child(tommy)
 
 	var barnaby_beggar = TownspersonNPCScript.new()
@@ -975,7 +975,7 @@ func _build_town_population(parent: Node3D) -> void:
 		"May the Light shield you when night falls, champion.",
 		"I took a spear in the shoulder so this realm could stand."
 	]
-	barnaby_beggar.position = Vector3(-5.5, 0.0, 8.0)
+	barnaby_beggar.position = Vector3(-4.2, 0.0, 5.8)
 	parent.add_child(barnaby_beggar)
 
 	var genevieve = TownspersonNPCScript.new()

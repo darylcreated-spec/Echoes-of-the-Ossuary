@@ -37,10 +37,11 @@ func _build_visuals() -> void:
 	_anim_player = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_play_anim("Walking_A", true)
 	
-	# Floating Name Tag (Clean single line, distance culled)
+	# Prominent Floating Guard Name & Role Tag
 	_label = Label3D.new()
-	_label.position.y = 2.2
-	AssetLoader.style_world_label3d(_label, "🛡️ " + npc_name, 26, Color(0.85, 0.94, 1.0))
+	_label.position.y = 2.45
+	var guard_lbl = "🛡️ %s\n[%s]" % [npc_name, npc_title] if npc_title != "" else ("🛡️ " + npc_name)
+	AssetLoader.style_world_label3d(_label, guard_lbl, 50, Color(0.85, 0.95, 1.0))
 	add_child(_label)
 
 func _build_interaction() -> void:

@@ -89,6 +89,11 @@ func _build_campfire_visuals() -> void:
 			bench.rotation_degrees.y = 0.0 if z_side < 0 else 180.0
 			add_child(bench)
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 2.25, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🔥 %s\n[E] Rest by the Hearth" % site_name, 50, Color(1.0, 0.86, 0.55))
+	add_child(lbl)
+
 func _process(delta: float) -> void:
 	if _light:
 		_flicker_timer += delta * 14.0

@@ -58,6 +58,11 @@ func _build_terrace() -> void:
 	lamp.position = Vector3(3.5, 3.0, 2.5)
 	add_child(lamp)
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(1.5, 2.85, 1.2)
+	AssetLoader.style_world_label3d(lbl, "🍺 Rusty Anchor Terrace\n[E] Listen to Old Salty Barnaby's Shanty", 50, Color(1.0, 0.88, 0.55))
+	add_child(lbl)
+
 func _spawn_trestle_table(pos: Vector3) -> void:
 	var table_root = Node3D.new()
 	table_root.position = pos

@@ -225,11 +225,13 @@ func _build_ui_tree() -> void:
 	region_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	region_badge.anchor_left = 0.5
 	region_badge.anchor_right = 0.5
-	region_badge.offset_left = -220
-	region_badge.offset_right = 220
-	region_badge.offset_top = 20
-	region_badge.add_theme_font_size_override("font_size", 14)
-	region_badge.add_theme_color_override("font_color", Color(0.95, 0.90, 0.70))
+	region_badge.offset_left = -260
+	region_badge.offset_right = 260
+	region_badge.offset_top = 18
+	region_badge.add_theme_font_size_override("font_size", 18)
+	region_badge.add_theme_constant_override("outline_size", 6)
+	region_badge.add_theme_color_override("font_outline_color", Color(0.03, 0.03, 0.05, 0.95))
+	region_badge.add_theme_color_override("font_color", Color(1.0, 0.94, 0.72))
 	root_control.add_child(region_badge)
 
 	# Compass Bar: shows nearby settlements, directions and distances
@@ -252,14 +254,14 @@ func _build_ui_tree() -> void:
 	interact_prompt.anchor_right = 0.5
 	interact_prompt.anchor_top = 0.8
 	interact_prompt.anchor_bottom = 0.8
-	interact_prompt.offset_left = -200
-	interact_prompt.offset_right = 200
+	interact_prompt.offset_left = -320
+	interact_prompt.offset_right = 320
 	var mf = AssetLoader.get_medieval_font()
 	if mf:
 		interact_prompt.add_theme_font_override("font", mf)
-	interact_prompt.add_theme_font_size_override("font_size", 24)
-	interact_prompt.add_theme_constant_override("outline_size", 6)
-	interact_prompt.add_theme_color_override("font_outline_color", Color(0.04, 0.04, 0.06, 0.95))
+	interact_prompt.add_theme_font_size_override("font_size", 32)
+	interact_prompt.add_theme_constant_override("outline_size", 8)
+	interact_prompt.add_theme_color_override("font_outline_color", Color(0.03, 0.03, 0.05, 0.98))
 	interact_prompt.modulate = Color(1.0, 0.95, 0.55)
 	interact_prompt.visible = false
 	root_control.add_child(interact_prompt)
@@ -272,12 +274,14 @@ func _build_ui_tree() -> void:
 	controls_bar.anchor_right = 0.5
 	controls_bar.anchor_top = 1.0
 	controls_bar.anchor_bottom = 1.0
-	controls_bar.offset_left = -560
-	controls_bar.offset_right = 560
-	controls_bar.offset_top = -24
+	controls_bar.offset_left = -620
+	controls_bar.offset_right = 620
+	controls_bar.offset_top = -26
 	controls_bar.offset_bottom = -6
-	controls_bar.add_theme_font_size_override("font_size", 11)
-	controls_bar.modulate = Color(0.85, 0.88, 0.95, 0.72)
+	controls_bar.add_theme_font_size_override("font_size", 14)
+	controls_bar.add_theme_constant_override("outline_size", 4)
+	controls_bar.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.04, 0.92))
+	controls_bar.modulate = Color(0.90, 0.92, 0.98, 0.85)
 	root_control.add_child(controls_bar)
 	
 	# Top Center: Boss Health Bar
@@ -703,12 +707,9 @@ func _ensure_story_beacon_3d() -> void:
 
 		var lbl = Label3D.new()
 		lbl.name = "BeaconLabel"
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.font_size = 28
-		lbl.outline_size = 6
-		lbl.modulate = Color(1.0, 0.92, 0.38)
+		AssetLoader.style_world_label3d(lbl, "⭐ STORY OBJECTIVE", 58, Color(1.0, 0.94, 0.38))
+		lbl.visibility_range_end = 65.0
 		lbl.position.y = 4.2
-		lbl.text = "⭐ STORY OBJECTIVE"
 		_story_beacon_3d.add_child(lbl)
 
 		get_tree().current_scene.add_child.call_deferred(_story_beacon_3d)

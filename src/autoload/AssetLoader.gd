@@ -767,7 +767,7 @@ func get_medieval_font() -> Font:
 			_medieval_font = load("res://assets/ui/MedievalSharp.ttf") as Font
 	return _medieval_font
 
-func style_world_label3d(label: Label3D, text: String = "", font_size: int = 26, primary_color: Color = Color(1.0, 0.94, 0.72)) -> void:
+func style_world_label3d(label: Label3D, text: String = "", font_size: int = 54, primary_color: Color = Color(1.0, 0.94, 0.72)) -> void:
 	if not label:
 		return
 	if text != "":
@@ -775,18 +775,20 @@ func style_world_label3d(label: Label3D, text: String = "", font_size: int = 26,
 	var f = get_medieval_font()
 	if f:
 		label.font = f
-	label.font_size = font_size
-	label.outline_size = 6
-	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
+	var effective_size: int = maxi(48, int(round(float(font_size) * 1.85))) if font_size < 48 else font_size
+	label.font_size = effective_size
+	label.pixel_size = 0.006
+	label.outline_size = 14
+	label.outline_modulate = Color(0.02, 0.02, 0.04, 0.98)
 	label.modulate = primary_color
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.double_sided = true
-	label.render_priority = 0
-	label.outline_render_priority = 0
-	label.visibility_range_begin = 2.4
-	label.visibility_range_begin_margin = 0.8
-	label.visibility_range_end = 15.0
-	label.visibility_range_end_margin = 3.5
+	label.render_priority = 2
+	label.outline_render_priority = 1
+	label.visibility_range_begin = 1.6
+	label.visibility_range_begin_margin = 0.6
+	label.visibility_range_end = 38.0
+	label.visibility_range_end_margin = 6.0
 	label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

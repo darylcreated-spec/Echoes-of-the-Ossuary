@@ -123,6 +123,11 @@ func _spawn_lockbox() -> void:
 	aura.position.y = 0.5
 	_chest_node.add_child(aura)
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 2.2, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🗝️ Sunken Captain's Lockbox\n[E] Inspect Treasure", 52, Color(0.55, 0.94, 1.0))
+	_chest_node.add_child(lbl)
+
 	add_child(_chest_node)
 
 func _process(delta: float) -> void:

@@ -96,12 +96,9 @@ func _build_naval_war_horn() -> void:
 	horn_root.add_child(ped)
 
 	var horn_lbl = Label3D.new()
-	horn_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	horn_lbl.position = Vector3(0.0, 1.85, 0.0)
-	horn_lbl.pixel_size = 0.006
-	horn_lbl.visibility_range_end = 24.0
-	horn_lbl.modulate = Color(0.45, 0.92, 1.0)
-	horn_lbl.text = "⚓ Port Naval Defense Horn\n[E] Sound Horn to Rally Port Marines & Cannons"
+	horn_lbl.position = Vector3(0.0, 2.35, 0.0)
+	AssetLoader.style_world_label3d(horn_lbl, "⚓ Port Naval Defense Horn\n[E] Sound Horn to Rally Port Marines & Cannons", 56, Color(0.50, 0.94, 1.0))
+	horn_lbl.visibility_range_end = 42.0
 	horn_root.add_child(horn_lbl)
 
 	var area = Area3D.new()
@@ -365,11 +362,9 @@ func _spawn_sea_victory_chest() -> void:
 	_victory_chest = chest
 
 	var lbl = Label3D.new()
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 2.1, 0.0)
-	lbl.pixel_size = 0.006
-	lbl.modulate = Color(0.45, 0.95, 1.0)
-	lbl.text = "⚓ Admiral's Naval Spoils\n[Claimed: +350 Gold, +150 Echoes]"
+	lbl.position = Vector3(0.0, 2.45, 0.0)
+	AssetLoader.style_world_label3d(lbl, "⚓ Admiral's Naval Spoils\n[Claimed: +350 Gold, +150 Echoes]", 56, Color(0.50, 0.96, 1.0))
+	lbl.visibility_range_end = 42.0
 	chest.add_child(lbl)
 
 func interact(_player: Node = null) -> void:

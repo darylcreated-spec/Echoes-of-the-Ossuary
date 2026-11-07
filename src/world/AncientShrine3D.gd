@@ -76,6 +76,11 @@ func _build_shrine_visuals() -> void:
 	motes.mesh = mote_mesh
 	add_child(motes)
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 2.95, 0.0)
+	AssetLoader.style_world_label3d(lbl, "✨ %s\n%s" % [shrine_name, get_prompt_text()], 54, _aura_light.light_color.lightened(0.25))
+	add_child(lbl)
+
 func _process(delta: float) -> void:
 	if _aura_light:
 		_pulse_timer += delta * 2.5

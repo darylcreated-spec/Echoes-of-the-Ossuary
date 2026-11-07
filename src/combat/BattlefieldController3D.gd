@@ -144,12 +144,9 @@ func _build_war_horn_interaction() -> void:
 	horn_root.add_child(ped)
 
 	var horn_lbl = Label3D.new()
-	horn_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	horn_lbl.position = Vector3(0.0, 1.8, 0.0)
-	horn_lbl.pixel_size = 0.006
-	horn_lbl.visibility_range_end = 24.0
-	horn_lbl.modulate = Color(1.0, 0.9, 0.4)
-	horn_lbl.text = "📯 Royal War Horn\n[E] Sound Horn to Rally Vanguard"
+	horn_lbl.position = Vector3(0.0, 2.35, 0.0)
+	AssetLoader.style_world_label3d(horn_lbl, "📯 Royal War Horn\n[E] Sound Horn to Rally Vanguard", 56, Color(1.0, 0.92, 0.45))
+	horn_lbl.visibility_range_end = 42.0
 	horn_root.add_child(horn_lbl)
 
 	var area = Area3D.new()
@@ -456,11 +453,9 @@ func _spawn_victory_chest() -> void:
 	chest.add_child(gold_light)
 
 	var lbl = Label3D.new()
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.position = Vector3(0.0, 2.2, 0.0)
-	lbl.pixel_size = 0.006
-	lbl.modulate = Color(1.0, 0.88, 0.25)
-	lbl.text = "🏆 Royal Spoils of War\n[Claimed: +300 Gold, +150 Echoes]"
+	lbl.position = Vector3(0.0, 2.55, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🏆 Royal Spoils of War\n[Claimed: +300 Gold, +150 Echoes]", 56, Color(1.0, 0.90, 0.30))
+	lbl.visibility_range_end = 42.0
 	chest.add_child(lbl)
 
 func interact(player: Node = null) -> void:

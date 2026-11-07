@@ -120,13 +120,9 @@ func _build_ui_and_collider() -> void:
 
 	# Overhead Naval Health & Faction Label
 	_hp_label = Label3D.new()
-	_hp_label.position = Vector3(0.0, 11.0, 0.0)
-	_hp_label.font_size = 32
-	_hp_label.outline_size = 8
-	_hp_label.outline_modulate = Color(0.1, 0.05, 0.05, 0.95)
-	_hp_label.modulate = Color(1.0, 0.45, 0.45)
-	_hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_hp_label.double_sided = true
+	_hp_label.position = Vector3(0.0, 11.2, 0.0)
+	AssetLoader.style_world_label3d(_hp_label, "", 58, Color(1.0, 0.48, 0.48))
+	_hp_label.visibility_range_end = 55.0
 	_update_hp_display()
 	add_child(_hp_label)
 

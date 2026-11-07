@@ -55,7 +55,9 @@ func _process(_delta: float) -> void:
 		var lbl = Label.new()
 		var dir_str = _get_direction_string(p_pos, item["pos"])
 		lbl.text = "%s [%s %.0fm]" % [item["name"], dir_str, item["dist"]]
-		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_font_size_override("font_size", 15)
+		lbl.add_theme_constant_override("outline_size", 5)
+		lbl.add_theme_color_override("font_outline_color", Color(0.03, 0.03, 0.05, 0.95))
 		lbl.add_theme_color_override("font_color", item["color"])
 		container.add_child(lbl)
 

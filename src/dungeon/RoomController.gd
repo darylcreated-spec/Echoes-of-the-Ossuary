@@ -203,9 +203,8 @@ func _spawn_return_portal(pos: Vector3) -> void:
 	portal.add_child(col)
 	
 	var label = Label3D.new()
-	label.text = "[E] Return to Sanctuary"
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position.y = 3.2
+	AssetLoader.style_world_label3d(label, "🌀 Return Portal\n[E] Return to Sanctuary", 56, Color(0.55, 0.95, 1.0))
 	portal.add_child(label)
 	
 	# Dynamic interaction method
@@ -261,8 +260,8 @@ func _spawn_upgrade_altar(pos: Vector3) -> void:
 	altar.add_child(area)
 	
 	var label = Label3D.new()
-	label.position.y = 2.55
-	AssetLoader.style_world_label3d(label, "[E] Soul Altar", 32, Color(0.7, 0.95, 1.0))
+	label.position.y = 2.85
+	AssetLoader.style_world_label3d(label, "✨ Sacred Soul Altar\n[E] Channel Soul Echoes", 58, Color(0.68, 0.98, 1.0))
 	altar.add_child(label)
 	
 	add_child(altar)
@@ -355,8 +354,8 @@ func _spawn_class_pedestals(base_pos: Vector3) -> void:
 		ped.add_child(preview)
 		
 		var label = Label3D.new()
-		label.position.y = 2.45
-		AssetLoader.style_world_label3d(label, "[E] " + c["name"], 34, Color(1.0, 0.92, 0.65))
+		label.position.y = 2.65
+		AssetLoader.style_world_label3d(label, "⚔️ %s Class\n[E] Assume Mantle" % c["name"], 54, Color(1.0, 0.94, 0.68))
 		ped.add_child(label)
 		
 		add_child(ped)

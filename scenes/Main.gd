@@ -1037,6 +1037,34 @@ func _run_gameplay_self_test() -> void:
 	assert(AudioManager._active_region_music_zone == "overworld", "Oakhaven Hub must trigger overworld music")
 	print(" -> Multi-Biome Terrain Shader, Sector NPCs, FX & Dynamic Regional Music verified!")
 
+	# =========================================================
+	# TEST 28: ENLARGED IN-GAME 3D LABELS ON NPCS & WORLD ASSETS
+	# =========================================================
+	print("\n[TEST 28] Verifying Enlarged High-Visibility 3D Labels on NPCs & World Assets...")
+	var town_npc_labels = 0
+	for n in all_npcs:
+		if n is TownNPC and n._label:
+			assert(n._label.font_size >= 48, "TownNPC label font_size must be >= 48 (got %d)" % n._label.font_size)
+			assert(n._label.outline_size >= 12, "TownNPC label outline_size must be >= 12")
+			assert(n._label.visibility_range_end >= 30.0, "TownNPC label visibility_range_end must be >= 30m for Top-Down view")
+			town_npc_labels += 1
+	assert(town_npc_labels >= 40, "Must verify >= 40 TownNPC enlarged 3D labels")
+
+	for citizen in all_townspeople:
+		assert(citizen._name_label != null, "TownspersonNPC must have a persistent overhead _name_label")
+		assert(citizen._name_label.font_size >= 48, "TownspersonNPC _name_label font_size must be >= 48")
+		assert(citizen._bark_label != null and citizen._bark_label.font_size >= 40, "TownspersonNPC _bark_label font_size must be >= 40")
+
+	for guard in all_patrols:
+		if guard._label:
+			assert(guard._label.font_size >= 48, "PatrolNPC label font_size must be >= 48")
+
+	var world_labels = current_room.find_children("*", "Label3D", true, false)
+	print(" -> Total Active World Label3D Nodes Verified: %d (TownNPCs: %d, Townspeople: %d, Patrols: %d)" % [
+		world_labels.size(), town_npc_labels, all_townspeople.size(), all_patrols.size()
+	])
+	assert(world_labels.size() >= 140, "Must have >= 140 enlarged Label3D nodes across NPCs, troops, shrines, stalls, campfires, and structures")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

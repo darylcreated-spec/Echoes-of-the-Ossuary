@@ -60,6 +60,11 @@ func _build_stall_visuals() -> void:
 	light.omni_range = 5.5
 	add_child(light)
 
+	var lbl = Label3D.new()
+	lbl.position = Vector3(0.0, 3.1, 0.0)
+	AssetLoader.style_world_label3d(lbl, "🧺 %s\n[E] Inspect Wares" % stall_name, 52, Color(1.0, 0.94, 0.68))
+	add_child(lbl)
+
 func _setup_interaction_area() -> void:
 	var area = Area3D.new()
 	area.name = "MarketInteractArea"

@@ -117,13 +117,14 @@ func _build_visuals() -> void:
 	var mf = AssetLoader.get_medieval_font()
 	if mf:
 		_label.font = mf
-	_label.font_size = 58
-	_label.outline_size = 14
+	_label.font_size = 68
+	_label.pixel_size = 0.006
+	_label.outline_size = 16
 	_label.outline_modulate = Color(0.01, 0.03, 0.08, 1.0)
 	_label.modulate = Color(0.35, 1.0, 0.95)
 	_label.render_priority = 3
 	_label.outline_render_priority = 2
-	_label.position.y = 3.2
+	_label.position.y = 3.4
 	
 	if GameManager.current_floor == 0:
 		_label.text = "▼ STEP HERE TO DESCEND ▼\n[ ENTER OSSUARY — FLOOR 1 ]"

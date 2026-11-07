@@ -61,8 +61,9 @@ func spawn_damage_number(pos: Vector3, amount: float, is_crit: bool, is_player_d
 	var mf = AssetLoader.get_medieval_font()
 	if mf:
 		label.font = mf
-	label.font_size = 54 if is_crit else 38
-	label.outline_size = 10
+	label.font_size = 66 if is_crit else 48
+	label.pixel_size = 0.006
+	label.outline_size = 12
 	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
 	label.render_priority = 4
 	label.outline_render_priority = 3
@@ -166,8 +167,9 @@ func show_popup_text(pos: Vector3, text: String, color: Color = Color(0.95, 0.90
 	var mf = AssetLoader.get_medieval_font()
 	if mf:
 		label.font = mf
-	label.font_size = 38
-	label.outline_size = 10
+	label.font_size = 48
+	label.pixel_size = 0.006
+	label.outline_size = 12
 	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
 	label.render_priority = 5
 	label.outline_render_priority = 4

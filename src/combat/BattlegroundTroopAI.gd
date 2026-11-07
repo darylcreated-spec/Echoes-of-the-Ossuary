@@ -195,14 +195,13 @@ func _build_overhead_ui() -> void:
 
 	# Unit Title Label
 	_overhead_label = Label3D.new()
-	_overhead_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	var f_color = Color(0.75, 0.92, 1.0) if faction == Faction.ROYAL else Color(1.0, 0.65, 0.65)
+	AssetLoader.style_world_label3d(_overhead_label, unit_name, 48 if role != Role.COMMANDER else 58, f_color)
+	_overhead_label.pixel_size = 0.0046 if role != Role.COMMANDER else 0.006
 	_overhead_label.no_depth_test = false
-	_overhead_label.pixel_size = 0.0055
-	_overhead_label.visibility_range_end = 22.0
-	var f_color = Color(0.70, 0.88, 1.0) if faction == Faction.ROYAL else Color(1.0, 0.65, 0.65)
-	_overhead_label.modulate = f_color
-	_overhead_label.text = unit_name
-	_overhead_label.position.y = 0.25
+	_overhead_label.visibility_range_end = 42.0
+	var stagger_y = 0.30 + float(get_instance_id() % 3) * 0.28
+	_overhead_label.position.y = stagger_y if role != Role.COMMANDER else 0.65
 	ui_root.add_child(_overhead_label)
 
 	# 3D Background Bar
@@ -562,12 +561,12 @@ func _update_overhead_ui() -> void:
 	if _overhead_label:
 		var status_str = ""
 		match current_state:
-			State.CHARGE: status_str = " [CHARGE]"
-			State.SHIELD_WALL: status_str = " [SHIELD WALL]"
-			State.RALLY: status_str = " [RALLY]"
-			State.ENGAGED: status_str = " [CLASH]"
-			State.DEAD: status_str = " [FALLEN]"
-		_overhead_label.text = "%s (%d/%d)%s" % [unit_name, int(current_health), int(max_health), status_str]
+			State.CHARGE: status_str = " • CHARGE"
+			State.SHIELD_WALL: status_str = " • SHIELD WALL"
+			State.RALLY: status_str = " • RALLY"
+			State.ENGAGED: status_str = " • CLASH"
+			State.DEAD: status_str = " • FALLEN"
+		_overhead_label.text = "%s\n[%d/%d HP%s]" % [unit_name, int(current_health), int(max_health), status_str]
 
 func _face_direction(dir: Vector3, delta: float) -> void:
 	if dir.length_squared() > 0.001:

@@ -25,6 +25,7 @@ enum NPCRole {
 
 var _anim_player: AnimationPlayer = null
 var _model_root: Node3D = null
+var _name_label: Label3D = null
 var _bark_label: Label3D = null
 var _bark_timer: float = 0.0
 var _current_wp_idx: int = 0
@@ -39,7 +40,7 @@ func _ready() -> void:
 	_build_visuals()
 	_build_speech_bark_ui()
 	_build_interaction_area()
-	_bark_timer = randf_range(2.0, 7.0)
+	_bark_timer = randf_range(5.0, 18.0)
 
 	if speech_barks.is_empty():
 		_setup_default_barks()
@@ -68,21 +69,31 @@ func _build_visuals() -> void:
 		_play_anim("Walking_A")
 
 func _build_speech_bark_ui() -> void:
+	_name_label = Label3D.new()
+	_name_label.position = Vector3(0.0, 2.35 if role != NPCRole.CHILD else 1.75, 0.0)
+	var name_str = "%s %s\n[%s]" % [icon, citizen_name, citizen_title] if citizen_title != "" else (icon + " " + citizen_name)
+	AssetLoader.style_world_label3d(_name_label, name_str, 48, Color(0.96, 0.92, 0.78))
+	add_child(_name_label)
+
 	_bark_label = Label3D.new()
-	_bark_label.position = Vector3(0.0, 2.25 if role != NPCRole.CHILD else 1.55, 0.0)
-	_bark_label.font_size = 18
-	_bark_label.outline_size = 5
-	_bark_label.outline_modulate = Color(0.05, 0.05, 0.08, 0.95)
-	_bark_label.modulate = Color(1.0, 0.94, 0.75, 0.0) # Start invisible
+	_bark_label.position = Vector3(0.0, 3.05 if role != NPCRole.CHILD else 2.35, 0.0)
+	var mf = AssetLoader.get_medieval_font()
+	if mf:
+		_bark_label.font = mf
+	_bark_label.font_size = 42
+	_bark_label.pixel_size = 0.0058
+	_bark_label.outline_size = 11
+	_bark_label.outline_modulate = Color(0.03, 0.03, 0.05, 0.98)
+	_bark_label.modulate = Color(1.0, 0.95, 0.78, 0.0) # Start invisible
 	_bark_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_bark_label.double_sided = true
-	_bark_label.visibility_range_begin = 2.4
-	_bark_label.visibility_range_begin_margin = 0.8
-	_bark_label.visibility_range_end = 8.0
-	_bark_label.visibility_range_end_margin = 2.0
+	_bark_label.visibility_range_begin = 1.6
+	_bark_label.visibility_range_begin_margin = 0.6
+	_bark_label.visibility_range_end = 26.0
+	_bark_label.visibility_range_end_margin = 4.0
 	_bark_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
-	_bark_label.render_priority = 0
-	_bark_label.outline_render_priority = 0
+	_bark_label.render_priority = 3
+	_bark_label.outline_render_priority = 2
 	_bark_label.text = ""
 	add_child(_bark_label)
 
@@ -201,12 +212,17 @@ func _trigger_ambient_bark() -> void:
 		return
 
 	var text = speech_barks[randi() % speech_barks.size()]
-	_bark_label.text = icon + " \"" + text + "\""
+	_bark_label.text = "%s %s:\n\"%s\"" % [icon, citizen_name, text]
+	_bark_label.position = _name_label.position if _name_label else Vector3(0.0, 2.35, 0.0)
 
 	var tw = create_tween()
-	tw.tween_property(_bark_label, "modulate:a", 1.0, 0.3)
-	tw.tween_interval(4.2)
-	tw.tween_property(_bark_label, "modulate:a", 0.0, 0.5)
+	if _name_label:
+		tw.tween_property(_name_label, "modulate:a", 0.0, 0.2)
+	tw.tween_property(_bark_label, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(3.8)
+	tw.tween_property(_bark_label, "modulate:a", 0.0, 0.35)
+	if _name_label:
+		tw.tween_property(_name_label, "modulate:a", 1.0, 0.25)
 
 func get_prompt_text() -> String:
 	return "[E] Speak with " + citizen_name
