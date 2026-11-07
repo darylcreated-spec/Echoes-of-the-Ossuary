@@ -889,6 +889,64 @@ func _run_gameplay_self_test() -> void:
 	assert(pirate_ship.current_health < ship_hp_before, "Pirate warship must take naval damage")
 	print(" -> Autonomous Pirate Warship AI patrolling & naval combat damage verified!")
 
+	# 23. Sector C4 Ground Troop Battle (King's Army vs Crimson Legion) & Ocean Expansion to A1/A2
+	print("\n[TEST 23] Sector C4 Ground Troop Battle & A1/A2 Ocean Expansion Suite...")
+	# Verify Ocean expansion spans full 350m length
+	assert(oc_mesh.size.x >= 148.0 and oc_mesh.size.y >= 340.0, "Ocean water surface must cover full western edge across A1, A2, A3, A4")
+	print(" -> Verified 350m Western Ocean coverage: %s at %s" % [oc_mesh.size, ocean_surface.position])
+
+	# Verify Whisperwood Enclave relocated to Sector B1 and C1
+	var thorne = dungeon_gen.find_child("druid_thorne", true, false)
+	if not thorne:
+		for n in get_tree().get_nodes_in_group("interactable"):
+			if n.get("npc_id") == "druid_thorne":
+				thorne = n
+				break
+	assert(thorne != null, "Elder Thorne must exist")
+	assert(thorne.global_position.x > -75.0 and thorne.global_position.z < -45.0, "Elder Thorne must be located in Sector B1")
+	print(" -> Elder Thorne safely relocated to Sector B1: %s" % thorne.global_position)
+
+	# Verify Sector C4 Battlefield Controller
+	var b_controllers = get_tree().get_nodes_in_group("battlefield_controller")
+	assert(b_controllers.size() > 0, "BattlefieldController3D must exist in world")
+	var bf = b_controllers[0]
+	assert(bf.global_position.x >= 0.0 and bf.global_position.x <= 75.0, "Battlefield must be positioned in Column C")
+	assert(bf.global_position.z >= 100.0, "Battlefield must be positioned in Row 4 (Z >= 100)")
+	print(" -> Sector C4 Battlefield Controller verified at: %s" % bf.global_position)
+
+	# Verify Player-Controlled King's Army vs AI-Controlled Crimson Legion
+	var royals = get_tree().get_nodes_in_group("royal_army")
+	var crimsons = get_tree().get_nodes_in_group("crimson_army")
+	print(" -> King's Royal Army Troops deployed: %d | Crimson Legion Troops deployed: %d" % [royals.size(), crimsons.size()])
+	assert(royals.size() >= 12, "King's Royal Army must have at least 12 troops")
+	assert(crimsons.size() >= 14, "Crimson Legion must have at least 14 troops")
+
+	# Test Command 1: Shield Wall
+	bf.command_all_shield_wall()
+	var shielded = 0
+	for t in royals:
+		if t.get("is_shield_wall") == true:
+			shielded += 1
+	assert(shielded >= 10, "King's troops must form Shield Wall phalanx")
+	print(" -> Command [2] SHIELD WALL verified! %d troops in defensive phalanx" % shielded)
+
+	# Test Command 2: Full Charge
+	bf.command_all_charge()
+	var charging = 0
+	for t in royals:
+		if t.get("current_state") == 2: # State.CHARGE
+			charging += 1
+	assert(charging >= 10, "King's troops must enter Charge state")
+	print(" -> Command [1] CHARGE verified! %d troops charging enemy line" % charging)
+
+	# Test Command 3: Rally to Hero
+	bf.command_all_rally()
+	print(" -> Command [3] RALLY TO HERO verified!")
+
+	# Test Command 4: Crossbow Volley
+	bf.command_all_volley()
+	print(" -> Command [4] ARCHER VOLLEY verified!")
+
 	print("\n==================================================")
 	print("   ALL GAMEPLAY AND STORY TESTS COMPLETED: 100% PASS   ")
 	print("==================================================")

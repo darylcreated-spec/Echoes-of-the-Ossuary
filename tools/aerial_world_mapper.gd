@@ -6,11 +6,11 @@ class AerialGridOverlay extends Control:
 	var col_x_bounds = [-210.0, -85.0, 0.0, 75.0, 145.0]
 	var row_z_bounds = [-140.0, -45.0, 28.0, 100.0, 210.0]
 	var sector_names = {
-		"A1": "Whisperwood Grove",
-		"B1": "Greenhollow Village",
-		"C1": "Ossuary Crypt Gate",
+		"A1": "North-West Ocean",
+		"B1": "Whisperwood Enclave",
+		"C1": "Crypt Gate & Grove",
 		"D1": "Khar-Drakken Crags",
-		"A2": "West Coastal Bluff",
+		"A2": "Open Western Ocean",
 		"B2": "Boar's Tusk & Market",
 		"C2": "Oakhaven Plaza Hub",
 		"D2": "River & Watermill",
@@ -20,7 +20,7 @@ class AerialGridOverlay extends Control:
 		"D3": "Weeping Fen Mire",
 		"A4": "Corsair Bastion",
 		"B4": "Naval Battle Theater",
-		"C4": "Crimson Siege Camp",
+		"C4": "Ground Troop Battle",
 		"D4": "Southern Estuary"
 	}
 	var camera: Camera3D = null
@@ -58,7 +58,7 @@ class AerialGridOverlay extends Control:
 				var sector_w = abs(p_bot_right.x - p_top_left.x)
 
 				# Badge Box: [A1]
-				var badge_pos = p_top_left + Vector2(6, 6)
+				var badge_pos = p_top_left + Vector2(6, 40 if ri == 0 else 6)
 				var badge_size = Vector2(38, 24)
 				draw_rect(Rect2(badge_pos, badge_size), Color(0.08, 0.08, 0.12, 0.90), true)
 				draw_rect(Rect2(badge_pos, badge_size), Color(1.0, 0.84, 0.3, 0.95), false, 1.5)
@@ -204,6 +204,23 @@ static func run_mapping(main_node: Node3D) -> void:
 		for i in range(4):
 			await tree.process_frame
 		_save_viewport_image(tree, out_dir + "/" + q["name"] + ".png", local_dir + "/" + q["name"] + ".png")
+
+	# --- 5. GROUND PERSPECTIVE CLOSE-UPS ---
+	# A. Sector C4 Ground Troop Battle (Hero's Vanguard vs Crimson Legion)
+	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	camera.fov = 60.0
+	camera.global_position = Vector3(35.0, 7.5, 124.0)
+	camera.look_at(Vector3(35.0, 1.2, 165.0), Vector3.UP)
+	for i in range(4):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/ground_battle_c4_clash.png", local_dir + "/ground_battle_c4_clash.png")
+
+	# B. Sector B1 Relocated Sylva's Rest & Open Western Ocean
+	camera.global_position = Vector3(-46.0, 8.5, -60.0)
+	camera.look_at(Vector3(-46.0, 1.0, -88.0), Vector3.UP)
+	for i in range(4):
+		await tree.process_frame
+	_save_viewport_image(tree, out_dir + "/sector_b1_whisperwood_enclave.png", local_dir + "/sector_b1_whisperwood_enclave.png")
 
 	overlay_layer.queue_free()
 	print("==================================================================")

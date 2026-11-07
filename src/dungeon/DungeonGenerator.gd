@@ -32,6 +32,8 @@ const DestructibleProp3DScript = preload("res://src/world/DestructibleProp3D.gd"
 const ChoppableTree3DScript = preload("res://src/world/ChoppableTree3D.gd")
 const TownspersonNPCScript = preload("res://src/actors/TownspersonNPC.gd")
 const EnemyShipAI3DScript = preload("res://src/actors/EnemyShipAI3D.gd")
+const BattlefieldController3DScript = preload("res://src/combat/BattlefieldController3D.gd")
+const BattlegroundTroopAIScript = preload("res://src/combat/BattlegroundTroopAI.gd")
 
 # KayKit Dungeon strict 2.0m tile footprint
 const TILE_SIZE: float = 2.0
@@ -318,16 +320,14 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	floor_body.collision_layer = 1
 	floor_body.collision_mask = 0
 
-	# North Bank Floor (X: -137 to 137, Z: -137 to 20.0)
-	_add_floor_col_box(floor_body, Vector3(274.0, 1.2, 157.0), Vector3(0.0, -0.6, -58.5))
-	# South-Central & East Landmass Floor (X: -62.0 to 137.0, Z: 28.0 to 137.0)
-	_add_floor_col_box(floor_body, Vector3(199.0, 1.2, 109.0), Vector3(37.5, -0.6, 82.5))
-	# South-West Coastal Headland Floor (X: -137.0 to -62.0, Z: 28.0 to 46.0)
-	_add_floor_col_box(floor_body, Vector3(75.0, 1.2, 18.0), Vector3(-99.5, -0.6, 37.0))
-	# Sunken Ocean Harbor Seabed Floor (Expanded open sea X: -210.0 to -62.0, Z: 46.0 to 210.0 at Y = -1.20m)
-	_add_floor_col_box(floor_body, Vector3(148.0, 1.2, 164.0), Vector3(-136.0, -1.80, 128.0))
-	# Sunken Riverbed Floor (X: -137 to 137, Z: 20.0 to 28.0 at Y = -0.50m)
-	_add_floor_col_box(floor_body, Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
+	# North Bank Floor (starts at X = -78.0 to 137.0, Z: -137.0 to 20.0)
+	_add_floor_col_box(floor_body, Vector3(215.0, 1.2, 157.0), Vector3(29.5, -0.6, -58.5))
+	# South-Central & East Landmass Floor (X: -62.0 to 137.0, Z: 28.0 to 210.0 - Extended for Sector C4 Battleground)
+	_add_floor_col_box(floor_body, Vector3(199.0, 1.2, 182.0), Vector3(37.5, -0.6, 119.0))
+	# Sunken Ocean Harbor Seabed Floor (Expanded open sea X: -210.0 to -62.0 across full Z: -140.0 to 210.0 at Y = -1.20m)
+	_add_floor_col_box(floor_body, Vector3(148.0, 1.2, 350.0), Vector3(-136.0, -1.80, 35.0))
+	# Sunken Riverbed Floor (X: -78.0 to 137.0, Z: 20.0 to 28.0 at Y = -0.50m)
+	_add_floor_col_box(floor_body, Vector3(215.0, 1.2, 8.0), Vector3(29.5, -1.10, 24.0))
 
 	# Impassable Riverbank Collision Barriers (Prevents walking on water; players must cross via the Bridges)
 	# Openings at Western Wooden Bridge (X in [-19.8, -16.2]) and Central Stone Bridge (X in [-2.1, 2.1])
@@ -338,9 +338,12 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	_add_floor_col_box(floor_body, Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 28.0))
 	_add_floor_col_box(floor_body, Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 28.0))
 
+	# Coastal Cliff Impassable Boundary Barrier along X = -78.0 (Z: -137.0 to 46.0)
+	_add_floor_col_box(floor_body, Vector3(0.6, 4.0, 183.0), Vector3(-78.0, 1.5, -45.5))
+
 	# Ocean Quay Shoreline Collision Barriers (along X = -62.0 and Z = 46.0)
 	# Pier 1 at Z=62 (Z in [59.6, 64.4]), Pier 2 at Z=82 (Z in [79.6, 84.4]), Harbor Sea Stairs at Z=72 (Z in [70.4, 73.6]), and Golden Beach Cove (Z in [86.5, 114.0]) are fully open for water egress!
-	_add_floor_col_box(floor_body, Vector3(75.0, 3.5, 0.4), Vector3(-99.5, 1.5, 46.0))
+	_add_floor_col_box(floor_body, Vector3(16.0, 3.5, 0.4), Vector3(-70.0, 1.5, 46.0))
 	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 13.6), Vector3(-62.0, 1.5, 52.8)) # Z: 46.0 to 59.6
 	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 67.4))  # Z: 64.4 to 70.4
 	# Z: 70.4 to 73.6 is the open passage for Stone Harbor Sea Stairs!
@@ -351,41 +354,38 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 
 	parent.add_child(floor_body)
 	
-	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River Z in [20, 28] and Ocean Basin X < -62, Z > 46)
+	# Visual Overworld Slotted Grass Landscape (Reveals the sunken River Z in [20, 28] and Ocean Basin X < -78 in North, X < -62 in South)
 	var g_mat = StandardMaterial3D.new()
 	g_mat.albedo_color = Color(0.20, 0.38, 0.16) # Rich medieval pasture green
 	g_mat.roughness = 0.92
 
-	_add_grass_plane_mesh(parent, g_mat, "NorthBank_Grass", Vector2(274.0, 157.0), Vector3(0.0, 0.0, -58.5))
-	_add_grass_plane_mesh(parent, g_mat, "SouthBank_Grass", Vector2(199.0, 109.0), Vector3(37.5, 0.0, 82.5))
-	_add_grass_plane_mesh(parent, g_mat, "WestHeadland_Grass", Vector2(75.0, 18.0), Vector3(-99.5, 0.0, 37.0))
+	_add_grass_plane_mesh(parent, g_mat, "NorthBank_Grass", Vector2(215.0, 157.0), Vector3(29.5, 0.0, -58.5))
+	_add_grass_plane_mesh(parent, g_mat, "SouthBank_Grass", Vector2(199.0, 182.0), Vector3(37.5, 0.0, 119.0))
 	
-	# Outer world perimeter boundary collision barriers (Expanded SW naval theater)
+	# Outer world perimeter boundary collision barriers (Expanded full 350m x 350m world)
 	var wall_h = 18.0
 	var thick = 4.0
-	_add_static_box(parent, Vector3(0, wall_h * 0.5, -half_s - thick * 0.5), Vector3(ground_size + thick * 2, wall_h, thick))
-	# South boundary: land segment on East (X from -62 to 137), Ocean segment pushed out to Z = 210 (X from -210 to -62)
-	_add_static_box(parent, Vector3(37.5, wall_h * 0.5, half_s + thick * 0.5), Vector3(199.0 + thick * 2, wall_h, thick))
-	_add_static_box(parent, Vector3(-136.0, wall_h * 0.5, 210.0 + thick * 0.5), Vector3(148.0 + thick * 2, wall_h, thick))
-	_add_static_box(parent, Vector3(half_s + thick * 0.5, wall_h * 0.5, 0), Vector3(thick, wall_h, ground_size))
-	# West boundary: North segment on Land (Z from -137 to 46), Ocean segment pushed out to X = -210 (Z from 46 to 210)
-	_add_static_box(parent, Vector3(-half_s - thick * 0.5, wall_h * 0.5, -45.5), Vector3(thick, wall_h, 183.0))
-	_add_static_box(parent, Vector3(-210.0 - thick * 0.5, wall_h * 0.5, 128.0), Vector3(thick, wall_h, 164.0))
+	# North perimeter boundary: X from -210 to 137 (width: 347m, center X = -36.5)
+	_add_static_box(parent, Vector3(-36.5, wall_h * 0.5, -half_s - thick * 0.5), Vector3(347.0 + thick * 2, wall_h, thick))
+	# South perimeter boundary: X from -210 to 137 (width: 347m, center X = -36.5 at Z = 210.0)
+	_add_static_box(parent, Vector3(-36.5, wall_h * 0.5, 210.0 + thick * 0.5), Vector3(347.0 + thick * 2, wall_h, thick))
+	# East perimeter boundary: Z from -140 to 210 (length: 350m, center Z = 35.0 at X = 137.0)
+	_add_static_box(parent, Vector3(half_s + thick * 0.5, wall_h * 0.5, 35.0), Vector3(thick, wall_h, 350.0))
+	# West perimeter boundary: Z from -140 to 210 (length: 350m, center Z = 35.0 at X = -210.0)
+	_add_static_box(parent, Vector3(-210.0 - thick * 0.5, wall_h * 0.5, 35.0), Vector3(thick, wall_h, 350.0))
 
-	# Encircling Natural Perimeter Mountain Ridges (Spaced cleanly at 20m intervals, open at SW Ocean Coast)
+	# Encircling Natural Perimeter Mountain Ridges (Spaced cleanly at 20m intervals, open to the Western Ocean)
 	for perim_idx in range(-6, 7):
 		var offset_p = float(perim_idx) * 20.0
-		# North Ridge
-		_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(offset_p, 0.0, -half_s), Vector3.ONE * 8.5)
-		# South Ridge (Only on land X > -50, leaving SW Ocean horizon open)
-		if offset_p > -50.0 and abs(offset_p) > 22.0:
-			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(offset_p, 0.0, half_s), Vector3.ONE * 8.5)
+		# North Ridge (only on dry land X >= -70, leaving northern sea bay open)
+		if offset_p >= -70.0:
+			_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(offset_p, 0.0, -half_s), Vector3.ONE * 8.5)
+		# South Ridge (along southern boundary Z = 210.0, on land X > 30)
+		if offset_p > 30.0:
+			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(offset_p, 0.0, 210.0), Vector3.ONE * 8.5)
 		# East Ridge (mountain crags, skipping river channel Z in [14, 34])
 		if offset_p < 12.0 or offset_p > 36.0:
 			_place_prop(parent, "res://assets/overworld/mountain_A.gltf", Vector3(half_s, 0.0, offset_p), Vector3.ONE * 8.5)
-		# West Ridge (only North of the river Z < 14, leaving the Ocean Coast open to the sea)
-		if offset_p < 14.0:
-			_place_prop(parent, "res://assets/overworld/mountain_B_grass_trees.gltf", Vector3(-half_s, 0.0, offset_p), Vector3.ONE * 8.5)
 
 	# 2. Central Cobblestone Sanctuary Plaza (Spacious paved courtyard X in [-13, 13], Z in [-11, 13])
 	var plaza_mesh_inst = MeshInstance3D.new()
@@ -2172,18 +2172,18 @@ func _spawn_enemy(parent: Node3D, type: int, pos: Vector3, rot_y: float = 0.0) -
 # REGION 1: PORT BLACKWATER & THE SOUTH-WEST OCEAN COAST
 # =========================================================================
 func _build_port_blackwater_region(parent: Node3D) -> void:
-	# 1. Sunken Ocean Harbor Basin & Seabed (Expanded open sea X in [-210, -62], Z in [46, 210])
-	#    Uncovered by the SouthBank_Grass cutout so true ocean water is 100% visible!
+	# 1. Sunken Ocean Harbor Basin & Seabed (Expanded open sea X in [-210, -60], full Z in [-140, 210])
+	#    Uncovered by NorthBank & SouthBank cutouts so true ocean water spans the entire western coast!
 	var seabed_inst = MeshInstance3D.new()
 	seabed_inst.name = "OceanSeabedVisual"
 	var sb_mesh = PlaneMesh.new()
-	sb_mesh.size = Vector2(148.0, 164.0)
+	sb_mesh.size = Vector2(150.0, 350.0)
 	seabed_inst.mesh = sb_mesh
 	var sb_mat = StandardMaterial3D.new()
 	sb_mat.albedo_color = Color(0.08, 0.14, 0.18) # Deep ocean sand & silt
 	sb_mat.roughness = 0.95
 	seabed_inst.material_override = sb_mat
-	seabed_inst.position = Vector3(-136.0, -1.20, 128.0)
+	seabed_inst.position = Vector3(-135.0, -1.20, 35.0)
 	parent.add_child(seabed_inst)
 
 	# Shallow Seabed Safety Collider so amphibious enemies or players wading off the beach don't fall into the void
@@ -2192,22 +2192,22 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	seabed_col_body.collision_layer = 1
 	var seabed_col = CollisionShape3D.new()
 	var seabed_box = BoxShape3D.new()
-	seabed_box.size = Vector3(148.0, 0.5, 164.0)
+	seabed_box.size = Vector3(150.0, 0.5, 350.0)
 	seabed_col.shape = seabed_box
-	seabed_col.position = Vector3(-136.0, -0.60, 128.0)
+	seabed_col.position = Vector3(-135.0, -0.60, 35.0)
 	seabed_col_body.add_child(seabed_col)
 	parent.add_child(seabed_col_body)
 
-	# 2. Open Ocean Water Surface (Y = -0.15m, X in [-210, -62], Z in [46, 210])
+	# 2. Open Ocean Water Surface (Y = -0.15m, X in [-210, -60], Z in [-140, 210] - 350m Continuous Western Sea)
 	var ocean_basin = MeshInstance3D.new()
 	ocean_basin.name = "OceanWaterSurface"
 	var oc_mesh = PlaneMesh.new()
-	oc_mesh.size = Vector2(148.0, 164.0)
+	oc_mesh.size = Vector2(150.0, 350.0)
 	ocean_basin.mesh = oc_mesh
 	var ocean_mat = ShaderMaterial.new()
 	ocean_mat.shader = load("res://shaders/river_flow.gdshader")
 	ocean_basin.material_override = ocean_mat
-	ocean_basin.position = Vector3(-136.0, -0.15, 128.0)
+	ocean_basin.position = Vector3(-135.0, -0.15, 35.0)
 	parent.add_child(ocean_basin)
 
 	# 3. Stone Harbor Quay Wall & Paved Waterfront Promenade (X in [-62, -46], Z in [46, 86])
@@ -2227,11 +2227,22 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	var north_quay = MeshInstance3D.new()
 	north_quay.name = "HarborQuayWallNorth"
 	var nq_mesh = BoxMesh.new()
-	nq_mesh.size = Vector3(32.0, 1.35, 1.2)
+	nq_mesh.size = Vector3(16.0, 1.35, 1.2)
 	north_quay.mesh = nq_mesh
 	north_quay.material_override = quay_mat
-	north_quay.position = Vector3(-77.5, -0.42, 46.2)
+	north_quay.position = Vector3(-70.0, -0.42, 46.2)
 	parent.add_child(north_quay)
+
+	# Western Coastal Sea Cliffs along X = -78.0 (Rugged stone crags overlooking the expanded ocean)
+	var cliff_zs = [-125.0, -105.0, -85.0, -65.0, -45.0, -25.0, -5.0, 15.0, 35.0]
+	for cz in cliff_zs:
+		_place_prop(parent, "res://assets/overworld/rock_formation_large.gltf", Vector3(-79.5, -0.3, cz), Vector3.ONE * 3.4, float(int(cz * 17) % 360))
+		_place_prop(parent, "res://assets/overworld/rock_single_A.gltf", Vector3(-78.2, 0.0, cz + 6.0), Vector3.ONE * 2.2, 45.0)
+
+	# Scenic Clifftop Overlook with bench, lantern, and fence (X = -76.0, Z = -10.0)
+	_place_prop(parent, "res://assets/overworld/bench.gltf", Vector3(-75.5, 0.0, -10.0), Vector3.ONE * 1.5, 90.0)
+	_place_prop(parent, "res://assets/overworld/lantern.gltf", Vector3(-75.5, 0.0, -12.5), Vector3.ONE * 1.6)
+	_place_prop(parent, "res://assets/overworld/fence_wood_straight.gltf", Vector3(-77.5, 0.0, -10.0), Vector3.ONE * 2.0, 0.0)
 
 	var prom_mat = StandardMaterial3D.new()
 	prom_mat.albedo_color = Color(0.42, 0.40, 0.37) # Weathered harbor flagstones
@@ -2645,7 +2656,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 
 	# 13. Port Blackwater & Ships Expansion: Lighthouse, Shipwreck Cove, Drydock, Tavern Terrace, Fishing Spot & Stevedores
 	var lighthouse = HarborLighthouse3DScript.new()
-	lighthouse.position = Vector3(-84.0, 0.0, 38.0)
+	lighthouse.position = Vector3(-76.0, 0.0, 38.0)
 	parent.add_child(lighthouse)
 
 	var shipwreck = ShipwreckCove3DScript.new()
@@ -2836,11 +2847,11 @@ func _build_wooden_harbor_pier(parent: Node3D, pier_name: String, x_start: float
 	pier_root.add_child(lad_north)
 
 # =========================================================================
-# REGION 2: WHISPERWOOD FOREST & SYLVA'S REST
+# REGION 2: WHISPERWOOD FOREST & SYLVA'S REST (Relocated to Sector B1 & C1)
 # =========================================================================
 func _build_whisperwood_forest_region(parent: Node3D) -> void:
-	# 1. Sylva's Rest Woodland Glade (Centered at X = -76, Z = -64)
-	#    Surrounded by a natural perimeter of tall pines (outside the glade so zero trees clip buildings!)
+	# 1. Sylva's Rest Woodland Glade in Sector B1 (Centered at X = -46.0, Z = -84.0)
+	#    Surrounded by a natural perimeter of tall pines (inside Sector B1: X in [-74, -20], Z in [-125, -50])
 	var f_trees = [
 		"res://assets/overworld/tree_pine_orange_large.gltf",
 		"res://assets/overworld/trees_A_large.gltf",
@@ -2848,12 +2859,11 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 		"res://assets/overworld/tree_pine_yellow_large.gltf"
 	]
 	var forest_coords = [
-		Vector3(-42.0, 0.0, -44.0), Vector3(-68.0, 0.0, -38.0), Vector3(-82.0, 0.0, -42.0),
-		Vector3(-94.0, 0.0, -42.0), Vector3(-106.0, 0.0, -48.0), Vector3(-98.0, 0.0, -58.0),
-		Vector3(-108.0, 0.0, -68.0), Vector3(-98.0, 0.0, -76.0), Vector3(-108.0, 0.0, -86.0),
-		Vector3(-92.0, 0.0, -90.0), Vector3(-78.0, 0.0, -92.0), Vector3(-64.0, 0.0, -88.0),
-		Vector3(-54.0, 0.0, -74.0), Vector3(-54.0, 0.0, -58.0), Vector3(-86.0, 0.0, -104.0),
-		Vector3(-102.0, 0.0, -102.0)
+		Vector3(-28.0, 0.0, -55.0), Vector3(-38.0, 0.0, -50.0), Vector3(-55.0, 0.0, -52.0),
+		Vector3(-70.0, 0.0, -60.0), Vector3(-72.0, 0.0, -78.0), Vector3(-72.0, 0.0, -96.0),
+		Vector3(-66.0, 0.0, -112.0), Vector3(-50.0, 0.0, -118.0), Vector3(-34.0, 0.0, -114.0),
+		Vector3(-24.0, 0.0, -100.0), Vector3(-22.0, 0.0, -82.0), Vector3(-30.0, 0.0, -68.0),
+		Vector3(-42.0, 0.0, -122.0), Vector3(-60.0, 0.0, -122.0), Vector3(-30.0, 0.0, -90.0)
 	]
 	for i in range(forest_coords.size()):
 		var f_pos = forest_coords[i]
@@ -2862,43 +2872,43 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 		_add_static_cyl(parent, f_pos, 1.0, 7.5)
 
 	# Forest Fireflies & Atmospheric Spores
-	AmbientFX.create_forest_fireflies(parent, Vector3(-76.0, 2.0, -64.0), 12.0)
-	AmbientFX.create_forest_fireflies(parent, Vector3(-90.0, 2.0, -78.0), 14.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-46.0, 2.0, -84.0), 12.0)
+	AmbientFX.create_forest_fireflies(parent, Vector3(-54.0, 2.0, -94.0), 14.0)
 
-	# 2. Sylva's Rest Enclave Buildings (Arranged around the Open Glade)
-	# Elder Druid's Stone Circle Shrine (West side of Glade at X = -84.0, Z = -64.0)
+	# 2. Sylva's Rest Enclave Buildings in Sector B1
+	# Elder Druid's Stone Circle Shrine (West side of B1 Glade at X = -54.0, Z = -84.0)
 	var hunt_shrine = AncientShrine3DScript.new()
 	hunt_shrine.shrine_type = AncientShrine3DScript.ShrineType.HUNT
 	hunt_shrine.shrine_name = "Ancient Waystone of the Wild Hunt"
-	hunt_shrine.position = Vector3(-84.0, 0.0, -64.0)
+	hunt_shrine.position = Vector3(-54.0, 0.0, -84.0)
 	hunt_shrine.rotation_degrees.y = 90.0
 	parent.add_child(hunt_shrine)
 
 	# Whisperwood Ranger Campfire Rest Site in the Glade center
 	var forest_campfire = CampfireRestSite3DScript.new()
 	forest_campfire.site_name = "Sylva's Rest Woodland Hearth"
-	forest_campfire.position = Vector3(-74.0, 0.0, -64.0)
+	forest_campfire.position = Vector3(-46.0, 0.0, -84.0)
 	parent.add_child(forest_campfire)
 
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -59.5), Vector3(1.5, 2.5, 1.5))
-	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-86.0, 0.0, -68.5), Vector3(1.5, 2.5, 1.5))
-	_add_static_cyl(parent, Vector3(-86.0, 0.0, -59.5), 0.9, 7.5)
-	_add_static_cyl(parent, Vector3(-86.0, 0.0, -68.5), 0.9, 7.5)
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-56.0, 0.0, -80.0), Vector3(1.5, 2.5, 1.5))
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(-56.0, 0.0, -88.0), Vector3(1.5, 2.5, 1.5))
+	_add_static_cyl(parent, Vector3(-56.0, 0.0, -80.0), 0.9, 7.5)
+	_add_static_cyl(parent, Vector3(-56.0, 0.0, -88.0), 0.9, 7.5)
 
-	# Ranger Outpost Cottage (East side of Glade at X = -64.0, Z = -60.0, facing West -90°)
-	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(-64.0, 0.0, -60.0), Vector3.ONE * 6.2, -90.0)
-	_add_static_box(parent, Vector3(-64.0, 3.5, -60.0), Vector3(6.2, 6.8, 7.0))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-64.0, 7.8, -60.0))
+	# Ranger Outpost Cottage (East side of Glade at X = -38.0, Z = -92.0, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_home_B_blue.gltf", Vector3(-38.0, 0.0, -92.0), Vector3.ONE * 6.2, 0.0)
+	_add_static_box(parent, Vector3(-38.0, 3.5, -92.0), Vector3(6.2, 6.8, 7.0))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-38.0, 7.8, -92.0))
 
-	# Woodland Sawmill (North side of Glade at X = -74.0, Z = -76.0, facing South 0°)
-	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-74.0, 0.0, -76.0), Vector3.ONE * 5.2, 0.0)
-	_add_static_box(parent, Vector3(-74.0, 4.0, -76.0), Vector3(7.0, 6.5, 7.0))
+	# Woodland Sawmill (North side of Glade at X = -56.0, Z = -100.0, facing South 0°)
+	_place_prop(parent, "res://assets/overworld/building_lumbermill_blue.gltf", Vector3(-56.0, 0.0, -100.0), Vector3.ONE * 5.2, 0.0)
+	_add_static_box(parent, Vector3(-56.0, 4.0, -100.0), Vector3(7.0, 6.5, 7.0))
 
-	# Whisperwood Herbalist & Apothecary Cottage (South edge of Glade: X = -74.0, Z = -52.0, facing North 180°)
-	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-74.0, 0.0, -52.0), Vector3.ONE * 5.6, 180.0)
-	_add_static_box(parent, Vector3(-74.0, 3.5, -52.0), Vector3(6.5, 6.5, 6.5))
-	AmbientFX.create_chimney_smoke(parent, Vector3(-74.0, 7.2, -52.0))
-	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-70.5, 0.0, -55.5), Vector3.ONE * 2.0, 45.0)
+	# Whisperwood Herbalist & Apothecary Cottage (South edge of Glade: X = -36.0, Z = -74.0, facing North 180°)
+	_place_prop(parent, "res://assets/overworld/building_home_A_green.gltf", Vector3(-36.0, 0.0, -74.0), Vector3.ONE * 5.6, 180.0)
+	_add_static_box(parent, Vector3(-36.0, 3.5, -74.0), Vector3(6.5, 6.5, 6.5))
+	AmbientFX.create_chimney_smoke(parent, Vector3(-36.0, 7.2, -74.0))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-39.5, 0.0, -76.5), Vector3.ONE * 2.0, 45.0)
 
 	# NPC: Sylas the Apprentice Herbalist
 	var sylas = TownNPCScript.new()
@@ -2910,10 +2920,10 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	sylas.model_scale = Vector3(0.85, 0.85, 0.85)
 	sylas.model_rotation_y = 180.0
 	sylas.dialogue_text = "The forest canopy whispers ancient secrets to those who listen. I brew restorative teas from golden chanterelles and pine needles. May your steps through Whisperwood be peaceful!"
-	sylas.position = Vector3(-74.0, 0.0, -56.5)
+	sylas.position = Vector3(-42.0, 0.0, -76.0)
 	parent.add_child(sylas)
 
-	# 3. NPCs
+	# 3. NPCs in Sector B1
 	var thorne = TownNPCScript.new()
 	thorne.npc_id = "druid_thorne"
 	thorne.npc_name = "Elder Thorne"
@@ -2923,7 +2933,7 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	thorne.model_scale = Vector3(0.85, 0.85, 0.85)
 	thorne.model_rotation_y = 90.0
 	thorne.dialogue_text = "Peace be upon your spirit, traveler. Whisperwood Forest suffers under bandit outlaws who felled the sacred grove and severed the Living Heartwood. Drive back the highwaymen, return the Heartwood to the shrine, and receive nature's eternal rejuvenation!"
-	thorne.position = Vector3(-80.0, 0.0, -64.0)
+	thorne.position = Vector3(-50.0, 0.0, -84.0)
 	parent.add_child(thorne)
 
 	var elora = TownNPCScript.new()
@@ -2935,10 +2945,10 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	elora.model_scale = Vector3(0.85, 0.85, 0.85)
 	elora.model_rotation_y = -90.0
 	elora.dialogue_text = "Tread lightly. Bandit outlaws and hungry timber wolves stalk the shadows of the pines. Clear the woods and our scouts will ensure your safe passage across the realm!"
-	elora.position = Vector3(-68.5, 0.0, -58.5)
+	elora.position = Vector3(-54.0, 0.0, -74.0)
 	parent.add_child(elora)
 
-	# Interactive World Restoration Station: Druidic Sun Altar
+	# Interactive World Restoration Station: Druidic Sun Altar (Sector B1: X = -48.0, Z = -92.0)
 	var altar_station = WorldRepairStationScript.new()
 	altar_station.repair_id = "druid_altar"
 	altar_station.station_name = "Whisperwood Sun Altar"
@@ -2946,9 +2956,9 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	altar_station.target_story_act = 3
 	altar_station.gold_reward = 150
 	altar_station.echo_reward = 50
-	altar_station.position = Vector3(-76.0, 0.0, -68.0)
-	var ruined_altar = _place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-76.0, 0.0, -68.0), Vector3.ONE * 2.0, 0.0)
-	var restored_altar = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-76.0, 0.0, -68.0), Vector3.ONE * 2.4, 0.0)
+	altar_station.position = Vector3(-48.0, 0.0, -92.0)
+	var ruined_altar = _place_prop(parent, "res://assets/overworld/shrine.gltf", Vector3(-48.0, 0.0, -92.0), Vector3.ONE * 2.0, 0.0)
+	var restored_altar = _place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(-48.0, 0.0, -92.0), Vector3.ONE * 2.4, 0.0)
 	var a_light = OmniLight3D.new()
 	a_light.light_color = Color(0.2, 1.0, 0.4)
 	a_light.light_energy = 2.2
@@ -2959,18 +2969,39 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	altar_station.restored_node = restored_altar
 	parent.add_child(altar_station)
 
-	# 4. Enemies, Wildlife & Quest Relics
-	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-90.0, 0.0, -52.0), 60.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-96.0, 0.0, -66.0), -30.0)
-	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-86.0, 0.0, -82.0), 140.0)
+	# 4. Enemies, Wildlife & Quest Relics in Sector B1
+	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-64.0, 0.0, -98.0), 60.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-36.0, 0.0, -106.0), -30.0)
+	_spawn_enemy(parent, EnemyAI.EnemyType.BANDIT, Vector3(-50.0, 0.0, -108.0), 140.0)
 
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-94.0, 0.0, -80.0), 30.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-102.0, 0.0, -88.0), -60.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(-74.0, 0.0, -48.0), 90.0)
-	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(-78.0, 0.0, -51.0), -45.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-62.0, 0.0, -108.0), 30.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.WOLF, Vector3(-48.0, 0.0, -114.0), -60.0)
 
-	_spawn_material_node(parent, "living_heartwood", "The Living Heartwood", "🌱", "res://assets/overworld/resource_lumber.gltf", Vector3(-88.0, 0.0, -74.0), Color(0.25, 0.88, 0.35), 80, 60, Vector3(2.6, 2.6, 2.6))
-	_spawn_material_node(parent, "heartwood_timber", "Ancient Ironwood", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-92.0, 0.0, -56.0), Color(0.8, 0.5, 0.2), 30, 20, Vector3(2.2, 2.2, 2.2))
+	_spawn_material_node(parent, "living_heartwood", "The Living Heartwood", "🌱", "res://assets/overworld/resource_lumber.gltf", Vector3(-34.0, 0.0, -84.0), Color(0.25, 0.88, 0.35), 80, 60, Vector3(2.6, 2.6, 2.6))
+	_spawn_material_node(parent, "heartwood_timber", "Ancient Ironwood", "🪵", "res://assets/overworld/resource_lumber.gltf", Vector3(-58.0, 0.0, -90.0), Color(0.8, 0.5, 0.2), 30, 20, Vector3(2.2, 2.2, 2.2))
+
+	# 5. Sector C1 Sacred Grove & Sanctuary Wildlife (North of Sanctuary, X in [15, 45], Z in [-120, -65])
+	# Sacred Standing Monolith Circle
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(25.0, 0.0, -84.0), Vector3(1.5, 2.5, 1.5))
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(31.0, 0.0, -84.0), Vector3(1.5, 2.5, 1.5))
+	_place_prop(parent, "res://assets/overworld/pillar.gltf", Vector3(28.0, 0.0, -90.0), Vector3(1.5, 2.5, 1.5))
+	_place_prop(parent, "res://assets/overworld/shrine_candles.gltf", Vector3(28.0, 0.0, -86.0), Vector3.ONE * 2.0, 0.0)
+	_add_static_cyl(parent, Vector3(25.0, 0.0, -84.0), 0.9, 7.5)
+	_add_static_cyl(parent, Vector3(31.0, 0.0, -84.0), 0.9, 7.5)
+	_add_static_cyl(parent, Vector3(28.0, 0.0, -90.0), 0.9, 7.5)
+
+	# Sacred Grove Stags and Deer grazing peacefully
+	_spawn_animal(parent, AnimalAI.AnimalType.STAG, Vector3(24.0, 0.0, -80.0), 90.0)
+	_spawn_animal(parent, AnimalAI.AnimalType.DEER, Vector3(34.0, 0.0, -86.0), -45.0)
+
+	# Sacred Grove Ancient Pines in C1
+	var c1_trees = [
+		Vector3(18.0, 0.0, -72.0), Vector3(38.0, 0.0, -76.0),
+		Vector3(42.0, 0.0, -92.0), Vector3(20.0, 0.0, -96.0)
+	]
+	for ct in c1_trees:
+		_place_prop(parent, "res://assets/overworld/tree_pine_yellow_large.gltf", ct, Vector3.ONE * 2.2, 45.0)
+		_add_static_cyl(parent, ct, 0.9, 7.0)
 
 # =========================================================================
 # REGION 3: KHAR-DRAKKEN CRAGS & ORC BASTION
@@ -3152,7 +3183,7 @@ func _build_crossroads_and_highroads(parent: Node3D) -> void:
 	sign_wood.model_path = "res://assets/overworld/post_lantern.gltf"
 	sign_wood.model_scale = Vector3.ONE * 1.2
 	sign_wood.dialogue_text = "Whisperwood Forest Waystone (Sylva's Rest).\nFast Travel to other unlocked settlements in the realm."
-	sign_wood.position = Vector3(-66.0, 0.0, -52.0)
+	sign_wood.position = Vector3(-42.0, 0.0, -52.0)
 	parent.add_child(sign_wood)
 
 	# 4. Khar-Drakken Waystone Signpost
@@ -3440,6 +3471,13 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 		Vector3(-26.0, 0.0, 66.0)
 	]
 	parent.add_child(crimson_army)
+
+	# 4. Sector C4 Ground Troop Battle: King's Royal Army (Player-Controlled) vs Crimson Legion (AI-Controlled)
+	# Full medieval battlefield in Sector C4 (Plains of the Crimson Front: X in [0, 75], Z in [100, 210])
+	var battleground = BattlefieldController3DScript.new()
+	battleground.name = "SectorC4_GroundBattlefield"
+	battleground.position = Vector3(35.0, 0.0, 155.0)
+	parent.add_child(battleground)
 
 # =========================================================================
 # REGION 6: GREENHOLLOW WOODLAND VILLAGE & MOVING CARAVAN WAGONS
