@@ -9,3 +9,5 @@ temp_git_assets/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+.vercel/
