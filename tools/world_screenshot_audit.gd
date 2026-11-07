@@ -42,6 +42,12 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 			"fov": 52.0
 		},
 		{
+			"name": "01B_pip_tommy_captain_vane",
+			"cam_pos": Vector3(1.2, 2.2, 3.5),
+			"look_at": Vector3(-1.5, 0.8, 9.0),
+			"fov": 50.0
+		},
+		{
 			"name": "02_cathedral_of_light_cloister",
 			"cam_pos": Vector3(8.0, 5.0, 6.0),
 			"look_at": Vector3(18.5, 3.0, -1.0),

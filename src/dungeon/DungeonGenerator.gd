@@ -318,44 +318,36 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	floor_body.collision_layer = 1
 	floor_body.collision_mask = 0
 
-	var add_f_col = func(b_size: Vector3, b_pos: Vector3):
-		var cs = CollisionShape3D.new()
-		var bx = BoxShape3D.new()
-		bx.size = b_size
-		cs.shape = bx
-		cs.position = b_pos
-		floor_body.add_child(cs)
-
 	# North Bank Floor (X: -137 to 137, Z: -137 to 20.0)
-	add_f_col.call(Vector3(274.0, 1.2, 157.0), Vector3(0.0, -0.6, -58.5))
+	_add_floor_col_box(floor_body, Vector3(274.0, 1.2, 157.0), Vector3(0.0, -0.6, -58.5))
 	# South-Central & East Landmass Floor (X: -62.0 to 137.0, Z: 28.0 to 137.0)
-	add_f_col.call(Vector3(199.0, 1.2, 109.0), Vector3(37.5, -0.6, 82.5))
+	_add_floor_col_box(floor_body, Vector3(199.0, 1.2, 109.0), Vector3(37.5, -0.6, 82.5))
 	# South-West Coastal Headland Floor (X: -137.0 to -62.0, Z: 28.0 to 46.0)
-	add_f_col.call(Vector3(75.0, 1.2, 18.0), Vector3(-99.5, -0.6, 37.0))
+	_add_floor_col_box(floor_body, Vector3(75.0, 1.2, 18.0), Vector3(-99.5, -0.6, 37.0))
 	# Sunken Ocean Harbor Seabed Floor (Expanded open sea X: -210.0 to -62.0, Z: 46.0 to 210.0 at Y = -1.20m)
-	add_f_col.call(Vector3(148.0, 1.2, 164.0), Vector3(-136.0, -1.80, 128.0))
+	_add_floor_col_box(floor_body, Vector3(148.0, 1.2, 164.0), Vector3(-136.0, -1.80, 128.0))
 	# Sunken Riverbed Floor (X: -137 to 137, Z: 20.0 to 28.0 at Y = -0.50m)
-	add_f_col.call(Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
+	_add_floor_col_box(floor_body, Vector3(274.0, 1.2, 8.0), Vector3(0.0, -1.10, 24.0))
 
 	# Impassable Riverbank Collision Barriers (Prevents walking on water; players must cross via the Bridges)
 	# Openings at Western Wooden Bridge (X in [-19.8, -16.2]) and Central Stone Bridge (X in [-2.1, 2.1])
-	add_f_col.call(Vector3(117.2, 3.5, 0.4), Vector3(-78.4, 1.5, 20.0))
-	add_f_col.call(Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 20.0))
-	add_f_col.call(Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 20.0))
-	add_f_col.call(Vector3(117.2, 3.5, 0.4), Vector3(-78.4, 1.5, 28.0))
-	add_f_col.call(Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 28.0))
-	add_f_col.call(Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 28.0))
+	_add_floor_col_box(floor_body, Vector3(117.2, 3.5, 0.4), Vector3(-78.4, 1.5, 20.0))
+	_add_floor_col_box(floor_body, Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 20.0))
+	_add_floor_col_box(floor_body, Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 20.0))
+	_add_floor_col_box(floor_body, Vector3(117.2, 3.5, 0.4), Vector3(-78.4, 1.5, 28.0))
+	_add_floor_col_box(floor_body, Vector3(14.1, 3.5, 0.4), Vector3(-9.15, 1.5, 28.0))
+	_add_floor_col_box(floor_body, Vector3(134.9, 3.5, 0.4), Vector3(69.55, 1.5, 28.0))
 
 	# Ocean Quay Shoreline Collision Barriers (along X = -62.0 and Z = 46.0)
 	# Pier 1 at Z=62 (Z in [59.6, 64.4]), Pier 2 at Z=82 (Z in [79.6, 84.4]), Harbor Sea Stairs at Z=72 (Z in [70.4, 73.6]), and Golden Beach Cove (Z in [86.5, 114.0]) are fully open for water egress!
-	add_f_col.call(Vector3(75.0, 3.5, 0.4), Vector3(-99.5, 1.5, 46.0))
-	add_f_col.call(Vector3(0.4, 3.5, 13.6), Vector3(-62.0, 1.5, 52.8)) # Z: 46.0 to 59.6
-	add_f_col.call(Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 67.4))  # Z: 64.4 to 70.4
+	_add_floor_col_box(floor_body, Vector3(75.0, 3.5, 0.4), Vector3(-99.5, 1.5, 46.0))
+	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 13.6), Vector3(-62.0, 1.5, 52.8)) # Z: 46.0 to 59.6
+	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 67.4))  # Z: 64.4 to 70.4
 	# Z: 70.4 to 73.6 is the open passage for Stone Harbor Sea Stairs!
-	add_f_col.call(Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 76.6))  # Z: 73.6 to 79.6
-	add_f_col.call(Vector3(0.4, 3.5, 2.1), Vector3(-62.0, 1.5, 85.45)) # Z: 84.4 to 86.5
+	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 6.0), Vector3(-62.0, 1.5, 76.6))  # Z: 73.6 to 79.6
+	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 2.1), Vector3(-62.0, 1.5, 85.45)) # Z: 84.4 to 86.5
 	# Z: 86.5 to 114.0 is Golden Beach Cove: completely OPEN for swimming and walking onto the sand!
-	add_f_col.call(Vector3(0.4, 3.5, 23.0), Vector3(-62.0, 1.5, 125.5)) # Z: 114.0 to 137.0
+	_add_floor_col_box(floor_body, Vector3(0.4, 3.5, 23.0), Vector3(-62.0, 1.5, 125.5)) # Z: 114.0 to 137.0
 
 	parent.add_child(floor_body)
 	
@@ -364,19 +356,9 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	g_mat.albedo_color = Color(0.20, 0.38, 0.16) # Rich medieval pasture green
 	g_mat.roughness = 0.92
 
-	var add_grass_plane = func(p_name: String, p_size: Vector2, p_pos: Vector3):
-		var g_mesh_inst = MeshInstance3D.new()
-		g_mesh_inst.name = p_name
-		var pm = PlaneMesh.new()
-		pm.size = p_size
-		g_mesh_inst.mesh = pm
-		g_mesh_inst.material_override = g_mat
-		g_mesh_inst.position = p_pos
-		parent.add_child(g_mesh_inst)
-
-	add_grass_plane.call("NorthBank_Grass", Vector2(274.0, 157.0), Vector3(0.0, 0.0, -58.5))
-	add_grass_plane.call("SouthBank_Grass", Vector2(199.0, 109.0), Vector3(37.5, 0.0, 82.5))
-	add_grass_plane.call("WestHeadland_Grass", Vector2(75.0, 18.0), Vector3(-99.5, 0.0, 37.0))
+	_add_grass_plane_mesh(parent, g_mat, "NorthBank_Grass", Vector2(274.0, 157.0), Vector3(0.0, 0.0, -58.5))
+	_add_grass_plane_mesh(parent, g_mat, "SouthBank_Grass", Vector2(199.0, 109.0), Vector3(37.5, 0.0, 82.5))
+	_add_grass_plane_mesh(parent, g_mat, "WestHeadland_Grass", Vector2(75.0, 18.0), Vector3(-99.5, 0.0, 37.0))
 	
 	# Outer world perimeter boundary collision barriers (Expanded SW naval theater)
 	var wall_h = 18.0
@@ -953,7 +935,7 @@ func _build_town_population(parent: Node3D) -> void:
 	pip.citizen_name = "Pip"
 	pip.citizen_title = "Town Youth"
 	pip.role = TownspersonNPCScript.NPCRole.CHILD
-	pip.model_path = "res://assets/characters/adventurers/Barbarian.glb"
+	pip.model_path = "res://assets/characters/adventurers/Rogue.glb"
 	pip.model_scale = Vector3(0.58, 0.58, 0.58)
 	pip.icon = "🏃"
 	pip.speech_barks = ["Tag! You're it!", "Look at the champion's sword!", "Bet you can't catch me!"]
@@ -2060,6 +2042,24 @@ func _apply_flag_shader(node: Node3D, path: String = "") -> void:
 			var mi = child as MeshInstance3D
 			if mi:
 				mi.material_override = flag_mat
+
+func _add_floor_col_box(floor_body: StaticBody3D, b_size: Vector3, b_pos: Vector3) -> void:
+	var cs = CollisionShape3D.new()
+	var bx = BoxShape3D.new()
+	bx.size = b_size
+	cs.shape = bx
+	cs.position = b_pos
+	floor_body.add_child(cs)
+
+func _add_grass_plane_mesh(parent: Node3D, g_mat: StandardMaterial3D, p_name: String, p_size: Vector2, p_pos: Vector3) -> void:
+	var g_mesh_inst = MeshInstance3D.new()
+	g_mesh_inst.name = p_name
+	var pm = PlaneMesh.new()
+	pm.size = p_size
+	g_mesh_inst.mesh = pm
+	g_mesh_inst.material_override = g_mat
+	g_mesh_inst.position = p_pos
+	parent.add_child(g_mesh_inst)
 
 func _add_static_box(parent: Node3D, pos: Vector3, sz: Vector3) -> StaticBody3D:
 	var body = StaticBody3D.new()

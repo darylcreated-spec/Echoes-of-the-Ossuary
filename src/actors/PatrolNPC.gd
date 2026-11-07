@@ -37,10 +37,10 @@ func _build_visuals() -> void:
 	_anim_player = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_play_anim("Walking_A", true)
 	
-	# Floating Name Tag & Prompt
+	# Floating Name Tag (Clean single line, distance culled)
 	_label = Label3D.new()
 	_label.position.y = 2.2
-	AssetLoader.style_world_label3d(_label, "🛡️ " + npc_name + "\n[E] Speak", 38, Color(0.85, 0.94, 1.0))
+	AssetLoader.style_world_label3d(_label, "🛡️ " + npc_name, 26, Color(0.85, 0.94, 1.0))
 	add_child(_label)
 
 func _build_interaction() -> void:

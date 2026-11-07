@@ -156,6 +156,18 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 							var p = c.get_parent()
 							if p and ("handslot" in p.name.to_lower() or "hand" in p.name.to_lower()):
 								c.visible = false
+					if "assets/weapons" in candidate or "weapon" in candidate:
+						for mi in instance.find_children("*", "MeshInstance3D", true, false):
+							var mat = mi.get_active_material(0)
+							if mat is StandardMaterial3D and mat.albedo_texture == null:
+								var mname = mat.resource_name.to_lower()
+								if "knight" in mname or "shield" in mname:
+									mat.albedo_texture = load("res://assets/characters/adventurers/Knight_knight_texture.png")
+								elif "barbarian" in mname:
+									mat.albedo_texture = load("res://assets/characters/adventurers/Barbarian_barbarian_texture.png")
+								else:
+									mat.albedo_texture = load("res://assets/characters/adventurers/adventurer_texture.png")
+								mat.roughness = 0.8
 					if "assets/ships" in candidate or "ship" in candidate:
 						var colormap_tex = get_ship_colormap_texture()
 						if colormap_tex:
@@ -169,6 +181,24 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 									if mat.albedo_texture == null:
 										mat.albedo_texture = colormap_tex
 					return instance
+
+	# Robust humanoid fallback before crude procedural boxes
+	if fallback_type == "character":
+		for emergency_path in [
+			"res://assets/characters/adventurers/Rogue.glb",
+			"res://assets/characters/adventurers/Knight.glb",
+			"res://assets/characters/adventurers/Mage.glb"
+		]:
+			if ResourceLoader.exists(emergency_path) or FileAccess.file_exists(emergency_path):
+				var em_res = ResourceLoader.load(emergency_path)
+				if em_res is PackedScene:
+					var em_inst = em_res.instantiate()
+					if em_inst is Node3D:
+						for c in em_inst.find_children("*", "MeshInstance3D", true, false):
+							var p = c.get_parent()
+							if p and ("handslot" in p.name.to_lower() or "hand" in p.name.to_lower()):
+								c.visible = false
+						return em_inst
 
 	# Procedural Fallback Generator
 	match fallback_type:
@@ -720,7 +750,7 @@ func get_medieval_font() -> Font:
 			_medieval_font = load("res://assets/ui/MedievalSharp.ttf") as Font
 	return _medieval_font
 
-func style_world_label3d(label: Label3D, text: String = "", font_size: int = 36, primary_color: Color = Color(1.0, 0.94, 0.72)) -> void:
+func style_world_label3d(label: Label3D, text: String = "", font_size: int = 26, primary_color: Color = Color(1.0, 0.94, 0.72)) -> void:
 	if not label:
 		return
 	if text != "":
@@ -729,13 +759,16 @@ func style_world_label3d(label: Label3D, text: String = "", font_size: int = 36,
 	if f:
 		label.font = f
 	label.font_size = font_size
-	label.outline_size = 10
+	label.outline_size = 6
 	label.outline_modulate = Color(0.04, 0.04, 0.06, 0.95)
 	label.modulate = primary_color
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.double_sided = true
-	label.render_priority = 3
-	label.outline_render_priority = 2
+	label.render_priority = 0
+	label.outline_render_priority = 0
+	label.visibility_range_end = 22.0
+	label.visibility_range_end_margin = 4.0
+	label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 

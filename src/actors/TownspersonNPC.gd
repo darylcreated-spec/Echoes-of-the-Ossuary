@@ -49,6 +49,10 @@ func _build_visuals() -> void:
 		model_scale = Vector3(0.58, 0.58, 0.58)
 	_model_root = AssetLoader.load_or_generate_model(model_path, "character", citizen_name)
 	_model_root.scale = model_scale
+	if role == NPCRole.CHILD:
+		var cape = _model_root.find_child("Rogue_Cape", true, false)
+		if cape:
+			cape.visible = false
 	add_child(_model_root)
 
 	_anim_player = _model_root.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -66,12 +70,17 @@ func _build_visuals() -> void:
 func _build_speech_bark_ui() -> void:
 	_bark_label = Label3D.new()
 	_bark_label.position = Vector3(0.0, 2.35 if role != NPCRole.CHILD else 1.65, 0.0)
-	_bark_label.font_size = 28
-	_bark_label.outline_size = 8
+	_bark_label.font_size = 24
+	_bark_label.outline_size = 6
 	_bark_label.outline_modulate = Color(0.05, 0.05, 0.08, 0.95)
 	_bark_label.modulate = Color(1.0, 0.94, 0.75, 0.0) # Start invisible
 	_bark_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_bark_label.double_sided = true
+	_bark_label.visibility_range_end = 16.0
+	_bark_label.visibility_range_end_margin = 3.0
+	_bark_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	_bark_label.render_priority = 0
+	_bark_label.outline_render_priority = 0
 	_bark_label.text = ""
 	add_child(_bark_label)
 

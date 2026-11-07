@@ -136,10 +136,19 @@ func _build_role_effects() -> void:
 		AssetLoader.attach_weapon_socket(_model, xbow, "handslot.r")
 
 	elif npc_id in ["guard", "commander", "siege_captain", "harbormaster"]:
-		var sword = AssetLoader.load_or_generate_model("res://assets/weapons/sword_1handed.gltf", "weapon", "sword")
-		AssetLoader.attach_weapon_socket(_model, sword, "handslot.r")
-		var shield = AssetLoader.load_or_generate_model("res://assets/weapons/shield_square_color.gltf", "weapon", "shield")
-		AssetLoader.attach_weapon_socket(_model, shield, "handslot.l")
+		var showed_builtin = false
+		if _model:
+			var s_sword = _model.find_child("1H_Sword", true, false)
+			var s_shield = _model.find_child("Badge_Shield", true, false)
+			if s_sword and s_shield:
+				s_sword.visible = true
+				s_shield.visible = true
+				showed_builtin = true
+		if not showed_builtin:
+			var sword = AssetLoader.load_or_generate_model("res://assets/weapons/sword_1handed.gltf", "weapon", "sword")
+			AssetLoader.attach_weapon_socket(_model, sword, "handslot.r")
+			var shield = AssetLoader.load_or_generate_model("res://assets/weapons/banner_shield_blue.gltf.glb", "weapon", "shield")
+			AssetLoader.attach_weapon_socket(_model, shield, "handslot.l")
 
 	elif npc_id == "woodcutter_hal":
 		var axe = AssetLoader.load_or_generate_model("res://assets/weapons/axe_2handed.gltf", "weapon", "axe")
@@ -165,10 +174,13 @@ func _build_visuals() -> void:
 	if _anim_player:
 		_play_default_idle()
 
-	# Floating Name Tag & Prompt (Always created for all NPCs)
+	# Floating Name Tag (Clean single line, proximity culled to prevent HUD clutter)
 	_label = Label3D.new()
 	_label.position.y = 2.45
-	AssetLoader.style_world_label3d(_label, icon + " " + npc_name + "\n[E] Speak", 38, Color(1.0, 0.92, 0.65))
+	AssetLoader.style_world_label3d(_label, icon + " " + npc_name, 26, Color(1.0, 0.92, 0.65))
+	_label.visibility_range_end = 20.0
+	_label.visibility_range_end_margin = 4.0
+	_label.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	add_child(_label)
 
 func _play_default_idle() -> void:
