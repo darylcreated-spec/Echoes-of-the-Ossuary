@@ -185,8 +185,8 @@ func _build_trebuchet_assembly() -> void:
 
 	# 8. Animated Siege Engineer Crew operating the Winch
 	var crew_configs = [
-		{"pos": Vector3(-2.5, 0.0, 2.8), "rot": 90.0, "model": "res://assets/characters/adventurers/Barbarian.glb", "scale": Vector3.ONE * 0.48},
-		{"pos": Vector3(2.5, 0.0, 2.8), "rot": -90.0, "model": "res://assets/characters/adventurers/Knight.glb", "scale": Vector3.ONE * 0.52}
+		{"pos": Vector3(-2.6, 0.0, 2.8), "rot": 90.0, "model": "res://assets/characters/adventurers/Barbarian.glb", "scale": Vector3.ONE * 0.85},
+		{"pos": Vector3(2.6, 0.0, 2.8), "rot": -90.0, "model": "res://assets/characters/adventurers/Knight.glb", "scale": Vector3.ONE * 0.85}
 	]
 	for cc in crew_configs:
 		var eng = AssetLoader.load_or_generate_model(cc["model"], "character", "Engineer")

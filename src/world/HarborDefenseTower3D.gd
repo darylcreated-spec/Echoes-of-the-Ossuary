@@ -47,7 +47,7 @@ func _build_visuals() -> void:
 	# 3. Armed Battlement Marine Sentry
 	var sentry = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "CoastalGunner")
 	if sentry:
-		sentry.scale = Vector3.ONE * 0.54
+		sentry.scale = Vector3.ONE * 0.85
 		sentry.position = Vector3(1.1, 8.8, 0.4)
 		sentry.rotation_degrees.y = -90.0
 		add_child(sentry)

@@ -16,7 +16,7 @@ enum NPCRole {
 @export var citizen_title: String = "Oakhaven Resident"
 @export var role: NPCRole = NPCRole.CITIZEN
 @export var model_path: String = "res://assets/characters/adventurers/Rogue.glb"
-@export var model_scale: Vector3 = Vector3(0.52, 0.52, 0.52)
+@export var model_scale: Vector3 = Vector3(0.85, 0.85, 0.85)
 @export var speech_barks: Array = []
 @export var waypoints: Array = []
 @export var move_speed: float = 2.2
@@ -45,6 +45,8 @@ func _ready() -> void:
 		_setup_default_barks()
 
 func _build_visuals() -> void:
+	if role == NPCRole.CHILD and (model_scale == Vector3(0.85, 0.85, 0.85) or model_scale == Vector3(0.52, 0.52, 0.52) or model_scale == Vector3(0.35, 0.35, 0.35)):
+		model_scale = Vector3(0.58, 0.58, 0.58)
 	_model_root = AssetLoader.load_or_generate_model(model_path, "character", citizen_name)
 	_model_root.scale = model_scale
 	add_child(_model_root)
@@ -63,7 +65,7 @@ func _build_visuals() -> void:
 
 func _build_speech_bark_ui() -> void:
 	_bark_label = Label3D.new()
-	_bark_label.position = Vector3(0.0, 2.25 if role != NPCRole.CHILD else 1.6, 0.0)
+	_bark_label.position = Vector3(0.0, 2.35 if role != NPCRole.CHILD else 1.65, 0.0)
 	_bark_label.font_size = 28
 	_bark_label.outline_size = 8
 	_bark_label.outline_modulate = Color(0.05, 0.05, 0.08, 0.95)

@@ -7,7 +7,7 @@ class_name TownNPC
 @export var icon: String = "⚒️"
 @export_multiline var dialogue_text: String = "Hail, warrior! The forge fires burn night and day. Bring me Soul Echoes from the Ossuary depths and I shall re-temper your blade, fortify your armor, and sharpen your dash reflexes!"
 @export var model_path: String = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-@export var model_scale: Vector3 = Vector3(0.55, 0.55, 0.55)
+@export var model_scale: Vector3 = Vector3(0.85, 0.85, 0.85)
 @export var model_rotation_y: float = 0.0
 
 var _model: Node3D = null
@@ -120,7 +120,7 @@ func _build_role_effects() -> void:
 		c_mesh.height = 0.16
 		c_mesh.material = gold_mat
 		crown.mesh = c_mesh
-		crown.position = Vector3(0.0, 1.92, 0.0)
+		crown.position = Vector3(0.0, 2.15, 0.0)
 		add_child(crown)
 
 		if "king" in npc_id:
@@ -167,7 +167,7 @@ func _build_visuals() -> void:
 
 	# Floating Name Tag & Prompt (Always created for all NPCs)
 	_label = Label3D.new()
-	_label.position.y = 2.2
+	_label.position.y = 2.45
 	AssetLoader.style_world_label3d(_label, icon + " " + npc_name + "\n[E] Speak", 38, Color(1.0, 0.92, 0.65))
 	add_child(_label)
 

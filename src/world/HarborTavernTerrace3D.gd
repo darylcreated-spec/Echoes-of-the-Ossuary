@@ -135,6 +135,7 @@ func _spawn_shantyman(pos: Vector3) -> void:
 		var scene = load(char_path)
 		if scene:
 			_shantyman_model = scene.instantiate()
+			_shantyman_model.scale = Vector3(0.85, 0.85, 0.85)
 			_shantyman_model.position = pos
 			_shantyman_model.rotation_degrees.y = -45.0
 			add_child(_shantyman_model)

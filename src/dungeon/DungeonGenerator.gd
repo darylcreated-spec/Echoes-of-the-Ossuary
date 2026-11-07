@@ -483,7 +483,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	torval.npc_title = "Forge Master"
 	torval.icon = "⚒️"
 	torval.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	torval.model_scale = Vector3(0.52, 0.52, 0.52)
+	torval.model_scale = Vector3(0.85, 0.85, 0.85)
 	torval.model_rotation_y = 90.0
 	torval.dialogue_text = "Hail, warrior! The forge fires blaze with eternal embers. Deliver unto me the Soul Echoes reaped from the Ossuary depths, and I shall temper your weapons, bolster your armor, and sharpen your dash reflexes!"
 	torval.position = Vector3(-12.2, 0.0, -1.0)
@@ -526,7 +526,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	alyssa.npc_title = "Sanctuary Priestess"
 	alyssa.icon = "✨"
 	alyssa.model_path = "res://assets/characters/adventurers/Mage.glb"
-	alyssa.model_scale = Vector3(0.53, 0.53, 0.53)
+	alyssa.model_scale = Vector3(0.85, 0.85, 0.85)
 	alyssa.model_rotation_y = -90.0
 	alyssa.dialogue_text = "May the Sacred Light guide your steps, champion. The dead stir restlessly in the Catacombs below. Inquire upon our Sanctuary Bounties—purge the wicked hordes to claim divine favour and rich reward!"
 	alyssa.position = Vector3(12.2, 0.0, -1.0)
@@ -554,7 +554,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	caelen.npc_title = "Royal Falconer"
 	caelen.icon = "🦅"
 	caelen.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
-	caelen.model_scale = Vector3(0.52, 0.52, 0.52)
+	caelen.model_scale = Vector3(0.85, 0.85, 0.85)
 	caelen.model_rotation_y = 180.0
 	caelen.dialogue_text = "My hunting falcons scout the skies from the High Crags to the Weeping Fen. Strange darkness stirs within the catacombs below. Tread with vigilant eyes, warrior!"
 	caelen.position = Vector3(8.5, 0.0, -4.8)
@@ -574,7 +574,7 @@ func _build_overworld_sanctuary(parent: Node3D) -> void:
 	vane.npc_title = "Gate Sentinel"
 	vane.icon = "🛡️"
 	vane.model_path = "res://assets/characters/adventurers/Knight.glb"
-	vane.model_scale = Vector3(0.55, 0.55, 0.55)
+	vane.model_scale = Vector3(0.88, 0.88, 0.88)
 	vane.model_rotation_y = 160.0
 	vane.dialogue_text = "Halt, warrior! You stand before the threshold of the Ossuary Catacombs. Beneath the north crypt lies the descent sigil. Step upon the glowing seal to plunge into the underworld. Beware the Bone Titan's wrath on the final floor!"
 	vane.position = Vector3(-2.8, 0.0, 11.8)
@@ -735,7 +735,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	barkeep.npc_title = "Tavern Keeper"
 	barkeep.icon = "🍺"
 	barkeep.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	barkeep.model_scale = Vector3(0.52, 0.52, 0.52)
+	barkeep.model_scale = Vector3(0.85, 0.85, 0.85)
 	barkeep.model_rotation_y = 0.0
 	barkeep.dialogue_text = "Rest your weary bones, adventurer! A tankard of spiced cider cures all curses. Mind the talk of shadows in the Blackwood Forest... folks say the trees have eyes!"
 	barkeep.position = Vector3(-24.2, 0.0, 13.2)
@@ -748,7 +748,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	lyra.npc_title = "Realm Troubadour"
 	lyra.icon = "🎵"
 	lyra.model_path = "res://assets/characters/adventurers/Mage.glb"
-	lyra.model_scale = Vector3(0.52, 0.52, 0.52)
+	lyra.model_scale = Vector3(0.85, 0.85, 0.85)
 	lyra.model_rotation_y = -90.0
 	lyra.dialogue_text = "*Strums a lively lute ballad*\n'Of ossuary depths and heroes bold, who braved the dark and seized the gold!' Greetings, champion! Would you care to hear a song of the ancient high kings?"
 	lyra.position = Vector3(-20.5, 0.0, 13.0)
@@ -781,7 +781,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	merchant.npc_title = "Traveling Merchant"
 	merchant.icon = "💰"
 	merchant.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	merchant.model_scale = Vector3(0.53, 0.53, 0.53)
+	merchant.model_scale = Vector3(0.85, 0.85, 0.85)
 	merchant.model_rotation_y = 0.0
 	merchant.dialogue_text = "Finest goods from across the realm! Weapons tempered in dwarven fire and draughts brewed by eastern alchemists. Bring me ancient relics from the catacombs and I will pay a handsome fortune!"
 	merchant.position = Vector3(-35.5, 0.0, 13.2)
@@ -799,7 +799,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	herbalist.npc_title = "Master Apothecary & Herbalist"
 	herbalist.icon = "🌿"
 	herbalist.model_path = "res://assets/characters/adventurers/Mage.glb"
-	herbalist.model_scale = Vector3(0.52, 0.52, 0.52)
+	herbalist.model_scale = Vector3(0.85, 0.85, 0.85)
 	herbalist.model_rotation_y = 0.0
 	herbalist.dialogue_text = "Greetings, wanderer! Fresh moon-sage, mountain thistle, and soothing draughts to cleanse wounds. Stay vigilant against the foul pestilence rising from the tombs!"
 	herbalist.position = Vector3(-44.5, 0.0, 13.2)
@@ -827,7 +827,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	archer.npc_title = "Sanctuary Marksman"
 	archer.icon = "🎯"
 	archer.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	archer.model_scale = Vector3(0.53, 0.53, 0.53)
+	archer.model_scale = Vector3(0.85, 0.85, 0.85)
 	archer.model_rotation_y = -90.0
 	archer.dialogue_text = "Steady breath, steady aim! Captain Vane says the outlaws in Whisperwood won't wait for us to draw. Practice makes lethal!"
 	archer.position = Vector3(30.0, 0.0, 2.0)
@@ -847,7 +847,7 @@ func _build_town_quarter(parent: Node3D) -> void:
 	dennis.npc_title = "Granary Storeman"
 	dennis.icon = "🌾"
 	dennis.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	dennis.model_scale = Vector3(0.52, 0.52, 0.52)
+	dennis.model_scale = Vector3(0.85, 0.85, 0.85)
 	dennis.model_rotation_y = -90.0
 	dennis.dialogue_text = "Flour sacks stacked high for the royal bakehouses! Between Miller Bronn's waterwheel and Farmer Giles's harvest, Oakhaven never hungers."
 	dennis.position = Vector3(38.0, 0.0, 4.5)
@@ -954,7 +954,7 @@ func _build_town_population(parent: Node3D) -> void:
 	pip.citizen_title = "Town Youth"
 	pip.role = TownspersonNPCScript.NPCRole.CHILD
 	pip.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	pip.model_scale = Vector3(0.35, 0.35, 0.35)
+	pip.model_scale = Vector3(0.58, 0.58, 0.58)
 	pip.icon = "🏃"
 	pip.speech_barks = ["Tag! You're it!", "Look at the champion's sword!", "Bet you can't catch me!"]
 	pip.waypoints = [
@@ -969,8 +969,8 @@ func _build_town_population(parent: Node3D) -> void:
 	tommy.citizen_name = "Tommy"
 	tommy.citizen_title = "Town Youth"
 	tommy.role = TownspersonNPCScript.NPCRole.CHILD
-	tommy.model_path = "res://assets/characters/adventurers/Adventurer.glb"
-	tommy.model_scale = Vector3(0.35, 0.35, 0.35)
+	tommy.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	tommy.model_scale = Vector3(0.58, 0.58, 0.58)
 	tommy.icon = "🏃"
 	tommy.speech_barks = ["Wait for me, Pip!", "I'm gonna be a knight one day!", "Did you see that warhorse?"]
 	tommy.waypoints = [
@@ -985,7 +985,8 @@ func _build_town_population(parent: Node3D) -> void:
 	barnaby_beggar.citizen_name = "Old Barnaby"
 	barnaby_beggar.citizen_title = "Fen War Veteran"
 	barnaby_beggar.role = TownspersonNPCScript.NPCRole.BEGGAR
-	barnaby_beggar.model_path = "res://assets/characters/adventurers/Adventurer.glb"
+	barnaby_beggar.model_path = "res://assets/characters/adventurers/Rogue.glb"
+	barnaby_beggar.model_scale = Vector3(0.85, 0.85, 0.85)
 	barnaby_beggar.icon = "🪙"
 	barnaby_beggar.speech_barks = [
 		"Spare a copper for an old soldier of the Fen Wars...",
@@ -1000,6 +1001,7 @@ func _build_town_population(parent: Node3D) -> void:
 	genevieve.citizen_title = "Noble Patron"
 	genevieve.role = TownspersonNPCScript.NPCRole.CITIZEN
 	genevieve.model_path = "res://assets/characters/adventurers/Mage.glb"
+	genevieve.model_scale = Vector3(0.85, 0.85, 0.85)
 	genevieve.icon = "👒"
 	genevieve.speech_barks = [
 		"The market looks lively today, thank the heavens.",
@@ -1007,11 +1009,11 @@ func _build_town_population(parent: Node3D) -> void:
 		"Splendid morning for a stroll across the sanctuary."
 	]
 	genevieve.waypoints = [
-		Vector3(5.0, 0.0, 0.5),
-		Vector3(5.0, 0.0, 7.5),
-		Vector3(1.0, 0.0, 7.5)
+		Vector3(7.5, 0.0, 1.5),
+		Vector3(7.5, 0.0, 7.5),
+		Vector3(2.0, 0.0, 7.5)
 	]
-	genevieve.position = Vector3(5.0, 0.0, 0.5)
+	genevieve.position = Vector3(7.5, 0.0, 1.5)
 	parent.add_child(genevieve)
 
 	var silas_vendor = TownspersonNPCScript.new()
@@ -1238,7 +1240,7 @@ func _build_town_population(parent: Node3D) -> void:
 	ned.citizen_title = "Harbor Lad"
 	ned.role = TownspersonNPCScript.NPCRole.CHILD
 	ned.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	ned.model_scale = Vector3(0.35, 0.35, 0.35)
+	ned.model_scale = Vector3(0.58, 0.58, 0.58)
 	ned.icon = "⛵"
 	ned.speech_barks = [
 		"Look at the big warship with the crimson sails!",
@@ -1579,7 +1581,7 @@ func _build_watermill_and_canal(parent: Node3D, pos: Vector3) -> void:
 	bronn.npc_title = "River Grain Master"
 	bronn.icon = "⚙️"
 	bronn.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	bronn.model_scale = Vector3(0.54, 0.54, 0.54)
+	bronn.model_scale = Vector3(0.85, 0.85, 0.85)
 	bronn.model_rotation_y = 0.0
 	bronn.dialogue_text = "Hear the rumble of the wheel! The river current powers the millstones day and night, grinding Giles's wheat into fine golden flour for the capital."
 	bronn.position = Vector3(pos.x - 5.0, 0.0, 14.2)
@@ -1613,7 +1615,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	rosalind.npc_title = "Dairy Maid & Beekeeper"
 	rosalind.icon = "🍯"
 	rosalind.model_path = "res://assets/characters/adventurers/Mage.glb"
-	rosalind.model_scale = Vector3(0.52, 0.52, 0.52)
+	rosalind.model_scale = Vector3(0.85, 0.85, 0.85)
 	rosalind.model_rotation_y = 0.0
 	rosalind.dialogue_text = "Golden clover honey and fresh creamy milk! Sunnydale's meadows bloom bright in the summer sun. Keep the wolves at bay and our hives produce sweet comb all year round!"
 	rosalind.position = Vector3(20.0, 0.0, 33.5)
@@ -1634,7 +1636,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	giles.npc_title = "Hamlet Elder"
 	giles.icon = "🌾"
 	giles.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	giles.model_scale = Vector3(0.56, 0.56, 0.56)
+	giles.model_scale = Vector3(0.85, 0.85, 0.85)
 	giles.model_rotation_y = -20.0
 	giles.dialogue_text = "Good day, traveler! Welcome to Sunnydale Hamlet. Our windmill grinds the harvest on the eastern knoll while our cattle graze safely in the fenced southern pasture. Deliver raw meat or fine hides from the wild beasts, and we shall reward you richly in coin!"
 	giles.position = Vector3(31.8, 0.0, 33.5)
@@ -1734,7 +1736,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	stablemaster.npc_title = "Royal Ostler & Stable Master"
 	stablemaster.icon = "🐎"
 	stablemaster.model_path = "res://assets/characters/adventurers/Knight.glb"
-	stablemaster.model_scale = Vector3(0.55, 0.55, 0.55)
+	stablemaster.model_scale = Vector3(0.85, 0.85, 0.85)
 	stablemaster.model_rotation_y = 180.0
 	stablemaster.position = Vector3(37.5, 0.0, 37.2)
 	parent.add_child(stablemaster)
@@ -1746,7 +1748,7 @@ func _build_farmlands_hamlet(parent: Node3D) -> void:
 	silas.npc_title = "Pasture Herdsman"
 	silas.icon = "🌾"
 	silas.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	silas.model_scale = Vector3(0.54, 0.54, 0.54)
+	silas.model_scale = Vector3(0.85, 0.85, 0.85)
 	silas.model_rotation_y = -90.0
 	silas.dialogue_text = "Sunnydale pastures are lush and green this season! Our cattle thrive, and the royal warsteeds graze in safety away from the northern bandits."
 	silas.position = Vector3(34.0, 0.0, 48.0)
@@ -1797,7 +1799,7 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	drake.npc_title = "Citadel Commander"
 	drake.icon = "🛡️"
 	drake.model_path = "res://assets/characters/adventurers/Knight.glb"
-	drake.model_scale = Vector3(0.58, 0.58, 0.58)
+	drake.model_scale = Vector3(0.88, 0.88, 0.88)
 	drake.model_rotation_y = 155.0
 	drake.dialogue_text = "Stand firm, warrior! The Imperial Citadel stands vigil against the abyss. Our scouts report arcane crystals gleaming in the north-eastern crags, and sacred relics lost in the western ruins. Check your royal bounties and bring glory to the realm!"
 	drake.position = Vector3(-3.5, 0.0, 39.5)
@@ -1810,7 +1812,7 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	king_overworld.npc_title = "Sovereign of the Realm"
 	king_overworld.icon = "👑"
 	king_overworld.model_path = "res://assets/characters/adventurers/Knight.glb"
-	king_overworld.model_scale = Vector3(0.60, 0.60, 0.60)
+	king_overworld.model_scale = Vector3(0.92, 0.92, 0.92)
 	king_overworld.model_rotation_y = -155.0
 	king_overworld.dialogue_text = "Hail, champion of Oakhaven! Look to the south where our siege trebuchets hurl fire against the encroaching warlords, and to the east where the Weeping Fen festers. Unite the Seals of our kingdom and victory shall be ours!"
 	king_overworld.position = Vector3(2.4, 0.0, 39.5)
@@ -1822,7 +1824,7 @@ func _build_castle_citadel(parent: Node3D) -> void:
 	queen_overworld.npc_title = "Queen Consort"
 	queen_overworld.icon = "👑"
 	queen_overworld.model_path = "res://assets/characters/adventurers/Mage.glb"
-	queen_overworld.model_scale = Vector3(0.56, 0.56, 0.56)
+	queen_overworld.model_scale = Vector3(0.85, 0.85, 0.85)
 	queen_overworld.model_rotation_y = -155.0
 	queen_overworld.dialogue_text = "Blessings of the Silvervein upon you, noble knight. Speak with me whenever your wounds weigh heavy, and the Crown's grace shall restore your strength."
 	queen_overworld.position = Vector3(4.2, 0.0, 39.5)
@@ -1836,7 +1838,7 @@ func _build_castle_citadel(parent: Node3D) -> void:
 		wall_archer.npc_title = "Rampart Marksman"
 		wall_archer.icon = "🏹"
 		wall_archer.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
-		wall_archer.model_scale = Vector3(0.54, 0.54, 0.54)
+		wall_archer.model_scale = Vector3(0.85, 0.85, 0.85)
 		wall_archer.model_rotation_y = 180.0
 		wall_archer.dialogue_text = "Eyes on the horizon! Not a single goblin, corsair, or siege raider breaches these ramparts while our quivers are full!"
 		wall_archer.position = Vector3(-7.0 if archer_idx == 0 else 7.0, 4.3, 35.8)
@@ -1949,7 +1951,7 @@ func _build_forgotten_ruins(parent: Node3D) -> void:
 	hermit.npc_title = "Keeper of the Forgotten"
 	hermit.icon = "🔮"
 	hermit.model_path = "res://assets/characters/adventurers/Mage.glb"
-	hermit.model_scale = Vector3(0.53, 0.53, 0.53)
+	hermit.model_scale = Vector3(0.85, 0.85, 0.85)
 	hermit.model_rotation_y = 25.0
 	hermit.dialogue_text = "Tread lightly, warrior. The stones here remember an empire older than memory. The Sacred Chalice and the Ancient Codex are scattered among these cracked pedestals. Channel the Soul Echoes you reap to unlock arcane boons!"
 	hermit.position = Vector3(-33.5, 0.0, -2.0)
@@ -2382,7 +2384,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	owen.npc_title = "Port Shipwright"
 	owen.icon = "🔨"
 	owen.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	owen.model_scale = Vector3(0.53, 0.53, 0.53)
+	owen.model_scale = Vector3(0.85, 0.85, 0.85)
 	owen.model_rotation_y = -90.0
 	owen.dialogue_text = "Good oak timber and pitch keep our cogs afloat against the sea swells. If your vessel needs a stout gangplank or sturdy oars, my workshop has the finest craftsmen in Blackwater!"
 	owen.position = Vector3(-52.5, 0.04, 84.0)
@@ -2511,7 +2513,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	fishmonger.npc_title = "Harbor Fishmonger"
 	fishmonger.icon = "🐟"
 	fishmonger.model_path = "res://assets/characters/adventurers/Mage.glb"
-	fishmonger.model_scale = Vector3(0.52, 0.52, 0.52)
+	fishmonger.model_scale = Vector3(0.85, 0.85, 0.85)
 	fishmonger.model_rotation_y = -90.0
 	fishmonger.dialogue_text = "Fresh silver-herring, salted cod, and smoked eels straight from the morning nets! Watch the harbor seals out on the rocks—they always bark before a storm rolls in!"
 	fishmonger.position = Vector3(-52.5, 0.04, 60.0)
@@ -2523,7 +2525,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	marlo.npc_title = "Corsair Captain"
 	marlo.icon = "⚓"
 	marlo.model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
-	marlo.model_scale = Vector3(0.55, 0.55, 0.55)
+	marlo.model_scale = Vector3(0.85, 0.85, 0.85)
 	marlo.model_rotation_y = -90.0
 	marlo.dialogue_text = "Ahoy, landlubber! Welcome to Port Blackwater. Look out at our cogs moored in the harbor basin! The Deep Sea Creeps have infested the southern cove and stolen the Tidecaller's Compass—bring it back to claim the corsair fortune!"
 	marlo.position = Vector3(-56.0, 0.04, 68.5)
@@ -2535,7 +2537,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	corin.npc_title = "Port Warden"
 	corin.icon = "🧭"
 	corin.model_path = "res://assets/characters/adventurers/Knight.glb"
-	corin.model_scale = Vector3(0.56, 0.56, 0.56)
+	corin.model_scale = Vector3(0.88, 0.88, 0.88)
 	corin.model_rotation_y = 180.0
 	corin.dialogue_text = "Welcome to Port Blackwater. Keep your weapons ready—corsairs brawl on the southern beach, and strange abominations crawl from the seabed. Check the harbor bounties to keep our port safe!"
 	corin.position = Vector3(-55.0, 0.04, 52.0)
@@ -2548,7 +2550,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	kaelen.npc_title = "High-Seas Voyager"
 	kaelen.icon = "⚓"
 	kaelen.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	kaelen.model_scale = Vector3(0.53, 0.53, 0.53)
+	kaelen.model_scale = Vector3(0.85, 0.85, 0.85)
 	kaelen.model_rotation_y = 90.0
 	kaelen.dialogue_text = "Ahoy! The Sea Sovereign weathered a fierce gale past the Kraken Shoals. The tides run deep, but our timber hull holds firm. Walk up the gangplank to inspect our decks!"
 	kaelen.position = Vector3(-73.5, 1.85, 68.0)
@@ -2561,7 +2563,7 @@ func _build_port_blackwater_region(parent: Node3D) -> void:
 	thaddeus.npc_title = "Harbor Manifest Officer"
 	thaddeus.icon = "📜"
 	thaddeus.model_path = "res://assets/characters/adventurers/Knight.glb"
-	thaddeus.model_scale = Vector3(0.52, 0.52, 0.52)
+	thaddeus.model_scale = Vector3(0.85, 0.85, 0.85)
 	thaddeus.model_rotation_y = 180.0
 	thaddeus.dialogue_text = "Cargo manifests, iron ingots, and dried rations—all trade entering Port Blackwater passes my inspection. Watch your step along the wooden dock pilings!"
 	thaddeus.position = Vector3(-65.0, 0.04, 62.0)
@@ -2905,7 +2907,7 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	sylas.npc_title = "Forest Herbalist"
 	sylas.icon = "🌱"
 	sylas.model_path = "res://assets/characters/adventurers/Mage.glb"
-	sylas.model_scale = Vector3(0.52, 0.52, 0.52)
+	sylas.model_scale = Vector3(0.85, 0.85, 0.85)
 	sylas.model_rotation_y = 180.0
 	sylas.dialogue_text = "The forest canopy whispers ancient secrets to those who listen. I brew restorative teas from golden chanterelles and pine needles. May your steps through Whisperwood be peaceful!"
 	sylas.position = Vector3(-74.0, 0.0, -56.5)
@@ -2918,7 +2920,7 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	thorne.npc_title = "Circle Druid"
 	thorne.icon = "🌿"
 	thorne.model_path = "res://assets/characters/adventurers/Mage.glb"
-	thorne.model_scale = Vector3(0.54, 0.54, 0.54)
+	thorne.model_scale = Vector3(0.85, 0.85, 0.85)
 	thorne.model_rotation_y = 90.0
 	thorne.dialogue_text = "Peace be upon your spirit, traveler. Whisperwood Forest suffers under bandit outlaws who felled the sacred grove and severed the Living Heartwood. Drive back the highwaymen, return the Heartwood to the shrine, and receive nature's eternal rejuvenation!"
 	thorne.position = Vector3(-80.0, 0.0, -64.0)
@@ -2930,7 +2932,7 @@ func _build_whisperwood_forest_region(parent: Node3D) -> void:
 	elora.npc_title = "Woodland Scout"
 	elora.icon = "🏹"
 	elora.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	elora.model_scale = Vector3(0.53, 0.53, 0.53)
+	elora.model_scale = Vector3(0.85, 0.85, 0.85)
 	elora.model_rotation_y = -90.0
 	elora.dialogue_text = "Tread lightly. Bandit outlaws and hungry timber wolves stalk the shadows of the pines. Clear the woods and our scouts will ensure your safe passage across the realm!"
 	elora.position = Vector3(-68.5, 0.0, -58.5)
@@ -3018,7 +3020,7 @@ func _build_khar_drakken_crags_region(parent: Node3D) -> void:
 	thordin.npc_title = "Dwarven Prospector"
 	thordin.icon = "💎"
 	thordin.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	thordin.model_scale = Vector3(0.52, 0.52, 0.52)
+	thordin.model_scale = Vector3(0.85, 0.85, 0.85)
 	thordin.model_rotation_y = 0.0
 	thordin.dialogue_text = "Gold veins run deep through the granite beneath Khar-Drakken! Keep your eyes keen for raw mineral crystals in the crags—ancient treasures lie hidden where the earth breaks open!"
 	thordin.position = Vector3(65.0, 0.0, -41.5)
@@ -3264,7 +3266,7 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	morrigan.npc_title = "Keeper of the Weeping Fen"
 	morrigan.icon = "🐸"
 	morrigan.model_path = "res://assets/characters/adventurers/Mage.glb"
-	morrigan.model_scale = Vector3(0.54, 0.54, 0.54)
+	morrigan.model_scale = Vector3(0.85, 0.85, 0.85)
 	morrigan.model_rotation_y = 180.0
 	morrigan.dialogue_text = "Step not off the rotting planks, wanderer... The Weeping Fen swallows the careless whole. Bog Creeps and hollow dead guard the Sunken Fen Seal in the mire. Reclaim it and channel the ancient echoes!"
 	morrigan.position = Vector3(84.0, 0.2, 100.5)
@@ -3277,7 +3279,7 @@ func _build_weeping_fen_swamp_region(parent: Node3D) -> void:
 	agnes.npc_title = "Bog Alchemist"
 	agnes.icon = "🧪"
 	agnes.model_path = "res://assets/characters/adventurers/Mage.glb"
-	agnes.model_scale = Vector3(0.52, 0.52, 0.52)
+	agnes.model_scale = Vector3(0.85, 0.85, 0.85)
 	agnes.model_rotation_y = 90.0
 	agnes.dialogue_text = "Grave-moss, willow-bark, and weeping lotus... the fen yields potent reagents for those brave enough to harvest them. Stay upon the boardwalk timbers, wanderer!"
 	agnes.position = Vector3(82.0, 0.2, 88.0)
@@ -3409,7 +3411,7 @@ func _build_siege_encampment_and_battlefield(parent: Node3D) -> void:
 	vargos.npc_title = "Royal Artillery Commander"
 	vargos.icon = "☄️"
 	vargos.model_path = "res://assets/characters/adventurers/Knight.glb"
-	vargos.model_scale = Vector3(0.58, 0.58, 0.58)
+	vargos.model_scale = Vector3(0.88, 0.88, 0.88)
 	vargos.model_rotation_y = 0.0
 	vargos.dialogue_text = "Behold our counterweight trebuchets! We captured this siege battery from the Crimson Warlords and turned their own artillery against their southern vanguard. Interact with either trebuchet to loose a flaming boulder volley!"
 	vargos.position = Vector3(0.0, 0.0, 70.0)
@@ -3467,7 +3469,7 @@ func _build_greenhollow_village_and_caravans(parent: Node3D) -> void:
 	woodcutter.npc_title = "Greenhollow Elder"
 	woodcutter.icon = "🪓"
 	woodcutter.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	woodcutter.model_scale = Vector3(0.55, 0.55, 0.55)
+	woodcutter.model_scale = Vector3(0.85, 0.85, 0.85)
 	woodcutter.model_rotation_y = 180.0
 	woodcutter.dialogue_text = "Welcome to Greenhollow Village! Our timberwrights fell the stoutest oaks for Port Blackwater's ships and the King's siege engines."
 	woodcutter.position = Vector3(-47.0, 0.0, -22.0)

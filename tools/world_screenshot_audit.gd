@@ -22,7 +22,7 @@ static func run_audit(main_node: Node3D, out_prefix: String = "before") -> void:
 	if cam_ui:
 		cam_ui.visible = false
 	if player:
-		player.visible = false
+		player.visible = true
 
 	var out_dir = "C:/Users/daryl/.gemini/antigravity/brain/b85f0ffa-34bf-4cb5-a1fb-9879dd096756/screenshots"
 	DirAccess.make_dir_recursive_absolute(out_dir)

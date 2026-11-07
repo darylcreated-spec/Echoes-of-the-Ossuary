@@ -4,7 +4,7 @@ class_name PatrolNPC
 @export var npc_name: String = "Citadel Guard"
 @export var npc_title: String = "Royal Sentry"
 @export var model_path: String = "res://assets/characters/adventurers/Knight.glb"
-@export var model_scale: Vector3 = Vector3(0.55, 0.55, 0.55)
+@export var model_scale: Vector3 = Vector3(0.85, 0.85, 0.85)
 @export var patrol_speed: float = 2.4
 @export var waypoints: Array = []
 @export var wait_time_at_waypoint: float = 3.0

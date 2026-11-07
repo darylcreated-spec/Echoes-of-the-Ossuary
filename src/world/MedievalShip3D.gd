@@ -580,7 +580,7 @@ func _build_medieval_cog() -> void:
 
 	# 9. ANIMATED DECK CREW (Helmsman, Bow Lookout, Deck Sailor)
 	var helmsman = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue_Hooded.glb", "character", "Helmsman")
-	helmsman.scale = Vector3.ONE * 0.54
+	helmsman.scale = Vector3.ONE * 0.85
 	helmsman.position = Vector3(0.0, 4.35, 4.0)
 	helmsman.rotation_degrees.y = 180.0
 	_hull_pivot.add_child(helmsman)
@@ -590,7 +590,7 @@ func _build_medieval_cog() -> void:
 		_play_ship_crew_anim(hap, "Interact")
 
 	var lookout = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "Lookout")
-	lookout.scale = Vector3.ONE * 0.54
+	lookout.scale = Vector3.ONE * 0.85
 	lookout.position = Vector3(0.0, 3.45, -5.4)
 	lookout.rotation_degrees.y = 180.0
 	_hull_pivot.add_child(lookout)
@@ -600,7 +600,7 @@ func _build_medieval_cog() -> void:
 		_play_ship_crew_anim(lap, "Cheer")
 
 	var sailor = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Barbarian.glb", "character", "Sailor")
-	sailor.scale = Vector3.ONE * 0.52
+	sailor.scale = Vector3.ONE * 0.85
 	sailor.position = Vector3(1.2, 1.95, -0.6)
 	sailor.rotation_degrees.y = 90.0
 	_hull_pivot.add_child(sailor)
@@ -642,7 +642,7 @@ func _build_medieval_cog() -> void:
 		var archer_spots = [Vector3(-1.8, 3.45, -5.2), Vector3(1.8, 3.45, -5.2), Vector3(2.2, 4.35, 5.2)]
 		for a_pos in archer_spots:
 			var marine = archer_model.duplicate()
-			marine.scale = Vector3.ONE * 0.52
+			marine.scale = Vector3.ONE * 0.85
 			marine.position = a_pos
 			marine.rotation_degrees.y = 180.0 if a_pos.z < 0 else -90.0
 			_hull_pivot.add_child(marine)
@@ -756,7 +756,7 @@ func _build_rowboat() -> void:
 
 	# 4. Animated Harbor Oarsman on Center Bench
 	var rower = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rower")
-	rower.scale = Vector3.ONE * 0.50
+	rower.scale = Vector3.ONE * 0.80
 	rower.position = Vector3(0.0, 0.55, 0.0)
 	_hull_pivot.add_child(rower)
 

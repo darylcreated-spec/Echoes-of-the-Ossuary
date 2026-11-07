@@ -60,7 +60,7 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	king.npc_title = "High Sovereign of Oakhaven"
 	king.icon = "👑"
 	king.model_path = "res://assets/characters/adventurers/Knight.glb"
-	king.model_scale = Vector3(0.60, 0.60, 0.60)
+	king.model_scale = Vector3(0.92, 0.92, 0.92)
 	king.model_rotation_y = 0.0
 	king.dialogue_text = "Hear our royal decree, champion! Besieging warlords press against our southern fields, bog abominations fester in the Weeping Fen, and the Ossuary stirs beneath our very stones. Restore the ancient Seals and lead our armies to victory!"
 	king.position = Vector3(-1.1, 0.6, -9.6)
@@ -73,7 +73,7 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	queen.npc_title = "Queen of the Silvervein"
 	queen.icon = "👑"
 	queen.model_path = "res://assets/characters/adventurers/Mage.glb"
-	queen.model_scale = Vector3(0.56, 0.56, 0.56)
+	queen.model_scale = Vector3(0.85, 0.85, 0.85)
 	queen.model_rotation_y = 0.0
 	queen.dialogue_text = "May the light of the Crown shield your heart, brave traveler. The Three Royal Seals of the Realm—Harbor, Forest, and Crag—must be united with the Weeping Fen ward to banish the abyss forever."
 	queen.position = Vector3(1.1, 0.6, -9.6)
@@ -107,7 +107,7 @@ static func _build_castle_throne_room(parent: Node3D) -> void:
 	steward.npc_title = "Royal Castellan"
 	steward.icon = "👑"
 	steward.model_path = "res://assets/characters/adventurers/Knight.glb"
-	steward.model_scale = Vector3(0.55, 0.55, 0.55)
+	steward.model_scale = Vector3(0.85, 0.85, 0.85)
 	steward.model_rotation_y = 180.0
 	steward.dialogue_text = "Welcome to the Grand Hall, champion. The Ossuary stirs below, and our King seeks heroes of fortitude. The royal chalice was lost to the northern ruins—bring it to me and receive the blessing of the Crown!"
 	steward.position = Vector3(1.8, 0.6, -8.5)
@@ -173,8 +173,8 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	_add_warm_light(room, Vector3(-4.5, 2.8, -2.0), Color(1.0, 0.78, 0.48), 1.4, 7.5)
 	
 	# Seated Tavern Patrons at dining tables
-	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(2.5, 0.0, -2.5), 0.0, Vector3(0.52, 0.52, 0.52))
-	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue.glb", Vector3(2.5, 0.0, -0.5), 180.0, Vector3(0.50, 0.50, 0.50))
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(2.5, 0.0, -2.5), 0.0, Vector3(0.85, 0.85, 0.85))
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue.glb", Vector3(2.5, 0.0, -0.5), 180.0, Vector3(0.85, 0.85, 0.85))
 
 	# NPC: Barkeep Barnaby (behind bar)
 	var barkeep = TownNPC.new()
@@ -183,7 +183,7 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	barkeep.npc_title = "Tavern Master"
 	barkeep.icon = "🍺"
 	barkeep.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	barkeep.model_scale = Vector3(0.54, 0.54, 0.54)
+	barkeep.model_scale = Vector3(0.85, 0.85, 0.85)
 	barkeep.model_rotation_y = 90.0
 	barkeep.dialogue_text = "Welcome to The Boar's Tusk! Rest your boots by the hearth, traveler. Say, my granddad's secret spiced mead recipe scroll was lost near the old watchtower cemetery. If you retrieve it, I've got gold and my finest draughts for you!"
 	barkeep.position = Vector3(-5.2, 0, -2.0)
@@ -196,7 +196,7 @@ static func _build_tavern_interior(parent: Node3D) -> void:
 	bard.npc_title = "Minstrel of Oakhaven"
 	bard.icon = "🪕"
 	bard.model_path = "res://assets/characters/adventurers/Rogue.glb"
-	bard.model_scale = Vector3(0.52, 0.52, 0.52)
+	bard.model_scale = Vector3(0.85, 0.85, 0.85)
 	bard.model_rotation_y = -45.0
 	bard.dialogue_text = "Listen close to the embers, traveler... 'Beneath the stone, the ossuary sighs, where fallen kings and hollow shadows rise!' Keep your sword sharp when you step into the depths."
 	bard.position = Vector3(3.8, 0, -5.2)
@@ -254,7 +254,7 @@ static func _build_forge_interior(parent: Node3D) -> void:
 	torval.npc_title = "Grand Forge Smith"
 	torval.icon = "⚒️"
 	torval.model_path = "res://assets/characters/npcs/dwarf_warrior_from_fbx.gltf"
-	torval.model_scale = Vector3(0.55, 0.55, 0.55)
+	torval.model_scale = Vector3(0.40, 0.40, 0.40)
 	torval.dialogue_text = "Step into the heart of the forge, warrior! My bellows roar day and night. If you bring me refined ingots from the ruined quarry, I'll hone your blade with razor lethality!"
 	torval.position = Vector3(1.8, 0, -1.8)
 	room.add_child(torval)
@@ -313,7 +313,7 @@ static func _build_cottage_interior(parent: Node3D) -> void:
 	giles.npc_title = "Village Patriarch"
 	giles.icon = "🌾"
 	giles.model_path = "res://assets/characters/adventurers/Barbarian.glb"
-	giles.model_scale = Vector3(0.55, 0.55, 0.55)
+	giles.model_scale = Vector3(0.85, 0.85, 0.85)
 	giles.dialogue_text = "Good day, traveler. Welcome to our humble home. Ferocious timber wolves have crept out from the eastern woods and stalked our sheep pasture! If you can hunt 3 wolves, our hamlet will reward you with gold and soul echoes."
 	giles.position = Vector3(2.4, 0, 0.5)
 	room.add_child(giles)
@@ -407,7 +407,7 @@ static func _add_warm_light(parent: Node3D, pos: Vector3, color: Color, energy: 
 static func _spawn_guard_npc(parent: Node3D, pos: Vector3, rot_y: float) -> Node3D:
 	var guard = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Knight.glb", "character", "royal_guard")
 	guard.position = pos
-	guard.scale = Vector3(0.55, 0.55, 0.55)
+	guard.scale = Vector3(0.85, 0.85, 0.85)
 	guard.rotation_degrees.y = rot_y
 	parent.add_child(guard)
 	var ap = guard.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -472,8 +472,8 @@ static func _build_rusty_anchor_interior(parent: Node3D) -> void:
 	_place_model(room, "res://assets/furniture/table_medium.gltf", Vector3(3.2, 0, 1.5), Vector3.ONE * 1.5)
 	_place_model(room, "res://assets/furniture/chair_stool_wood.gltf", Vector3(3.2, 0, 0.4), Vector3.ONE * 1.4)
 	_place_model(room, "res://assets/furniture/chair_stool_wood.gltf", Vector3(3.2, 0, 2.6), Vector3.ONE * 1.4)
-	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue_Hooded.glb", Vector3(3.2, 0.0, 0.4), 0.0, Vector3.ONE * 0.52)
-	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(3.2, 0.0, 2.6), 180.0, Vector3.ONE * 0.52)
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Rogue_Hooded.glb", Vector3(3.2, 0.0, 0.4), 0.0, Vector3.ONE * 0.85)
+	_spawn_seated_npc(room, "res://assets/characters/adventurers/Barbarian.glb", Vector3(3.2, 0.0, 2.6), 180.0, Vector3.ONE * 0.85)
 
 	# Exit Doorway back to Port Blackwater Docks
 	var exit_door = BuildingDoorway.new()

@@ -302,14 +302,34 @@ func _spawn_class_pedestals(base_pos: Vector3) -> void:
 		area.add_child(col)
 		ped.add_child(area)
 		
-		# Floating Miniature Hero Preview
+		# Floating Hero Preview Statue
 		var preview = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/" + c["name"] + ".glb", "character", c["name"])
-		preview.scale = Vector3(0.65, 0.65, 0.65)
+		preview.scale = Vector3(0.85, 0.85, 0.85)
 		preview.position.y = 0.45
+		
+		# Reveal only the signature weapon for the class pedestal statue
+		match c["name"]:
+			"Knight":
+				for m in preview.find_children("*", "MeshInstance3D", true, false):
+					if m.name in ["1H_Sword", "Rectangle_Shield"]:
+						m.visible = true
+			"Rogue":
+				for m in preview.find_children("*", "MeshInstance3D", true, false):
+					if m.name == "Knife":
+						m.visible = true
+			"Mage":
+				for m in preview.find_children("*", "MeshInstance3D", true, false):
+					if m.name in ["2H_Staff", "Spellbook"]:
+						m.visible = true
+			"Barbarian":
+				for m in preview.find_children("*", "MeshInstance3D", true, false):
+					if m.name == "2H_Axe":
+						m.visible = true
+		
 		ped.add_child(preview)
 		
 		var label = Label3D.new()
-		label.position.y = 2.05
+		label.position.y = 2.45
 		AssetLoader.style_world_label3d(label, "[E] " + c["name"], 34, Color(1.0, 0.92, 0.65))
 		ped.add_child(label)
 		

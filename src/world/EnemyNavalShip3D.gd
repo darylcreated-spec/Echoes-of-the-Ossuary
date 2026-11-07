@@ -52,7 +52,7 @@ func _build_visuals() -> void:
 	# 3. Skeleton Pirate Crew on Gun Deck
 	var pirate_skel = AssetLoader.load_or_generate_model("res://assets/characters/skeletons/Skeleton_Warrior.glb", "character", "PirateSkel")
 	if pirate_skel:
-		pirate_skel.scale = Vector3.ONE * 0.52
+		pirate_skel.scale = Vector3.ONE * 0.88
 		pirate_skel.position = Vector3(0.0, 1.8, 2.4)
 		pirate_skel.rotation_degrees.y = 180.0
 		_hull_pivot.add_child(pirate_skel)

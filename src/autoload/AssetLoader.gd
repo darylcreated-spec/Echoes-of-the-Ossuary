@@ -151,6 +151,11 @@ func load_or_generate_model(asset_path: String, fallback_type: String, fallback_
 								var aabb = c.mesh.get_aabb()
 								if aabb.position.x < -0.5:
 									c.position.x += 1.0
+					if "characters/adventurers" in candidate or "adventurers/" in candidate:
+						for c in instance.find_children("*", "MeshInstance3D", true, false):
+							var p = c.get_parent()
+							if p and ("handslot" in p.name.to_lower() or "hand" in p.name.to_lower()):
+								c.visible = false
 					if "assets/ships" in candidate or "ship" in candidate:
 						var colormap_tex = get_ship_colormap_texture()
 						if colormap_tex:

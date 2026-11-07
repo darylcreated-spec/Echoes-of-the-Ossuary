@@ -55,7 +55,7 @@ func _build_squadron() -> void:
 		add_child(soldier_root)
 
 		var model = AssetLoader.load_or_generate_model(models[i], "character", "Knight")
-		model.scale = Vector3(0.55, 0.55, 0.55)
+		model.scale = Vector3(0.85, 0.85, 0.85)
 		soldier_root.add_child(model)
 		_soldiers.append(soldier_root)
 

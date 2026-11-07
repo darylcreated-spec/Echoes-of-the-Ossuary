@@ -48,7 +48,7 @@ func _build_caravan_assembly() -> void:
 
 	# 2. Walking Caravan Trader alongside the Pack Horse
 	var driver = AssetLoader.load_or_generate_model("res://assets/characters/adventurers/Rogue.glb", "character", "Rogue")
-	driver.scale = Vector3(0.53, 0.53, 0.53)
+	driver.scale = Vector3(0.85, 0.85, 0.85)
 	driver.position = Vector3(1.1, 0.0, 0.5)
 	add_child(driver)
 	_driver_anim = driver.find_child("AnimationPlayer", true, false) as AnimationPlayer

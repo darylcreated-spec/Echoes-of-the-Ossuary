@@ -143,7 +143,7 @@ func _setup_visuals() -> void:
 	var type_name = "Skeleton_Minion"
 	var weapon_name = "Skeleton_Blade"
 	var model_path = ""
-	var model_scale = Vector3.ONE
+	var model_scale = Vector3(0.88, 0.88, 0.88)
 	
 	match enemy_type:
 		EnemyType.MINION:
@@ -186,12 +186,12 @@ func _setup_visuals() -> void:
 			type_name = "Rogue_Hooded"
 			weapon_name = "sword_1handed"
 			model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
-			model_scale = Vector3(0.55, 0.55, 0.55)
+			model_scale = Vector3(0.85, 0.85, 0.85)
 		EnemyType.BANDIT:
 			type_name = "Rogue_Hooded"
 			weapon_name = "dagger"
 			model_path = "res://assets/characters/adventurers/Rogue_Hooded.glb"
-			model_scale = Vector3(0.55, 0.55, 0.55)
+			model_scale = Vector3(0.85, 0.85, 0.85)
 
 	visual_model_root = AssetLoader.load_or_generate_model(model_path, "character", type_name)
 	visual_model_root.name = "Model"
